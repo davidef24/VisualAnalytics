@@ -5,6 +5,3 @@ test
 
 
 abc
-
-
-bombeis
