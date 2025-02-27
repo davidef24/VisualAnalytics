@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+
 
 
 # Define the columns to drop
@@ -11,7 +13,7 @@ columns_to_drop = [
     "player_url", "fifa_update", "fifa_update_date", "potential",
     "club_position", "club_jersey_number", "club_loaned_from", "club_joined_date", "club_contract_valid_until_year",
     "nation_team_id", "nation_jersey_number", "work_rate", "body_type", "release_clause_eur",
-    "ls", "st", "rs", "lw", "lf", "cf", "rf", "rw", "lam", "cam", "ram", "lm", "lcm", "cm", "rcm", "rm",
+    "ls", "st", "rs", "dob","lw", "lf", "cf", "rf", "rw", "lam", "cam", "ram", "lm", "lcm", "cm", "rcm", "rm",
     "lwb", "ldm", "cdm", "rdm", "rwb", "lb", "lcb", "cb", "rcb", "rb", "gk", "nation_position", "player_tags", "player_traits"
 ]
 
@@ -35,23 +37,118 @@ df_cleaned.info()
 
 
 
-#
-## Standardize features
-#scaler = StandardScaler()
-#df_scaled = scaler.fit_transform(df_numeric)
-#
-## Apply PCA (reduce to 2 components)
-#pca = PCA(n_components=2)
-#df_pca = pca.fit_transform(df_scaled)
-#
-## Create a DataFrame with PCA results
-#df_pca = pd.DataFrame(df_pca, columns=["PC1", "PC2"])
-#
-## Visualize clusters
-#plt.figure(figsize=(10, 6))
-#sns.scatterplot(x=df_pca["PC1"], y=df_pca["PC2"], alpha=0.7)
-#plt.xlabel("Principal Component 1")
-#plt.ylabel("Principal Component 2")
-#plt.title("PCA Clustering of FIFA 23 Players")
-#plt.show()
-#
+
+
+
+df_cleaned_nogk = df_cleaned.drop(columns=["goalkeeping_speed"], errors='ignore')
+df_cleaned_nogk = df_cleaned_nogk.dropna()
+
+# One-Hot Encoding delle colonne categoriche
+categorical_features = ["player_positions", "league_name", "club_name", "nationality_name"]
+df_preprocessed_nogk = pd.get_dummies(df_cleaned_nogk, columns=categorical_features, drop_first=True)
+
+# Selezione delle colonne numeriche per la standardizzazione
+numerical_features_nogk = df_preprocessed_nogk.select_dtypes(include=["int64", "float64"]).columns
+scaler = StandardScaler()
+df_preprocessed_nogk[numerical_features_nogk] = scaler.fit_transform(df_preprocessed_nogk[numerical_features_nogk])
+
+# Applicazione PCA
+pca = PCA(n_components=2)  # Riduzione a 2 componenti per la visualizzazione
+principal_components = pca.fit_transform(df_preprocessed_nogk[numerical_features_nogk])
+
+# Creazione DataFrame con le componenti principali
+df_pca = pd.DataFrame(data=principal_components, columns=["PC1", "PC2"])
+
+# Plot dei risultati PCA
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x=df_pca["PC1"], y=df_pca["PC2"], alpha=0.5)
+plt.xlabel("Principal Component 1")
+plt.ylabel("Principal Component 2")
+plt.title("PCA Senza Portieri")
+plt.show()
+plt.savefig("pca_plot_noGK.png")
+
+
+
+
+df_cleaned_gk = df_cleaned.fillna(df_cleaned.min())
+# One-Hot Encoding delle colonne categoriche
+categorical_features = ["player_positions", "league_name", "club_name", "nationality_name"]
+df_preprocessed_gk = pd.get_dummies(df_cleaned_gk, columns=categorical_features, drop_first=True)
+
+# Selezione delle colonne numeriche per la standardizzazione
+numerical_features = df_preprocessed_gk.select_dtypes(include=["int64", "float64"]).columns
+scaler = StandardScaler()
+df_preprocessed_gk[numerical_features] = scaler.fit_transform(df_preprocessed_gk[numerical_features])
+
+# Applicazione PCA
+pca = PCA(n_components=2)  # Riduzione a 2 componenti per la visualizzazione
+principal_components = pca.fit_transform(df_preprocessed_gk[numerical_features])
+
+# Creazione DataFrame con le componenti principali
+df_pca = pd.DataFrame(data=principal_components, columns=["PC1", "PC2"])
+
+# Plot dei risultati PCA
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x=df_pca["PC1"], y=df_pca["PC2"], alpha=0.5)
+plt.xlabel("Principal Component 1")
+plt.ylabel("Principal Component 2")
+plt.title("PCA con NaN Sostituiti (Inclusi Portieri)")
+plt.savefig("pca_plot_with_gk.png")  # Salva il grafico come immagine
+plt.show()  # Mostra il grafico
+
+
+
+X = df_cleaned_gk[numerical_features]
+
+# Standardizzazione delle caratteristiche
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Applicazione dell'Elbow Method
+inertia = []
+k_values = range(1, 11)  # Prova per k da 1 a 10
+
+for k in k_values:
+    kmeans = KMeans(n_clusters=k, init='k-means++', random_state=42)
+    kmeans.fit(X_scaled)
+    inertia.append(kmeans.inertia_)
+
+# Plot dell'Elbow Method
+plt.figure(figsize=(10, 6))
+plt.plot(k_values, inertia, marker='o')
+plt.title('Elbow Method With GK')
+plt.xlabel('Number of Clusters (k)')
+plt.ylabel('Inertia')
+plt.xticks(k_values)
+plt.grid()
+plt.savefig("elbow_method_gk.png")
+plt.show()
+
+
+
+X = df_cleaned_nogk[numerical_features_nogk]
+
+# Standardizzazione delle caratteristiche
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Applicazione dell'Elbow Method
+inertia = []
+k_values = range(1, 11)  # Prova per k da 1 a 10
+
+for k in k_values:
+    kmeans = KMeans(n_clusters=k, init='k-means++', random_state=42)
+    kmeans.fit(X_scaled)
+    inertia.append(kmeans.inertia_)
+
+# Plot dell'Elbow Method
+plt.figure(figsize=(10, 6))
+plt.plot(k_values, inertia, marker='o')
+plt.title('Elbow Method With No GK')
+plt.xlabel('Number of Clusters (k)')
+plt.ylabel('Inertia')
+plt.xticks(k_values)
+plt.grid()
+plt.savefig("elbow_method_nogk.png")
+plt.show()
