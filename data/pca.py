@@ -11,7 +11,7 @@ from sklearn.cluster import KMeans
 # Define the columns to drop
 columns_to_drop = [
     "player_url", "fifa_update", "fifa_update_date", "potential",
-    "club_position", "club_jersey_number", "club_loaned_from", "club_joined_date", "club_contract_valid_until_year",
+     "club_jersey_number", "club_loaned_from", "club_joined_date", "club_contract_valid_until_year",
     "nation_team_id", "nation_jersey_number", "work_rate", "body_type", "release_clause_eur",
     "ls", "st", "rs", "dob","lw", "lf", "cf", "rf", "rw", "lam", "cam", "ram", "lm", "lcm", "cm", "rcm", "rm",
     "lwb", "ldm", "cdm", "rdm", "rwb", "lb", "lcb", "cb", "rcb", "rb", "gk", "nation_position", "player_tags", "player_traits"
@@ -33,28 +33,35 @@ df_cleaned = df_cleaned.dropna(subset=["value_eur"])
 # Save the cleaned dataset
 df_cleaned.to_csv("cleaned_players.csv", index=False)
 
-df_cleaned.info()
+#df_cleaned.info()
 
+# Define columns to exclude for PCA and K-Means
+excluded_columns = [
+    "player_id", "fifa_version", "short_name", "dob", "player_positions",
+    "league_id", "league_name", "league_level", "club_team_id", "club_name",
+    "nationality_id", "nationality_name", "real_face", "player_face_url", "long_name"
+]
 
+# Drop the excluded columns
+df_pca_kmeans = df_cleaned.drop(columns=excluded_columns, errors='ignore')
 
-
-
-
-df_cleaned_nogk = df_cleaned.drop(columns=["goalkeeping_speed"], errors='ignore')
+df_cleaned_nogk = df_pca_kmeans.drop(columns=["goalkeeping_speed"], errors='ignore')
 df_cleaned_nogk = df_cleaned_nogk.dropna()
 
 # One-Hot Encoding delle colonne categoriche
-categorical_features = ["player_positions", "league_name", "club_name", "nationality_name"]
+categorical_features = ["club_position", "preferred_foot"]
 df_preprocessed_nogk = pd.get_dummies(df_cleaned_nogk, columns=categorical_features, drop_first=True)
 
+df_preprocessed_nogk.info()
+
 # Selezione delle colonne numeriche per la standardizzazione
-numerical_features_nogk = df_preprocessed_nogk.select_dtypes(include=["int64", "float64"]).columns
+#numerical_features_nogk = df_preprocessed_nogk.select_dtypes(include=["int64", "float64"]).columns
 scaler = StandardScaler()
-df_preprocessed_nogk[numerical_features_nogk] = scaler.fit_transform(df_preprocessed_nogk[numerical_features_nogk])
+df_preprocessed_nogk_scaled = scaler.fit_transform(df_preprocessed_nogk)
 
 # Applicazione PCA
 pca = PCA(n_components=2)  # Riduzione a 2 componenti per la visualizzazione
-principal_components = pca.fit_transform(df_preprocessed_nogk[numerical_features_nogk])
+principal_components = pca.fit_transform(df_preprocessed_nogk_scaled)
 
 # Creazione DataFrame con le componenti principali
 df_pca = pd.DataFrame(data=principal_components, columns=["PC1", "PC2"])
