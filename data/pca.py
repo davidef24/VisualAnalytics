@@ -33,7 +33,7 @@ df_cleaned = df_cleaned.dropna(subset=["value_eur"])
 excluded_columns = [
     "player_id", "fifa_version", "short_name", "dob", "player_positions",
     "league_id", "league_name", "league_level", "club_team_id", "club_name",
-    "nationality_id", "nationality_name", "real_face", "player_face_url", "long_name"
+    "nationality_id", "nationality_name", "real_face", "player_face_url", "long_name", "value_eur", "wage_eur"
 ]
 
 # Drop the excluded columns
@@ -58,11 +58,6 @@ final_components = tsne_20.fit_transform(df_scaled)
 
 # Convert the output into a proper DataFrame
 df_tsne = pd.DataFrame(data=final_components, columns=["Dim1", "Dim2"])
-df_cleaned_gk["Tsne_Dim1"] = df_tsne["Dim1"]
-df_cleaned_gk["Tsne_Dim2"] = df_tsne["Dim2"]
-
-# Check the structure of the DataFrame
-print(df_tsne.head())  # This ensures the structure is correct
 
 ## Find Best K Using Silhouette Score
 #k_values = range(2, 20)
@@ -90,9 +85,13 @@ print(df_tsne.head())  # This ensures the structure is correct
 #print(f"\nBest Number of Clusters: {best_k}")
 
 # Apply K-Means with Best K
-kmeans = KMeans(n_clusters=10, random_state=42, n_init=10)
-df_tsne["Cluster"] = kmeans.fit_predict(df_tsne[["Dim1", "Dim2"]])  # Ensure you are using only the 2D data for clustering
-df_cleaned_gk["Cluster"] = df_tsne["Cluster"]
+kmeans = KMeans(n_clusters=20, random_state=None, n_init=10)
+df_tsne["Cluster"] = kmeans.fit_predict(df_tsne[["Dim1", "Dim2"]])
+
+# Copy the Tsne_Dim1, Tsne_Dim2, and Cluster columns from df_tsne into df_cleaned_gk
+df_cleaned[['Tsne_Dim1', 'Tsne_Dim2', 'Cluster']] = df_tsne[['Dim1', 'Dim2', 'Cluster']].values
+
+
 
 # Plot t-SNE Clusters
 plt.figure(figsize=(10, 6))
@@ -103,5 +102,7 @@ plt.title(f"t-SNE with K-Means Clusters (K={20})")
 plt.legend(title="Cluster")
 plt.show()
 
+print(df_cleaned.info())
+
 # Save the cleaned dataset
-df_cleaned_gk.to_csv("data/players_with_tsne_and_clusters_data.csv", index=False)
+df_cleaned.to_csv("dashboard/players_with_tsne_and_clusters_data.csv", index=False)
