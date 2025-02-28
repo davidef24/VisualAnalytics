@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Football Players Analysis</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .dashboard-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;  /* Allinea a sinistra */
+        }
+        #soccer-field {
+            width: 600px;
+            height: 400px;
+            border: 2px solid black;
+            margin-top: 0; /* Rimuovi margine */
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <h1>Football Players Analysis</h1>
+        <div id="soccer-field">
+            <!-- Il campo verrà generato da D3.js -->
+        </div>
+    </div>
+
+    <script src="d3script.js"></script>
+</body>
+</html>
