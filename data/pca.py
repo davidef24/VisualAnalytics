@@ -102,7 +102,7 @@ plt.title(f"t-SNE with K-Means Clusters (K={20})")
 plt.legend(title="Cluster")
 plt.show()
 
-print(df_cleaned.info())
+
 
 # Save the cleaned dataset
 df_cleaned.to_csv("dashboard/players_with_tsne_and_clusters_data.csv", index=False)

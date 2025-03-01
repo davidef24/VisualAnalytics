@@ -10,10 +10,6 @@ function loadCSVData(csvFilePath, callback) {
         console.warn(`Row ${i}: Tsne_Dim1=${d.Tsne_Dim1}, Tsne_Dim2=${d.Tsne_Dim2}`);
       }
     });
-
-    console.log("Loaded sample:", data.slice(0, 5));
-    console.log("X Domain:", d3.extent(data, d => d.Tsne_Dim1));
-    console.log("Y Domain:", d3.extent(data, d => d.Tsne_Dim2));
   
     callback(data);
 
@@ -21,53 +17,6 @@ function loadCSVData(csvFilePath, callback) {
     console.error("Error loading the CSV file: ", error);
   });
 }
-
-// Function to create the scatterplot
-function createScatterplot(data, containerId) {
-  // Clear any existing scatterplot in the container.
-  d3.select(`#${containerId}`).html("");
-
-  // Define dimensions and margins.
-  const margin = { top: 20, right: 30, bottom: 40, left: 50 };
-  const width = 800 - margin.left - margin.right;
-  const height = 600 - margin.top - margin.bottom;
-
-  // Append SVG container.
-  const scatterSvg = d3.select(`#${containerId}`)
-    .append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-    .append("g")
-    .attr("transform", `translate(${margin.left}, ${margin.top})`);
-
-  // Define scales based on the data.
-  const xScale = d3.scaleLinear()
-    .domain(d3.extent(data, d => d.Tsne_Dim1)) // Use tsne_dim1 for the x-axis
-    .range([0, width]);
-
-  const yScale = d3.scaleLinear()
-    .domain(d3.extent(data, d => d.Tsne_Dim2)) // Use tsne_dim2 for the y-axis
-    .range([height, 0]);
-
-  // Append X axis.
-  scatterSvg.append("g")
-    .attr("transform", `translate(0, ${height})`)
-    .call(d3.axisBottom(xScale))
-    .append("text")
-    .attr("x", width / 2)
-    .attr("y", 30)
-    .attr("fill", "#000")
-    .text("t-SNE Dimension 1");
-
-  // Append Y axis.
-  scatterSvg.append("g")
-    .call(d3.axisLeft(yScale))
-    .append("text")
-    .attr("transform", "rotate(-90)")
-    .attr("y", -40)
-    .attr("x", -height / 2)
-    .attr("fill", "#000")
-    .text("t-SNE Dimension 2");
 
   // Define a color palette for clusters.
   const customColorPalette = [
@@ -77,70 +26,100 @@ function createScatterplot(data, containerId) {
     "#c49c94", "#f7b6d2", "#c7c7c7", "#dbdb8d", "#9edae5"  // Light Browns, Light Pinks, Light Grays, Light Yellows, Light Cyans
   ];
 
+// Function to create the scatterplot
+function createScatterplot(data, containerId) {
+  // Clear any existing scatterplot in the container.
+  d3.select(`#${containerId}`).html("");
+
+  // Get container dimensions dynamically
+  const container = d3.select(`#${containerId}`).node();
+  const { width: containerWidth, height: containerHeight } = container.getBoundingClientRect();
+
+  // Ensure valid dimensions
+  if (containerWidth === 0 || containerHeight === 0) {
+    console.warn("Container has zero dimensions. Skipping scatterplot rendering.");
+    return;
+  }
+
+  // Define margins and available width/height
+  const margin = { top: 20, right: 20, bottom: 30, left: 40 };
+  let width = containerWidth - margin.left - margin.right;
+  let height = containerHeight - margin.top - margin.bottom;
+
+  // Append SVG container
+  const scatterSvg = d3.select(`#${containerId}`)
+    .append("svg")
+    .attr("width", containerWidth)
+    .attr("height", containerHeight)
+    .append("g")
+    .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+  // Define scales
+  const xScale = d3.scaleLinear()
+    .domain(d3.extent(data, d => d.Tsne_Dim1))
+    .range([0, width]);
+
+  const yScale = d3.scaleLinear()
+    .domain(d3.extent(data, d => d.Tsne_Dim2))
+    .range([height, 0]);
+
+  // Append X axis
+  const xAxis = scatterSvg.append("g")
+    .attr("class", "x-axis")
+    .attr("transform", `translate(0, ${height})`)
+    .call(d3.axisBottom(xScale));
+
+  // Append Y axis
+  const yAxis = scatterSvg.append("g")
+    .attr("class", "y-axis")
+    .call(d3.axisLeft(yScale));
+
+  // Define color palette
   const colorPalette = customColorPalette;
 
-  // Add a tooltip div.
-  const tooltip = d3.select("body").append("div")
-    .attr("class", "tooltip")
-    .style("opacity", 0);
-
-  // Draw all data points.
-  scatterSvg.selectAll(".scatter-circle")
+  // Draw all data points
+  const circles = scatterSvg.selectAll(".scatter-circle")
     .data(data)
     .enter()
     .append("circle")
-      .attr("class", "scatter-circle")
-      .attr("cx", d => xScale(d.Tsne_Dim1))
-      .attr("cy", d => yScale(d.Tsne_Dim2))
-      .attr("r", 3)
-      .attr("fill", d => colorPalette[d.Cluster % colorPalette.length])
-      .attr("stroke", "black")
-      .attr("stroke-width", 0.5)
-      .attr("opacity", 0.7) // Initially, all dots are fully opaque.
-      .on("mouseover", function(event, d) {
-        // Show tooltip on hover.
-        tooltip.transition()
-          .duration(200)
-          .style("opacity", 0.9);
-          
-        tooltip.html(`
-          <strong>Full Name:</strong> ${d.short_name} <br>
-          <strong>Age:</strong> ${d.age} <br>
-          <strong>Overall:</strong> ${d.overall}
-          <strong>Role:</strong> ${d.player_positions}
-        `).style("left", (event.pageX + 1) + "px")
-        .style("top", (event.pageY - 1) + "px")
-        .style("min-width", "200px")  // Setting a minimum width
-        .style("min-height", "100px")  // Setting a minimum height to ensure it's large enough
-        .style("background-color", "rgba(0, 0, 0, 0.7)")  // Optional: adding background color for better contrast
-        .style("color", "white")  // Optional: making text white for readability
-        .style("border-radius", "8px")  // Optional: adding rounded corners
-        .style("box-shadow", "0 4px 8px rgba(0, 0, 0, 0.2)")  // Optional: adding shadow for better visibility
-        .style("white-space", "pre-wrap");  // Allowing line breaks within the content
-      })
-      .on("mouseout", function() {
-        // Hide tooltip on mouseout.
-        tooltip.transition()
-          .duration(500)
-          .style("opacity", 0);
-      })
-      .on("click", function(event, d) {
-        // When a circle is clicked, update the selected cluster.
-        const selectedCluster = d.cluster;
+    .attr("class", "scatter-circle")
+    .attr("cx", d => xScale(d.Tsne_Dim1))
+    .attr("cy", d => yScale(d.Tsne_Dim2))
+    .attr("r", 3)
+    .attr("fill", d => colorPalette[d.Cluster % colorPalette.length])
+    .attr("stroke", "black")
+    .attr("stroke-width", 0.5)
+    .attr("opacity", 0.7);
 
-        // Update the opacity of the dots: only the dots in the selected cluster are fully opaque.
-        scatterSvg.selectAll(".scatter-circle")
-          .attr("opacity", d => (d.cluster === selectedCluster ? 1 : 0.2));
+  // Add ResizeObserver
+  const resizeObserver = new ResizeObserver(entries => {
+    const { width: newWidth, height: newHeight } = entries[0].contentRect;
 
-        // Filter the data for the selected cluster for the other charts.
-        const clusterData = data.filter(x => x.cluster === selectedCluster);
+    // Check if dimensions actually changed
+    if (newWidth !== containerWidth || newHeight !== containerHeight) {
+      width = newWidth - margin.left - margin.right;
+      height = newHeight - margin.top - margin.bottom;
 
-        // Update other visualizations with the filtered data.
-        updateOtherVisualizations(clusterData);
-      });
+      // Update scales
+      xScale.range([0, width]);
+      yScale.range([height, 0]);
+
+      // Update axes
+      xAxis.call(d3.axisBottom(xScale));
+      yAxis.call(d3.axisLeft(yScale));
+
+      // Update circle positions
+      circles
+        .attr("cx", d => xScale(d.Tsne_Dim1))
+        .attr("cy", d => yScale(d.Tsne_Dim2));
+    }
+  });
+
+  resizeObserver.observe(container);
 
   return scatterSvg;
 }
+
 
 // Placeholder function to update other visualizations
 function updateOtherVisualizations(clusterData) {
@@ -164,7 +143,6 @@ document.addEventListener("DOMContentLoaded", function() {
   console.log("D3 script loaded!");
 
   d3.csv(csvFilePath).then(function(data) {
-      console.log("CSV Data Loaded:", data);
 
       // Posizioni aggiornate per la formazione 1-4-3-3
       const positions = [
