@@ -3,48 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scatterplot Visualization</title>
+    <title>Soccer Player Analysis Dashboard</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        .tooltip {
-            position: absolute;
-            text-align: center;
-            width: 120px;
-            height: 28px;
-            padding: 2px;
-            font: 12px sans-serif;
-            background: lightsteelblue;
-            border: 0px;
-            border-radius: 8px;
-            pointer-events: none;
-        }
-        #scatterplot-container {
-            margin: 20px;
-        }
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
             margin: 0;
-            padding: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
         }
+        
         .dashboard-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: 1fr 1fr 1fr;
+            gap: 20px;
+            height: 105vh;
+            width: 100%;
+        }
+        
+        .dashboard-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            align-items: flex-start;  /* Allinea a sinistra */
         }
-        #soccer-field {
-            width: 600px;
-            height: 400px;
-            border: 2px solid black;
-            margin-top: 0; /* Rimuovi margine */
+        
+        .card-header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .card-content {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #soccer-field-card {
+            grid-column: 1;
+            grid-row: 1;
+        }
+        
+        #scatterplot-card {
+            grid-column: 2;
+            grid-row: 1 / span 2;
+        }
+        
+        #player-image-card {
+            grid-column: 1;
+            grid-row: 2;
+        }
+        
+        #radar-chart-card {
+            grid-column: 2;
+            grid-row: 2;
+        }
+        
+        #bar-chart-card {
+            grid-column: 1;
+            grid-row: 3;
+        }
+        
+        #time-series-card {
+            grid-column: 2;
+            grid-row: 3;
+        }
+        
+        .tooltip {
+            position: absolute;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 5px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Player info styles */
+        .player-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .player-photo {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid #4d9221;
+        }
+        
+        .player-details {
+            margin-left: 20px;
+        }
+        
+        .player-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .player-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .player-stat {
+            background-color: #f8f8f8;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .stat-value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        /* No data placeholder */
+        .no-data {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: #999;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
-    <h1>Scatterplot Visualization</h1>
-    <div id="scatterplot-container"></div>
-    <div id="soccer-field">
-        <!-- Il campo verrà generato da D3.js -->
+    <div class="dashboard-container">
+        <!-- Soccer Field Visualization -->
+        <div id="soccer-field-card" class="dashboard-card">
+            <div class="card-header">Soccer Field Formation</div>
+            <div class="card-content">
+                <div id="soccer-field"></div>
+            </div>
+        </div>
+        
+        <!-- Scatterplot Visualization -->
+        <div id="scatterplot-card" class="dashboard-card">
+            <div class="card-header">Player Clusters (t-SNE)</div>
+            <div class="card-content">
+                <div id="scatterplot-container"></div>
+            </div>
+        </div>
+        
+        <!-- Player Image and Info -->
+        <div id="player-image-card" class="dashboard-card">
+            <div class="card-header">Player Information</div>
+            <div class="card-content">
+                <div id="player-info">
+                    <div class="no-data">Select a player to view details</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Radar Chart -->
+        <div id="radar-chart-card" class="dashboard-card">
+            <div class="card-header">Player Attributes</div>
+            <div class="card-content">
+                <div id="radar-chart">
+                    <div class="no-data">Select a player to view attributes</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bar Chart -->
+        <div id="bar-chart-card" class="dashboard-card">
+            <div class="card-header">Player vs Cluster Average</div>
+            <div class="card-content">
+                <div id="bar-chart">
+                    <div class="no-data">Select a player to compare with cluster</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Time Series Chart -->
+        <div id="time-series-card" class="dashboard-card">
+            <div class="card-header">Player Progression</div>
+            <div class="card-content">
+                <div id="time-series">
+                    <div class="no-data">Select a player to view progression</div>
+                </div>
+            </div>
+        </div>
     </div>
+
     <script src="d3Script.js"></script>
+    <script>
+        // Create the Player Info Section
+        function updatePlayerInfo(player) {
+            const playerInfoDiv = d3.select("#player-info");
+            playerInfoDiv.html(""); // Clear any existing content
+            
+            if (!player) {
+                playerInfoDiv.html('<div class="no-data">Select a player to view details</div>');
+                return;
+            }
+            
+            const infoContent = playerInfoDiv.append("div")
+                .attr("class", "player-info");
+                
+            // Add player photo (placeholder)
+            infoContent.append("img")
+                .attr("class", "player-photo")
+                .attr("src", `/api/placeholder/120/120`)
+                .attr("alt", player.short_name);
+                
+            // Add player details
+            const details = infoContent.append("div")
+                .attr("class", "player-details");
+                
+            details.append("div")
+                .attr("class", "player-name")
+                .text(player.short_name);
+                
+            details.append("div")
+                .text(`${player.player_positions} | Age: ${player.age}`);
+                
+            const stats = details.append("div")
+                .attr("class", "player-stats");
+                
+            // Add key stats
+            addStat(stats, "Overall", player.overall);
+            addStat(stats, "Potential", player.potential || "N/A");
+            addStat(stats, "Value", player.value_eur ? formatCurrency(player.value_eur) : "N/A");
+            addStat(stats, "Wage", player.wage_eur ? formatCurrency(player.wage_eur) : "N/A");
+            
+            // Update other visualizations with this player's data
+            updateRadarChart(player);
+            updateBarChart(player);
+            updateTimeSeriesChart(player);
+        }
+        
+        function addStat(container, label, value) {
+            const stat = container.append("div")
+                .attr("class", "player-stat");
+                
+            stat.append("div")
+                .attr("class", "stat-label")
+                .text(label);
+                
+            stat.append("div")
+                .attr("class", "stat-value")
+                .text(value);
+        }
+        
+        function formatCurrency(value) {
+            if (value >= 1000000) {
+                return "€" + (value / 1000000).toFixed(1) + "M";
+            } else if (value >= 1000) {
+                return "€" + (value / 1000).toFixed(1) + "K";
+            } else {
+                return "€" + value;
+            }
+        }
+        
+        // Placeholder functions for the other visualizations
+        function updateRadarChart(player) {
+            // Will be implemented in the future
+            console.log("Updating radar chart for player:", player.short_name);
+        }
+        
+        function updateBarChart(player) {
+            // Will be implemented in the future
+            console.log("Updating bar chart for player:", player.short_name);
+        }
+        
+        function updateTimeSeriesChart(player) {
+            // Will be implemented in the future
+            console.log("Updating time series for player:", player.short_name);
+        }
+        
+        // Event listeners to connect the visualizations
+        document.addEventListener("playerSelected", function(event) {
+            const player = event.detail;
+            updatePlayerInfo(player);
+        });
+        
+    </script>
 </body>
 </html>
