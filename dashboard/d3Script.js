@@ -168,24 +168,31 @@ document.addEventListener("DOMContentLoaded", function() {
 
       // Posizioni aggiornate per la formazione 1-4-3-3
       const positions = [
-          { role: "Keeper", x: 50, y: 200 },   // Portiere
-          { role: "Centre Back", x: 150, y: 50 },  // Difensore sinistro
-          { role: "Centre Back", x: 125, y: 150 }, // Difensore centrale
-          { role: "Centre Back", x: 125, y: 250 }, // Difensore centrale
-          { role: "Centre Back", x: 150, y: 350 }, // Difensore destro
-          { role: "Midfielder", x: 320, y: 110 },  // Centrocampista sinistro
-          { role: "Midfielder", x: 260, y: 200 }, // Centrocampista centrale
-          { role: "Midfielder", x: 320, y: 290}, // Centrocampista destro
-          { role: "Forward", x: 450, y: 75 },    // Attaccante sinistro
-          { role: "Forward", x: 475, y: 200 },   // Attaccante centrale
-          { role: "Forward", x: 450, y: 325 }    // Attaccante destro
+          { role: "GK", x: 50, y: 200 },   // Portiere
+          { role: "LB - LWB", x: 170, y: 50 },  // Terzino sinistro
+          { role: "CB - LCB", x: 130, y: 150 }, // Difensore centrale
+          { role: "CB - RCB", x: 130, y: 250 }, // Difensore centrale
+          { role: "RB - RWB", x: 170, y: 350 }, // Terzino destro
+          { role: "LDM - LCM - LAM - LM", x: 320, y: 110 },  // Centrocampista sinistro
+          { role: "CDM - CM - CAM", x: 280, y: 200 }, // Centrocampista centrale
+          { role: "RDM - RCM - RAM - RM", x: 320, y: 290}, // Centrocampista destro
+          { role: "LW - LF - LS", x: 450, y: 75 },    // Attaccante sinistro
+          { role: "CF - ST", x: 475, y: 200 },   // Attaccante centrale
+          { role: "RW - RF - RS", x: 450, y: 325 }    // Attaccante destro
       ];
 
       const positionColors = {
-          "Keeper": "#ffff33",           // Colore per il portiere
-          "Centre Back": "#377eb8",       // Colore per il difensore centrale
-          "Midfielder": "#ff7f00",      // Colore per il centrocampista
-          "Forward": "#e41a1c"         // Colore per l'attaccante
+          "GK": "#ffff33",           
+          "CB - LCB": "#377eb8",   
+          "CB - RCB": "#377eb8",        
+          "RB - RWB": "#377eb8",
+          "LB - LWB": "#377eb8",
+          "CDM - CM - CAM": "#ff7f00", 
+          "LDM - LCM - LAM - LM": "#ff7f00",
+          "RDM - RCM - RAM - RM": "#ff7f00",     
+          "RW - RF - RS": "#e41a1c",     
+          "LW - LF - LS": "#e41a1c",
+          "CF - ST": "#e41a1c"       
       };
       
 
@@ -380,32 +387,58 @@ document.addEventListener("DOMContentLoaded", function() {
       .attr("class", "role")
       .attr("cx", d => d.x)
       .attr("cy", d => d.y)
-      .attr("r", 12)  // Riduci il raggio dei pallini
-      .attr("fill", d => positionColors[d.role])  // Cambia il colore in base al ruolo
-      .style("cursor", "pointer")
+      .attr("r", 12)
+      .attr("fill", d => positionColors[d.role] || "gray")
+      .attr("stroke", "black")
+      .attr("stroke-width", 1.5)
       .on("click", function(event, d) {
-          console.log("Clicked position:", d.role);
-          filterPlayers(d.role);
+        filterScatterplotByRole(d.role);
       });
+
 
 
       // Testi per i ruoli
       svg.selectAll("text")
-          .data(positions)
-          .enter()
-          .append("text")
-          .attr("x", d => d.x)
-          .attr("y", d => d.y - 15)  // Aggiungi spazio sopra il pallino
-          .attr("text-anchor", "middle")
-          .attr("fill", "white")
-          .attr("font-size", "10px")  // Font size ridotto
-          .attr("font-weight", "bold")
-          .text(d => d.role);
+      .data(positions)
+      .enter()
+      .append("text")
+      .attr("x", d => d.x)
+      .attr("y", d => d.y - 15)  // Aggiungi spazio sopra il pallino
+      .attr("text-anchor", "middle")
+      .attr("fill", "white")  // Colore del testo
+      .attr("stroke", "black")  // Bordo nero
+      .attr("stroke-width", "2")  // Spessore del bordo
+      .attr("paint-order", "stroke")  // Priorità allo stroke per visibilità
+      .attr("font-size", "10px")  // Font size ridotto
+      .attr("font-weight", "bold")
+      .text(d => d.role);
 
-      function filterPlayers(position) {
-          const filtered = data.filter(player => player.position === position);
-          console.log("Filtered Players:", filtered);
+
+      // Funzione per aggiornare lo scatterplot in base al ruolo selezionato
+      function filterScatterplotByRole(selectedRole) {
+        // Filtra i dati in base al ruolo
+        const filteredData = window.dataset.filter(d => d.player_positions.includes(selectedRole));
+
+        // Ricrea lo scatterplot con i dati filtrati
+        createScatterplot(filteredData, "scatterplot-container");
       }
+
+      // Aggiungi un evento di click ai pallini dei ruoli
+      svg.selectAll("circle.role")
+        .on("click", function(event, d) {
+            const selectedRole = d.role.split(" - ")[0]; // Prendi solo il primo ruolo elencato
+            filterScatterplotByRole(selectedRole);
+        });
+
+        document.getElementById("reset-filter").addEventListener("click", function() {
+          console.log("Resetting Scatterplot");
+        
+          // Ripristina lo scatterplot con tutti i dati originali
+          createScatterplot(window.dataset, "scatterplot-container"); // Assicurati che `window.dataset` contenga i dati originali
+        });
+        
+
+      
   }).catch(error => {
       console.error("Error loading CSV:", error);
   });
