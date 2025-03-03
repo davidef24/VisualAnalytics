@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="data:,">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Soccer Player Analysis Dashboard</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -32,6 +33,7 @@
         }
         
         .card-header {
+            display: grid;
             border-bottom: 1px solid #eee;
             padding-bottom: 10px;
             margin-bottom: 10px;
@@ -42,7 +44,7 @@
 
         .card-content {
             flex-grow: 1;
-            min-height: 300px; /* Adjust based on your needs */
+            min-height: 200px; /* Adjust based on your needs */
             display: flex;
             flex: 1;
             position: relative;
@@ -56,11 +58,11 @@
         
         #scatterplot-card {
             grid-column: 2;
-            grid-row: 1 / span 2;
+            grid-row: 1;
         }
         
         #player-image-card {
-            grid-column: 1;
+            grid-column: 2;
             grid-row: 2;
         }
         
@@ -71,7 +73,7 @@
         
         #bar-chart-card {
             grid-column: 1;
-            grid-row: 3;
+            grid-row: 2;
         }
         
         #time-series-card {
@@ -156,6 +158,18 @@
             color: #999;
             font-style: italic;
         }
+
+        #scatterplot-card-header {
+            grid-template-columns: 3;
+            grid-template-rows: 1;
+        }
+
+        #slider-container {
+            margin-left: 10px;
+            width: 100px;
+            grid-row: 1;
+            grid-column: 3;
+        }
     </style>
 </head>
 <body>
@@ -163,7 +177,7 @@
         <!-- Soccer Field Visualization -->
         <div id="soccer-field-card" class="dashboard-card">
             <div class="card-header">
-                <div class="header-content">
+                <div class="header-content" >
                     <span>Soccer Field Formation</span>
                     <button id="reset-filter">
                         Reset Filter
@@ -177,7 +191,13 @@
         
         <!-- Scatterplot Visualization -->
         <div id="scatterplot-card" class="dashboard-card">
-            <div class="card-header">Player Clusters (t-SNE)</div>
+            <div class="card-header" id="scatterplot-card-header">
+                <div id="slider-container">
+                    <input type="range" id="scatterplot-slider" min="50" max="100" value="60">
+                    <span id="slider-value">60</span>
+                </div>
+                Player Clusters (t-SNE)
+            </div>
             <div class="card-content">
                 <div id="scatterplot-container"></div>
             </div>
@@ -206,7 +226,7 @@
         <!-- Bar Chart -->
         <div id="bar-chart-card" class="dashboard-card">
             <div class="card-header">Player vs Cluster Average</div>
-            <div class="card-content">
+            <div class="card-content" id="bar-chart-card-content">
                 <div id="bar-chart">
                     <div class="no-data">Select a player to compare with cluster</div>
                 </div>

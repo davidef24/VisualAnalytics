@@ -27,12 +27,12 @@ function loadCSVData(csvFilePath, callback) {
   ];
 
 // Function to create the scatterplot
-function createScatterplot(data, containerId) {
+function createScatterplot(data) {
   // Clear any existing scatterplot in the container.
-  d3.select(`#${containerId}`).html("");
+  d3.select("#scatterplot-container").html("");
 
   // Get container dimensions dynamically
-  const container = d3.select(`#${containerId}`).node();
+  const container = d3.select("#scatterplot-container").node();
   const { width: containerWidth, height: containerHeight } = container.getBoundingClientRect();
 
   // Ensure valid dimensions
@@ -47,7 +47,7 @@ function createScatterplot(data, containerId) {
   let height = containerHeight - margin.top - margin.bottom;
 
   // Append SVG container
-  const scatterSvg = d3.select(`#${containerId}`)
+  const scatterSvg = d3.select("#scatterplot-container")
     .append("svg")
     .attr("width", containerWidth)
     .attr("height", containerHeight)
@@ -94,7 +94,7 @@ function createScatterplot(data, containerId) {
    .attr("fill", d => colorPalette[d.Cluster % colorPalette.length])
    .attr("stroke", "black")
    .attr("stroke-width", 0.5)
-   .attr("opacity", 0.7)
+   .attr("opacity", 0.6)
    .on("mouseover", function(event, d) {
      tooltip.style("display", "block")
        .html(`
@@ -110,7 +110,13 @@ function createScatterplot(data, containerId) {
    })
    .on("mouseout", function() {
      tooltip.style("display", "none");
-   });
+   })
+   .on("click", function(event, d) {
+      // Filter data to include only players from the same cluster
+    const sameClusterData = data.filter(player => player.Cluster === d.Cluster);
+
+    createBarChart(d, sameClusterData); // Call the function to create the bar chart with the clicked player's data
+  });
 
   // Add ResizeObserver
   const resizeObserver = new ResizeObserver(entries => {
@@ -154,10 +160,11 @@ const csvFilePath = "players_with_tsne_and_clusters_data.csv"; // Update this pa
 // Load the CSV data and create the scatterplot.
 loadCSVData(csvFilePath, function(data) {
   // Save the data for later use (e.g., updating other visualizations).
+  //console.log(data);
   window.dataset = data;
 
   // Create the scatterplot.
-  createScatterplot(data, "scatterplot-container");
+  createScatterplot(data);
 });
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -418,7 +425,8 @@ document.addEventListener("DOMContentLoaded", function() {
         // Creiamo un array di ruoli dalla posizione selezionata
     
         // Filtriamo i dati mantenendo i giocatori che hanno almeno uno dei ruoli nell'array
-        const filteredData = window.dataset.filter(d => {
+        var dp = window.dataset;
+        const filteredData = dp.filter(d => {
             // Creiamo un array dei ruoli del giocatore
             const playerRoles = d.player_positions.split(" - ").map(role => role.trim());
             
@@ -427,7 +435,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     
         // Ricrea lo scatterplot con i dati filtrati
-        createScatterplot(filteredData, "scatterplot-container");
+        createScatterplot(filteredData);
     }
     
 
@@ -442,7 +450,7 @@ document.addEventListener("DOMContentLoaded", function() {
           console.log("Resetting Scatterplot");
         
           // Ripristina lo scatterplot con tutti i dati originali
-          createScatterplot(window.dataset, "scatterplot-container"); // Assicurati che `window.dataset` contenga i dati originali
+          createScatterplot(window.dataset); // Assicurati che `window.dataset` contenga i dati originali
         });
         
 
@@ -450,4 +458,123 @@ document.addEventListener("DOMContentLoaded", function() {
   }).catch(error => {
       console.error("Error loading CSV:", error);
   });
+});
+
+function createBarChart(playerData, clusterPlayers) {
+  const container = d3.select("#bar-chart-card-content");
+  container.selectAll("*").remove(); // Clear previous chart
+
+  const width = container.node().clientWidth;
+  const height = container.node().clientHeight;
+  const margin = { top: 20, right: 30, bottom: 50, left: 50 };
+  const chartWidth = width - margin.left - margin.right;
+  const chartHeight = height - margin.top - margin.bottom;
+
+  const svg = container.append("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // Check if player is a goalkeeper
+  const isGoalkeeper = playerData.player_positions === "GK";
+  
+  // Define attributes based on position
+  const attributes = isGoalkeeper 
+      ? ["Overall", "GK_Diving", "GK_Handling", "GK_Kicking", "GK_Positioning", "GK_Reflexes", "GK_Speed"]
+      : ["Overall", "Physic", "Pace", "Shooting", "Passing", "Dribbling", "Defending"];
+
+  const playerValues = attributes.map(attr => playerData[attr.toLowerCase()]);
+
+  // Compute cluster averages dynamically
+  const clusterAverages = {};
+  attributes.forEach(attr => {
+      const lowerAttr = attr.toLowerCase();
+
+      // Extract and filter only valid numeric values
+      const values = clusterPlayers
+          .map(player => Number(player[lowerAttr])) // Convert to Number to ensure numeric type
+          .filter(v => !isNaN(v) && v !== undefined);
+
+      // Compute average, avoiding division by zero
+      const avg = values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0;
+
+      clusterAverages[lowerAttr] = avg; // Store computed average
+  });
+
+
+  const clusterValues = attributes.map(attr => clusterAverages[attr.toLowerCase()]);
+
+  const x = d3.scaleBand()
+      .domain(attributes)
+      .range([0, chartWidth])
+      .padding(0.3);
+
+  const y = d3.scaleLinear()
+      .domain([0, 100])
+      .range([chartHeight, 0]);
+
+  svg.append("g")
+      .attr("transform", `translate(0,${chartHeight})`)
+      .call(d3.axisBottom(x))
+      .selectAll("text")
+      .style("text-anchor", "middle");
+
+  svg.append("g")
+      .call(d3.axisLeft(y));
+
+  const barWidth = x.bandwidth() / 2;
+
+  svg.selectAll(".player-bar")
+      .data(playerValues)
+      .enter()
+      .append("rect")
+      .attr("class", "player-bar")
+      .attr("x", (_, i) => x(attributes[i]))
+      .attr("y", d => y(d))
+      .attr("width", barWidth)
+      .attr("height", d => chartHeight - y(d))
+      .attr("fill", "steelblue");
+
+  svg.selectAll(".cluster-bar")
+      .data(clusterValues)
+      .enter()
+      .append("rect")
+      .attr("class", "cluster-bar")
+      .attr("x", (_, i) => x(attributes[i]) + barWidth)
+      .attr("y", d => y(d))
+      .attr("width", barWidth)
+      .attr("height", d => chartHeight - y(d))
+      .attr("fill", "orange");
+
+  svg.append("text")
+      .attr("x", chartWidth / 2)
+      .attr("y", height - 10)
+      .attr("text-anchor", "middle")
+      .style("font-size", "14px")
+      .text("Player vs Cluster Average Attributes");
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  const slider = document.getElementById("scatterplot-slider");
+  const sliderValue = document.getElementById("slider-value");
+
+  // Update slider value on input event
+  slider.addEventListener("input", function() {
+      sliderValue.textContent = slider.value;  // Update the text content of the value
+  });
+});
+
+// Event listener for slider change
+document.getElementById("scatterplot-slider").addEventListener("input", function() {
+  const sliderValue = this.value;
+  document.getElementById("slider-value").textContent = sliderValue;
+
+  const d = window.dataset;
+
+  // Filter players based on the slider value
+  var filteredPlayers = d.filter(player => player.overall >= sliderValue);
+
+  // Call the createScatterlot function with the filtered players
+  createScatterplot(filteredPlayers);
 });
