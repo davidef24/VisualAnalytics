@@ -163,290 +163,132 @@ loadCSVData(csvFilePath, function(data) {
 document.addEventListener("DOMContentLoaded", function() {
   console.log("D3 script loaded!");
 
+  // Definisci il container dell'immagine del campo da calcio
+  const container = d3.select("#soccer-field")
+    .append("svg")
+    .attr("width", "100%")
+    .attr("height", "100%");
+
+  // Ottieni le dimensioni effettive del contenitore
+  const containerWidth = container.node().getBoundingClientRect().width;
+  const containerHeight = container.node().getBoundingClientRect().height;
+
+  // Aggiungi l'immagine del campo da calcio
+  container.append("image")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", containerWidth)  // Impostiamo la larghezza in base al contenitore
+    .attr("height", containerHeight) // Impostiamo l'altezza in base al contenitore
+    .attr("xlink:href", "../field.jpg"); // Modifica con il percorso corretto
+
+
+    const fieldContainer = container.node();
+    const resizeObserver = new ResizeObserver(() => {
+      const containerWidth = fieldContainer.getBoundingClientRect().width;
+      const containerHeight = fieldContainer.getBoundingClientRect().height;
+  
+      container.select("image")
+        .attr("width", containerWidth)
+        .attr("height", containerHeight);
+    });
+  
+    resizeObserver.observe(fieldContainer);
+
+  // Carica il CSV e gestisci i giocatori
   d3.csv(csvFilePath).then(function(data) {
+    // Posizioni relative per la formazione 1-4-3-3
+    const positions = [
+      { role: "GK", x: 0.1, y: 0.5 },   // Portiere
+      { role: "LB - LWB", x: 0.3, y: 0.2 },  // Terzino sinistro
+      { role: "CB", x: 0.2, y: 0.5 },    // Difensore centrale
+      { role: "RB - RWB", x: 0.3, y: 0.8 }, // Terzino destro
+      { role: "LDM - LCM - LAM - LM", x: 0.5, y: 0.3 },  // Centrocampista sinistro
+      { role: "CDM - CM", x: 0.4, y: 0.5 }, // Centrocampista centrale
+      { role: "RDM - RCM - RAM - RM", x: 0.5, y: 0.7 }, // Centrocampista destro
+      { role: "CAM", x: 0.6, y: 0.5 }, // Trequartista
+      { role: "LW - LF - LS", x: 0.75, y: 0.2 },    // Attaccante sinistro
+      { role: "CF - ST", x: 0.8, y: 0.5 },   // Attaccante centrale
+      { role: "RW - RF - RS", x: 0.75, y: 0.8 }    // Attaccante destro
+    ];
 
-      // Posizioni aggiornate per la formazione 1-4-3-3
-      const positions = [
-          { role: "GK", x: 50, y: 200 },   // Portiere
-          { role: "LB - LWB", x: 170, y: 50 },  // Terzino sinistro
-          { role: "CB - LCB", x: 130, y: 150 }, // Difensore centrale
-          { role: "CB - RCB", x: 130, y: 250 }, // Difensore centrale
-          { role: "RB - RWB", x: 170, y: 350 }, // Terzino destro
-          { role: "LDM - LCM - LAM - LM", x: 320, y: 110 },  // Centrocampista sinistro
-          { role: "CDM - CM - CAM", x: 280, y: 200 }, // Centrocampista centrale
-          { role: "RDM - RCM - RAM - RM", x: 320, y: 290}, // Centrocampista destro
-          { role: "LW - LF - LS", x: 450, y: 75 },    // Attaccante sinistro
-          { role: "CF - ST", x: 475, y: 200 },   // Attaccante centrale
-          { role: "RW - RF - RS", x: 450, y: 325 }    // Attaccante destro
-      ];
+    const positionColors = {
+        "GK": "#ffff33",           
+        "CB": "#377eb8",         
+        "RB - RWB": "#377eb8",
+        "LB - LWB": "#377eb8",
+        "CDM - CM": "#ff7f00", 
+        "CAM": "#ff7f00", 
+        "LDM - LCM - LAM - LM": "#ff7f00",
+        "RDM - RCM - RAM - RM": "#ff7f00",     
+        "RW - RF - RS": "#e41a1c",     
+        "LW - LF - LS": "#e41a1c",
+        "CF - ST": "#e41a1c"       
+    };
 
-      const positionColors = {
-          "GK": "#ffff33",           
-          "CB - LCB": "#377eb8",   
-          "CB - RCB": "#377eb8",        
-          "RB - RWB": "#377eb8",
-          "LB - LWB": "#377eb8",
-          "CDM - CM - CAM": "#ff7f00", 
-          "LDM - LCM - LAM - LM": "#ff7f00",
-          "RDM - RCM - RAM - RM": "#ff7f00",     
-          "RW - RF - RS": "#e41a1c",     
-          "LW - LF - LS": "#e41a1c",
-          "CF - ST": "#e41a1c"       
-      };
-      
-
-      const svg = d3.select("#soccer-field").append("svg")
-          .attr("width", 600)
-          .attr("height", 400);
-
-      // Disegna il campo
-      svg.append("rect")
-          .attr("x", 0)
-          .attr("y", 0)
-          .attr("width", 600)
-          .attr("height", 400)
-          .attr("fill", "#4d9221");
-
-      // Disegnare le righe verticali alternate
-      const stripeWidth = 54.5;  // Larghezza delle strisce verticali
-      const colors = ["#4d9221", "#7fbc41"];  // Verde e verde chiaro
-
-      // Crea le righe verticali alternate
-      for (let i = 0; i < 560; i += stripeWidth) {
-          svg.append("rect")
-              .attr("x", i)
-              .attr("y", 10)
-              .attr("width", stripeWidth)
-              .attr("height", 380)
-              .attr("fill", colors[(i / stripeWidth) % 2]);  // Alterna tra verde e verde chiaro
-      }
-
-      // Linee del campo
-      svg.append("rect")  // Bordo del campo
-          .attr("x", 10)
-          .attr("y", 10)
-          .attr("width", 580)
-          .attr("height", 380)
-          .attr("stroke", "white")
-          .attr("fill", "none")
-          .attr("stroke-width", 3);
-
-      svg.append("line")  // Linea di metà campo
-          .attr("x1", 300)
-          .attr("y1", 10)
-          .attr("x2", 300)
-          .attr("y2", 390)
-          .attr("stroke", "white")
-          .attr("stroke-width", 3);
-
-      // Cerchio di centrocampo
-      svg.append("circle") // Cerchio di centrocampo
-          .attr("cx", 300)
-          .attr("cy", 200)
-          .attr("r", 50)
-          .attr("stroke", "white")
-          .attr("fill", "none")
-          .attr("stroke-width", 3);
-
-      // Aree di rigore
-      svg.append("rect") // Area di rigore sinistra
-          .attr("x", 10)
-          .attr("y", 75)
-          .attr("width", 120)
-          .attr("height", 250)
-          .attr("stroke", "white")
-          .attr("fill", "none")
-          .attr("stroke-width", 3);
-
-      svg.append("rect") // Area di rigore destra
-          .attr("x", 470)
-          .attr("y", 75)
-          .attr("width", 120)
-          .attr("height", 250)
-          .attr("stroke", "white")
-          .attr("fill", "none")
-          .attr("stroke-width", 3);
-
-      // Porte
-      svg.append("rect") // Porta sinistra
-          .attr("x", 10)
-          .attr("y", 150)
-          .attr("width", 40)
-          .attr("height", 100)
-          .attr("stroke", "white")
-          .attr("fill", "none")
-          .attr("stroke-width", 3);
-
-      svg.append("rect") // Porta destra
-          .attr("x", 550)
-          .attr("y", 150)
-          .attr("width", 40)
-          .attr("height", 100)
-          .attr("stroke", "white")
-          .attr("fill", "none")
-          .attr("stroke-width", 3);
-
-      // Quarti di cerchio agli angoli (verso l'interno)
-      const quarterCircleRadius = 10;
-      const quarterCircleArc = d3.arc()
-          .innerRadius(0)
-          .outerRadius(quarterCircleRadius)
-          .startAngle(0)
-          .endAngle(Math.PI / 2);
-
-      // Angolo in alto a sinistra
-      svg.append("path")
-          .attr("d", quarterCircleArc)
-          .attr("transform", "translate(10, 10) rotate(90)")  // Invertito verso l'interno
-          .attr("stroke", "white")
-          .attr("fill", "none")
-          .attr("stroke-width", 3);
-
-      // Angolo in alto a destra
-      svg.append("path")
-          .attr("d", quarterCircleArc)
-          .attr("transform", "translate(590, 10) rotate(180)")  // Invertito verso l'interno
-          .attr("stroke", "white")
-          .attr("fill", "none")
-          .attr("stroke-width", 3);
-
-      // Angolo in basso a sinistra
-      svg.append("path")
-          .attr("d", quarterCircleArc)
-          .attr("transform", "translate(10, 390) rotate(0)")  // Invertito verso l'interno
-          .attr("stroke", "white")
-          .attr("fill", "none")
-          .attr("stroke-width", 3);
-
-      // Angolo in basso a destra
-      svg.append("path")
-          .attr("d", quarterCircleArc)
-          .attr("transform", "translate(590, 390) rotate(-90)")  // Invertito verso l'interno
-          .attr("stroke", "white")
-          .attr("fill", "none")
-          .attr("stroke-width", 3);
-
-      // Punti sul centrocampo e per i calci di rigore
-      const penaltySpotRadius = 4;
-      const centerSpotRadius = 4;
-
-      // Punto di centrocampo
-      svg.append("circle")
-          .attr("cx", 300)
-          .attr("cy", 200)
-          .attr("r", centerSpotRadius)
-          .attr("fill", "white");
-
-      // Punti per i calci di rigore
-      svg.append("circle")
-          .attr("cx", 100)   // Punti di rigore sinistro
-          .attr("cy", 200)
-          .attr("r", penaltySpotRadius)
-          .attr("fill", "white");
-
-      svg.append("circle")
-          .attr("cx", 500)   // Punti di rigore destro
-          .attr("cy", 200)
-          .attr("r", penaltySpotRadius)
-          .attr("fill", "white");
-
-      // Dati per l'ellisse (larghezza e altezza)
-      const semiCircleHeight = 25;  // Altezza dell'ellisse (più piccola)
-
-      // Disegnare un semicircolo (ellisse schiacciata)
-      const semiCircleArc = d3.arc()
-          .innerRadius(0)
-          .outerRadius(semiCircleHeight)  // L'altezza definisce il raggio dell'ellisse
-          .startAngle(0)
-          .endAngle(Math.PI);  // Solo metà cerchio (semicircolo)
-
-      // Aggiungi il semicircolo a sinistra (fuori dall'area di rigore sinistra)
-      svg.append("path")
-          .attr("d", semiCircleArc)
-          .attr("transform", "translate(130, 200) scale(1, 1.6)")  // Scale solo sulla direzione Y per schiacciare l'ellisse
-          .attr("stroke", "white")
-          .attr("fill", "none")
-          .attr("stroke-width", 2.5)  // Mantieni la larghezza del bordo invariata
-          .style("smoothEdges");  // Mantiene il bordo senza sfocature
-
-      // Aggiungi il semicircolo a destra (fuori dall'area di rigore destra)
-      svg.append("path")
-          .attr("d", semiCircleArc)
-          .attr("transform", "translate(470, 200) rotate(180) scale(1, 1.6)")  // Scale solo sulla direzione Y per schiacciare l'ellisse
-          .attr("stroke", "white")
-          .attr("fill", "none")
-          .attr("stroke-width", 2.5)  // Mantieni la larghezza del bordo invariata
-          .style("smoothEdges");  // Mantiene il bordo senza sfocature
-
-      // Cerchi per i ruoli (pallini)
-      svg.selectAll("circle.role")
+    // Disegna i pallini per i ruoli
+    container.selectAll("circle.role")
       .data(positions)
       .enter()
       .append("circle")
       .attr("class", "role")
-      .attr("cx", d => d.x)
-      .attr("cy", d => d.y)
+      .attr("cx", d => d.x * containerWidth)  // Posizione dinamica
+      .attr("cy", d => d.y * containerHeight)  // Posizione dinamica
       .attr("r", 12)
       .attr("fill", d => positionColors[d.role] || "gray")
       .attr("stroke", "black")
       .attr("stroke-width", 1.5)
       .on("click", function(event, d) {
-        filterScatterplotByRole(d.role);
+        const selectedRoles = d.role.split("-").map(role => role.trim());
+        filterScatterplotByRole(selectedRoles);
       });
 
-
-
-      // Testi per i ruoli
-      svg.selectAll("text")
+    // Testi per i ruoli
+    container.selectAll("text")
       .data(positions)
       .enter()
       .append("text")
-      .attr("x", d => d.x)
-      .attr("y", d => d.y - 15)  // Aggiungi spazio sopra il pallino
+      .attr("x", d => d.x * containerWidth)
+      .attr("y", d => d.y * containerHeight - 15)  // Aggiungi spazio sopra il pallino
       .attr("text-anchor", "middle")
-      .attr("fill", "white")  // Colore del testo
-      .attr("stroke", "black")  // Bordo nero
-      .attr("stroke-width", "2")  // Spessore del bordo
-      .attr("paint-order", "stroke")  // Priorità allo stroke per visibilità
-      .attr("font-size", "10px")  // Font size ridotto
+      .attr("fill", "white")
+      .attr("stroke", "black")
+      .attr("stroke-width", "2")
+      .attr("paint-order", "stroke")
+      .attr("font-size", "10px")
       .attr("font-weight", "bold")
       .text(d => d.role);
 
+    // Funzione per aggiornare lo scatterplot in base ai ruoli selezionati
+    function filterScatterplotByRole(selectedRoles) {
+      console.log("Ruoli selezionati:", selectedRoles); // Debug
 
-      // Funzione per aggiornare lo scatterplot in base al ruolo selezionato
-      function filterScatterplotByRole(selectedRoles) {
-        // Creiamo un array di ruoli dalla posizione selezionata
-    
-        // Filtriamo i dati mantenendo i giocatori che hanno almeno uno dei ruoli nell'array
-        const filteredData = window.dataset.filter(d => {
-            // Creiamo un array dei ruoli del giocatore
-            const playerRoles = d.player_positions.split(" - ").map(role => role.trim());
-            
-            // Controlliamo se almeno un ruolo del giocatore è presente nei ruoli selezionati
-            return playerRoles.some(role => selectedRoles.includes(role));
-        });
-    
-        // Ricrea lo scatterplot con i dati filtrati
-        createScatterplot(filteredData, "scatterplot-container");
+      // Filtriamo i dati mantenendo i giocatori che hanno almeno uno dei ruoli selezionati
+      const filteredData = window.dataset.filter(d => {
+          if (!d.player_positions) return false; // Evita errori se manca il campo
+
+          // Creiamo un array dei ruoli del giocatore
+          const playerRoles = d.player_positions.split(",").map(role => role.trim());
+          
+          // Controlliamo se almeno uno dei ruoli del giocatore è presente nei ruoli selezionati
+          const hasMatchingRole = playerRoles.some(role => selectedRoles.includes(role));
+
+          return hasMatchingRole;
+      });
+
+      console.log("Giocatori filtrati:", filteredData.length); // Debug
+
+      // Ricrea lo scatterplot con i dati filtrati
+      createScatterplot(filteredData, "scatterplot-container");
     }
+
+    // Funzione per ripristinare il filtro dello scatterplot
+    document.getElementById("reset-filter").addEventListener("click", function() {
+      console.log("Resetting Scatterplot");
     
+      // Ripristina lo scatterplot con tutti i dati originali
+      createScatterplot(window.dataset, "scatterplot-container");
+    });
 
-      // Aggiungi un evento di click ai pallini dei ruoli
-      svg.selectAll("circle.role")
-        .on("click", function(event, d) {
-            const selectedRoles = d.role.split(" - ");
-            filterScatterplotByRole(selectedRoles);
-        });
-
-        document.getElementById("reset-filter").addEventListener("click", function() {
-          console.log("Resetting Scatterplot");
-        
-          // Ripristina lo scatterplot con tutti i dati originali
-          createScatterplot(window.dataset, "scatterplot-container"); // Assicurati che `window.dataset` contenga i dati originali
-        });
-        
-
-      
   }).catch(error => {
       console.error("Error loading CSV:", error);
   });
