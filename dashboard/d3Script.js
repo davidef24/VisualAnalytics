@@ -414,19 +414,28 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
       // Funzione per aggiornare lo scatterplot in base al ruolo selezionato
-      function filterScatterplotByRole(selectedRole) {
-        // Filtra i dati in base al ruolo
-        const filteredData = window.dataset.filter(d => d.player_positions.includes(selectedRole));
-
+      function filterScatterplotByRole(selectedRoles) {
+        // Creiamo un array di ruoli dalla posizione selezionata
+    
+        // Filtriamo i dati mantenendo i giocatori che hanno almeno uno dei ruoli nell'array
+        const filteredData = window.dataset.filter(d => {
+            // Creiamo un array dei ruoli del giocatore
+            const playerRoles = d.player_positions.split(" - ").map(role => role.trim());
+            
+            // Controlliamo se almeno un ruolo del giocatore è presente nei ruoli selezionati
+            return playerRoles.some(role => selectedRoles.includes(role));
+        });
+    
         // Ricrea lo scatterplot con i dati filtrati
         createScatterplot(filteredData, "scatterplot-container");
-      }
+    }
+    
 
       // Aggiungi un evento di click ai pallini dei ruoli
       svg.selectAll("circle.role")
         .on("click", function(event, d) {
-            const selectedRole = d.role.split(" - ")[0]; // Prendi solo il primo ruolo elencato
-            filterScatterplotByRole(selectedRole);
+            const selectedRoles = d.role.split(" - ");
+            filterScatterplotByRole(selectedRoles);
         });
 
         document.getElementById("reset-filter").addEventListener("click", function() {
