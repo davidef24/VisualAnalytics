@@ -99,7 +99,7 @@ function createScatterplot(data, containerId) {
      tooltip.style("display", "block")
        .html(`
          <strong>${d.short_name}</strong><br/>
-         Position: ${d.club_position}<br/>
+         Position: ${d.player_positions}<br/>
          Age: ${d.age}<br/>
          Overall: ${d.overall}
        `);
