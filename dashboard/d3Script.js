@@ -285,7 +285,7 @@ document.addEventListener("DOMContentLoaded", function() {
       console.log("Giocatori filtrati:", filteredData.length); // Debug
 
       // Ricrea lo scatterplot con i dati filtrati
-      createScatterplot(filteredData, "scatterplot-container");
+      createScatterplot(filteredData);
     }
     
 
