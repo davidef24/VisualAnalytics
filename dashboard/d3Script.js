@@ -77,19 +77,40 @@ function createScatterplot(data, containerId) {
   // Define color palette
   const colorPalette = customColorPalette;
 
-  // Draw all data points
-  const circles = scatterSvg.selectAll(".scatter-circle")
-    .data(data)
-    .enter()
-    .append("circle")
-    .attr("class", "scatter-circle")
-    .attr("cx", d => xScale(d.Tsne_Dim1))
-    .attr("cy", d => yScale(d.Tsne_Dim2))
-    .attr("r", 3)
-    .attr("fill", d => colorPalette[d.Cluster % colorPalette.length])
-    .attr("stroke", "black")
-    .attr("stroke-width", 0.5)
-    .attr("opacity", 0.7);
+  // Define tooltip (ensure it exists)
+  const tooltip = d3.select("body")
+    .append("div")
+    .attr("class", "tooltip");
+
+   // Draw all data points
+   const circles = scatterSvg.selectAll(".scatter-circle")
+   .data(data)
+   .enter()
+   .append("circle")
+   .attr("class", "scatter-circle")
+   .attr("cx", d => xScale(d.Tsne_Dim1))
+   .attr("cy", d => yScale(d.Tsne_Dim2))
+   .attr("r", 3)
+   .attr("fill", d => colorPalette[d.Cluster % colorPalette.length])
+   .attr("stroke", "black")
+   .attr("stroke-width", 0.5)
+   .attr("opacity", 0.7)
+   .on("mouseover", function(event, d) {
+     tooltip.style("display", "block")
+       .html(`
+         <strong>${d.short_name}</strong><br/>
+         Position: ${d.club_position}<br/>
+         Age: ${d.age}<br/>
+         Overall: ${d.overall}
+       `);
+   })
+   .on("mousemove", function(event) {
+     tooltip.style("left", (event.pageX + 10) + "px")
+       .style("top", (event.pageY - 20) + "px");
+   })
+   .on("mouseout", function() {
+     tooltip.style("display", "none");
+   });
 
   // Add ResizeObserver
   const resizeObserver = new ResizeObserver(entries => {
