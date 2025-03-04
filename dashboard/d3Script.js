@@ -187,20 +187,8 @@ document.addEventListener("DOMContentLoaded", function() {
     .attr("y", 0)
     .attr("width", containerWidth)  // Impostiamo la larghezza in base al contenitore
     .attr("height", containerHeight) // Impostiamo l'altezza in base al contenitore
-    .attr("xlink:href", "../field.jpg"); // Modifica con il percorso corretto
-
-
-    const fieldContainer = container.node();
-    const resizeObserver = new ResizeObserver(() => {
-      const containerWidth = fieldContainer.getBoundingClientRect().width;
-      const containerHeight = fieldContainer.getBoundingClientRect().height;
-  
-      container.select("image")
-        .attr("width", containerWidth)
-        .attr("height", containerHeight);
-    });
-  
-    resizeObserver.observe(fieldContainer);
+    .attr("xlink:href", "../field.jpg") // Modifica con il percorso corretto
+    .attr("preserveAspectRatio", "xMidYMid meet"); // Mantieni le proporzioni dell'immagine
 
   // Carica il CSV e gestisci i giocatori
   d3.csv(csvFilePath).then(function(data) {
