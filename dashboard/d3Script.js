@@ -114,7 +114,8 @@ function createScatterplot(data) {
    .on("click", function(event, d) {
       // Filter data to include only players from the same cluster
     const sameClusterData = data.filter(player => player.Cluster === d.Cluster);
-
+    console.log(d);
+    console.log(sameClusterData);
     createBarChart(d, sameClusterData); // Call the function to create the bar chart with the clicked player's data
   });
 
@@ -162,7 +163,7 @@ loadCSVData(csvFilePath, function(data) {
   // Save the data for later use (e.g., updating other visualizations).
   //console.log(data);
   window.dataset = data;
-
+  window.filterApplied = false;
   // Create the scatterplot.
   createScatterplot(data);
 });
@@ -203,7 +204,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // Carica il CSV e gestisci i giocatori
   d3.csv(csvFilePath).then(function(data) {
-    // Posizioni relative per la formazione 1-4-3-3
+    // Posizioni relative per la formazione 4-3-3
     const positions = [
       { role: "GK", x: 0.1, y: 0.5 },   // Portiere
       { role: "LB - LWB", x: 0.3, y: 0.2 },  // Terzino sinistro
@@ -269,8 +270,13 @@ document.addEventListener("DOMContentLoaded", function() {
     function filterScatterplotByRole(selectedRoles) {
       console.log("Ruoli selezionati:", selectedRoles); // Debug
 
+      if(!window.filterApplied){
+        window.filterApplied = true;
+        window.filteredDataset = window.dataset;
+      }
+      
       // Filtriamo i dati mantenendo i giocatori che hanno almeno uno dei ruoli selezionati
-      const filteredData = window.dataset.filter(d => {
+      window.filteredDataset = window.filteredDataset.filter(d => {
           if (!d.player_positions) return false; // Evita errori se manca il campo
 
           // Creiamo un array dei ruoli del giocatore
@@ -281,16 +287,13 @@ document.addEventListener("DOMContentLoaded", function() {
 
           return hasMatchingRole;
       });
-
-      console.log("Giocatori filtrati:", filteredData.length); // Debug
-
       // Ricrea lo scatterplot con i dati filtrati
-      createScatterplot(filteredData);
+      createScatterplot(filteredDataset);
     }
     
 
       // Aggiungi un evento di click ai pallini dei ruoli
-      svg.selectAll("circle.role")
+      container.selectAll("circle.role")
         .on("click", function(event, d) {
             const selectedRoles = d.role.split(" - ");
             filterScatterplotByRole(selectedRoles);
@@ -298,6 +301,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
         document.getElementById("reset-filter").addEventListener("click", function() {
           console.log("Resetting Scatterplot");
+
+          window.filterApplied = false;
         
           // Ripristina lo scatterplot con tutti i dati originali
           createScatterplot(window.dataset); // Assicurati che `window.dataset` contenga i dati originali
@@ -420,10 +425,17 @@ document.getElementById("scatterplot-slider").addEventListener("input", function
   const sliderValue = this.value;
   document.getElementById("slider-value").textContent = sliderValue;
 
-  const d = window.dataset;
+  if(!window.filterApplied){
+    window.filterApplied = true;
+    window.filteredDataset = window.dataset;
+  }
+  else{
+    console.log("Gonna print dataset already filtered");
+    console.log(window.filteredDataset);
+  }
 
   // Filter players based on the slider value
-  var filteredPlayers = d.filter(player => player.overall >= sliderValue);
+  var filteredPlayers = window.filteredDataset.filter(player => player.overall >= sliderValue);
 
   // Call the createScatterlot function with the filtered players
   createScatterplot(filteredPlayers);
