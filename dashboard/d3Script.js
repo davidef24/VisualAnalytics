@@ -119,6 +119,8 @@ function createScatterplot(data) {
     createBarChart(d, sameClusterData); // Call the function to create the bar chart with the clicked player's data
 
     updatePlayerInfo(d);
+
+    createRadarChart(d)
   });
 
   // Add ResizeObserver
@@ -299,6 +301,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
           const playerInfoDiv = d3.select("#player-info");
           playerInfoDiv.html("<div class='no-data'>Select a player to view details</div>");
+
+
+          resetRadarChart();
         });
         
 
@@ -469,6 +474,156 @@ function updatePlayerInfo(playerData) {
     playerInfoDiv.html("<div class='no-data'>No player data available</div>");
   }
 }
+
+
+
+function initializeRadarChart() {
+  const containerId = "radar-chart"; // ID del contenitore
+  const margin = { top: 50, right: 50, bottom: 50, left: 50 };
+  const width = 400 - margin.left - margin.right;
+  const height = 400 - margin.top - margin.bottom;
+
+  // Definisci gli attributi (assi) del radar chart
+  const attributes = [
+    { attribute: "Shooting", value: 0 },
+    { attribute: "Passing", value: 0 },
+    { attribute: "Dribbling", value: 0 },
+    { attribute: "Defending", value: 0 },
+    { attribute: "Movement Speed", value: 0 },
+    { attribute: "Power Stamina", value: 0 }
+  ];
+
+  const numAxes = attributes.length;
+  const angleSlice = (Math.PI * 2) / numAxes;
+
+  const rScale = d3.scaleLinear()
+    .domain([0, 100])
+    .range([0, width / 2]);
+
+  // Rimuovi qualsiasi SVG esistente
+  d3.select(`#${containerId}`).select("svg").remove();
+
+  // Crea l'elemento SVG
+  const svg = d3.select(`#${containerId}`)
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", `translate(${width / 2 + margin.left}, ${height / 2 + margin.top})`);
+
+  // Crea gli assi del radar chart
+  const axis = svg.selectAll(".axis")
+    .data(attributes)
+    .enter()
+    .append("g")
+    .attr("class", "axis");
+
+  // Aggiungi le linee degli assi
+  axis.append("line")
+    .attr("x1", 0)
+    .attr("y1", 0)
+    .attr("x2", (d, i) => rScale(100) * Math.cos(angleSlice * i - Math.PI / 2))
+    .attr("y2", (d, i) => rScale(100) * Math.sin(angleSlice * i - Math.PI / 2))
+    .attr("class", "line")
+    .style("stroke", "#ccc")
+    .style("stroke-width", "1px");
+
+  // Aggiungi le etichette degli assi
+  axis.append("text")
+    .attr("class", "legend")
+    .style("font-size", "12px")
+    .attr("text-anchor", "middle")
+    .attr("dy", "0.35em")
+    .attr("x", (d, i) => rScale(110) * Math.cos(angleSlice * i - Math.PI / 2))
+    .attr("y", (d, i) => rScale(110) * Math.sin(angleSlice * i - Math.PI / 2))
+    .text(d => d.attribute);
+}
+
+
+function createRadarChart(playerData) {
+  const containerId = "radar-chart"; // Definisci l'ID del contenitore qui
+
+  // Estrai gli attributi del giocatore
+  const playerAttributes = [
+    { attribute: "Shooting", value: +playerData.shooting },
+    { attribute: "Passing", value: +playerData.passing },
+    { attribute: "Dribbling", value: +playerData.dribbling },
+    { attribute: "Defending", value: +playerData.defending },
+    { attribute: "Movement Speed", value: +playerData.movement_sprint_speed },
+    { attribute: "Power Stamina", value: +playerData.power_stamina }
+  ];
+
+  const margin = { top: 50, right: 50, bottom: 50, left: 50 };
+  const width = 400 - margin.left - margin.right;
+  const height = 400 - margin.top - margin.bottom;
+
+  const numAxes = playerAttributes.length;
+  const angleSlice = (Math.PI * 2) / numAxes;
+
+  const rScale = d3.scaleLinear()
+    .domain([0, 100])
+    .range([0, width / 2]);
+
+  // Rimuovi qualsiasi SVG esistente
+  d3.select(`#${containerId}`).select("svg").remove();
+
+  // Crea l'elemento SVG
+  const svg = d3.select(`#${containerId}`)
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", `translate(${width / 2 + margin.left}, ${height / 2 + margin.top})`);
+
+  // Crea gli assi del radar chart
+  const axis = svg.selectAll(".axis")
+    .data(playerAttributes)
+    .enter()
+    .append("g")
+    .attr("class", "axis");
+
+  // Aggiungi le linee degli assi
+  axis.append("line")
+    .attr("x1", 0)
+    .attr("y1", 0)
+    .attr("x2", (d, i) => rScale(100) * Math.cos(angleSlice * i - Math.PI / 2))
+    .attr("y2", (d, i) => rScale(100) * Math.sin(angleSlice * i - Math.PI / 2))
+    .attr("class", "line")
+    .style("stroke", "#ccc")
+    .style("stroke-width", "1px");
+
+  // Aggiungi le etichette degli assi
+  axis.append("text")
+    .attr("class", "legend")
+    .style("font-size", "12px")
+    .attr("text-anchor", "middle")
+    .attr("dy", "0.35em")
+    .attr("x", (d, i) => rScale(110) * Math.cos(angleSlice * i - Math.PI / 2))
+    .attr("y", (d, i) => rScale(110) * Math.sin(angleSlice * i - Math.PI / 2))
+    .text(d => d.attribute);
+
+  // Crea l'area del radar chart
+  const radarLine = d3.lineRadial()
+    .curve(d3.curveLinearClosed)
+    .radius(d => rScale(d.value))
+    .angle((d, i) => i * angleSlice);
+
+  // Aggiungi l'area al grafico
+  svg.append("path")
+    .datum(playerAttributes)
+    .attr("class", "radar-area")
+    .attr("d", radarLine)
+    .style("fill", "rgba(77, 146, 33, 0.6)")
+    .style("stroke", "#4d9221")
+    .style("stroke-width", "2px");
+}
+
+function resetRadarChart() {
+  const containerId = "radar-chart"; // ID del contenitore
+  d3.select(`#${containerId}`).select("svg").remove(); // Rimuovi il grafico esistente
+  d3.select(`#${containerId}`).html("<div class='no-data'>Select a player to view attributes</div>"); // Ripristina il messaggio predefinito
+}
+
 
 document.addEventListener("DOMContentLoaded", function() {
   const slider = document.getElementById("scatterplot-slider");
