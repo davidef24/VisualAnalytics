@@ -17,7 +17,8 @@ columns_to_drop = [
 ]
 
 # Load dataset (update file_path with your actual file)
-file_path = "data/male_players (legacy)_23.csv"  # Change this to the actual dataset file
+#file_path = "data/male_players (legacy)_23.csv"  # Change this to the actual dataset file
+file_path = "VisualAnalytics/data/male_players (legacy)_23.csv"
 df = pd.read_csv(file_path)
 
 ## Filter only FIFA 23 players
@@ -43,16 +44,26 @@ df_pca_kmeans = df_cleaned.drop(columns=excluded_columns, errors='ignore')
 #df_cleaned_nogk = df_cleaned_nogk.dropna()
 # Remove rows with any null values
 #df_cleaned_gk1 = df_pca_kmeans.dropna(subset=["nationality_name"])
-df_cleaned_gk2 = df_pca_kmeans.fillna(0)
+# Calculate the mean for only numeric columns
+numeric_columns_original = df_cleaned.select_dtypes(include=[np.number]).columns
+column_means_original = np.round(df_cleaned[numeric_columns_original].min())
 
-print(df_cleaned_gk2.info())
+numeric_columns_pca = df_pca_kmeans.select_dtypes(include=[np.number]).columns
+column_means_pca = np.round(df_pca_kmeans[numeric_columns_pca].min())
+
+# Fill the NaN values with the respective column means for only numeric columns
+df_cleaned_pca = df_pca_kmeans.fillna(column_means_pca)
+df_output = df_cleaned.fillna(column_means_original)
+
+
+#print(df_cleaned_gk2.info())
 # Columns to use for t-SNE
 columns_for_tsne = [
     "overall", "pace", "dribbling", "shooting", "passing", "defending", "physic", "height_cm", "weight_kg"
 ]
 
 # Select only the columns for t-SNE
-df_for_tsne = df_cleaned_gk2[columns_for_tsne]
+df_for_tsne = df_cleaned_pca[columns_for_tsne]
 
 ## One-Hot Encoding of categorical features
 #categorical_features = ["club_position"]
@@ -96,11 +107,11 @@ df_tsne = pd.DataFrame(data=final_components, columns=["Dim1", "Dim2"])
 #print(f"\nBest Number of Clusters: {best_k}")
 
 # Apply K-Means with Best K
-kmeans = KMeans(n_clusters=10, random_state=None, n_init=10)
+kmeans = KMeans(n_clusters=20, random_state=None, n_init=10)
 df_tsne["Cluster"] = kmeans.fit_predict(df_tsne[["Dim1", "Dim2"]])
 
 # Copy the Tsne_Dim1, Tsne_Dim2, and Cluster columns from df_tsne into df_cleaned_gk
-df_cleaned[['Tsne_Dim1', 'Tsne_Dim2', 'Cluster']] = df_tsne[['Dim1', 'Dim2', 'Cluster']].values
+df_output[['Tsne_Dim1', 'Tsne_Dim2', 'Cluster']] = df_tsne[['Dim1', 'Dim2', 'Cluster']].values
 
 
 
@@ -113,7 +124,8 @@ plt.title(f"t-SNE with K-Means Clusters (K={20})")
 plt.legend(title="Cluster")
 plt.show()
 
+#print(df_cleaned.info())
 
 
 # Save the cleaned dataset
-df_cleaned.to_csv("dashboard/players_with_tsne_and_clusters_data.csv", index=False)
+df_output.to_csv("VisualAnalytics/dashboard/players_with_tsne_and_clusters_data.csv", index=False)
