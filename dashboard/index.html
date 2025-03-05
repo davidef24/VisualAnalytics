@@ -83,51 +83,58 @@
             height: 100%;
         }
         
-        /* Player info styles */
-        .player-info {
-            display: flex;
-            align-items: center;
+        /* Stile per il contenitore delle informazioni del giocatore */
+        #player-info {
+        display: flex;
+        align-items: flex-start; /* Allinea gli elementi in alto */
+        gap: 20px; /* Spazio tra l'immagine e i dettagli */
+        width: 100%;
+        height: 100%;
         }
-        
+
+        /* Stile per l'immagine del giocatore */
         .player-photo {
-            width: 120px;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 50%;
-            border: 3px solid #4d9221;
+        width: 150px; /* Dimensioni dell'immagine */
+        height: 150px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 3px solid #4d9221;
         }
-        
+
+        /* Stile per i dettagli del giocatore */
         .player-details {
-            margin-left: 20px;
+        flex: 1; /* Occupa lo spazio rimanente */
+        display: flex;
+        flex-direction: column;
+        gap: 10px; /* Spazio tra le statistiche */
         }
-        
+
         .player-name {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 5px;
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 10px;
         }
-        
+
         .player-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            grid-gap: 10px;
-            margin-top: 15px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* Due colonne per le statistiche */
+        gap: 10px;
         }
-        
+
         .player-stat {
-            background-color: #f8f8f8;
-            padding: 8px;
-            border-radius: 4px;
+        background-color: #f8f8f8;
+        padding: 8px;
+        border-radius: 4px;
         }
-        
+
         .stat-label {
-            font-size: 12px;
-            color: #666;
+        font-size: 12px;
+        color: #666;
         }
-        
+
         .stat-value {
-            font-size: 16px;
-            font-weight: bold;
+        font-size: 16px;
+        font-weight: bold;
         }
 
         #scatterplot-container {
@@ -232,97 +239,6 @@
     </div>
 
     <script src="d3Script.js"></script>
-    <script>
-        // Create the Player Info Section
-        function updatePlayerInfo(player) {
-            const playerInfoDiv = d3.select("#player-info");
-            playerInfoDiv.html(""); // Clear any existing content
-            
-            if (!player) {
-                playerInfoDiv.html('<div class="no-data">Select a player to view details</div>');
-                return;
-            }
-            
-            const infoContent = playerInfoDiv.append("div")
-                .attr("class", "player-info");
-                
-            // Add player photo (placeholder)
-            infoContent.append("img")
-                .attr("class", "player-photo")
-                .attr("src", `/api/placeholder/120/120`)
-                .attr("alt", player.short_name);
-                
-            // Add player details
-            const details = infoContent.append("div")
-                .attr("class", "player-details");
-                
-            details.append("div")
-                .attr("class", "player-name")
-                .text(player.short_name);
-                
-            details.append("div")
-                .text(`${player.player_positions} | Age: ${player.age}`);
-                
-            const stats = details.append("div")
-                .attr("class", "player-stats");
-                
-            // Add key stats
-            addStat(stats, "Overall", player.overall);
-            addStat(stats, "Potential", player.potential || "N/A");
-            addStat(stats, "Value", player.value_eur ? formatCurrency(player.value_eur) : "N/A");
-            addStat(stats, "Wage", player.wage_eur ? formatCurrency(player.wage_eur) : "N/A");
-            
-            // Update other visualizations with this player's data
-            updateRadarChart(player);
-            updateBarChart(player);
-            updateTimeSeriesChart(player);
-        }
-        
-        function addStat(container, label, value) {
-            const stat = container.append("div")
-                .attr("class", "player-stat");
-                
-            stat.append("div")
-                .attr("class", "stat-label")
-                .text(label);
-                
-            stat.append("div")
-                .attr("class", "stat-value")
-                .text(value);
-        }
-        
-        function formatCurrency(value) {
-            if (value >= 1000000) {
-                return "€" + (value / 1000000).toFixed(1) + "M";
-            } else if (value >= 1000) {
-                return "€" + (value / 1000).toFixed(1) + "K";
-            } else {
-                return "€" + value;
-            }
-        }
-        
-        // Placeholder functions for the other visualizations
-        function updateRadarChart(player) {
-            // Will be implemented in the future
-            console.log("Updating radar chart for player:", player.short_name);
-        }
-        
-        function updateBarChart(player) {
-            // Will be implemented in the future
-            console.log("Updating bar chart for player:", player.short_name);
-        }
-        
-        function updateTimeSeriesChart(player) {
-            // Will be implemented in the future
-            console.log("Updating time series for player:", player.short_name);
-        }
-        
-        // Event listeners to connect the visualizations
-        document.addEventListener("playerSelected", function(event) {
-            const player = event.detail;
-            updatePlayerInfo(player);
-        });
-        
-    </script>
+    
 </body>
 </html>

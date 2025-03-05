@@ -117,6 +117,8 @@ function createScatterplot(data) {
     console.log(d);
     console.log(sameClusterData);
     createBarChart(d, sameClusterData); // Call the function to create the bar chart with the clicked player's data
+
+    updatePlayerInfo(d);
   });
 
   // Add ResizeObserver
@@ -288,12 +290,15 @@ document.addEventListener("DOMContentLoaded", function() {
         });
 
         document.getElementById("reset-filter").addEventListener("click", function() {
-          console.log("Resetting Scatterplot");
+          console.log("Resetting Scatterplot and Player Information");
 
           window.filterApplied = false;
         
           // Ripristina lo scatterplot con tutti i dati originali
           createScatterplot(window.dataset); // Assicurati che `window.dataset` contenga i dati originali
+
+          const playerInfoDiv = d3.select("#player-info");
+          playerInfoDiv.html("<div class='no-data'>Select a player to view details</div>");
         });
         
 
@@ -396,6 +401,73 @@ function createBarChart(playerData, clusterPlayers) {
       .attr("text-anchor", "middle")
       .style("font-size", "14px")
       .text("Player vs Cluster Average Attributes");
+}
+
+
+
+function updatePlayerInfo(playerData) {
+  // Cerca il giocatore in window.dataset
+  const player = window.dataset.find(p => 
+    p.player_id === playerData.player_id
+  );
+
+  const playerInfoDiv = d3.select("#player-info");
+
+  if (player) {
+    playerInfoDiv.html("");
+
+    // Controlla se il giocatore ha un'immagine reale
+    const hasRealFace = player.real_face === "Yes";
+    const playerPhotoUrl = hasRealFace && player.player_face_url && player.player_face_url.trim() !== ""
+      ? player.player_face_url 
+      : "../placeholder.png"; // Sostituisci con il percorso corretto del placeholder
+
+    // Aggiungi l'immagine del giocatore o il placeholder
+    playerInfoDiv.append("img")
+      .attr("class", "player-photo")
+      .attr("src", playerPhotoUrl)
+      .attr("alt", player.short_name);
+
+    // Aggiungi i dettagli del giocatore
+    const playerDetails = playerInfoDiv.append("div")
+      .attr("class", "player-details");
+
+    playerDetails.append("div")
+      .attr("class", "player-name")
+      .text(player.short_name);
+
+    const playerStats = playerDetails.append("div")
+      .attr("class", "player-stats");
+
+    // Aggiungi le statistiche del giocatore
+    playerStats.append("div")
+      .attr("class", "player-stat")
+      .html(`<div class="stat-label">Overall</div><div class="stat-value">${player.overall}</div>`);
+
+    playerStats.append("div")
+      .attr("class", "player-stat")
+      .html(`<div class="stat-label">Position</div><div class="stat-value">${player.player_positions}</div>`);
+
+    playerStats.append("div")
+      .attr("class", "player-stat")
+      .html(`<div class="stat-label">Age</div><div class="stat-value">${player.age}</div>`);
+
+    playerStats.append("div")
+      .attr("class", "player-stat")
+      .html(`<div class="stat-label">Club</div><div class="stat-value">${player.club_name}</div>`);
+
+    playerStats.append("div")
+      .attr("class", "player-stat")
+      .html(`<div class="stat-label">Value</div><div class="stat-value">€${player.value_eur}</div>`);
+
+    playerStats.append("div")
+      .attr("class", "player-stat")
+      .html(`<div class="stat-label">Wage</div><div class="stat-value">€${player.wage_eur}</div>`);
+
+  } else {
+    // Se il giocatore non è trovato nel dataset
+    playerInfoDiv.html("<div class='no-data'>No player data available</div>");
+  }
 }
 
 document.addEventListener("DOMContentLoaded", function() {

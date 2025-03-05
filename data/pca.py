@@ -9,7 +9,7 @@ from sklearn.metrics import silhouette_score, silhouette_samples
 
 # Define the columns to drop
 columns_to_drop = [
-    "player_url", "fifa_update", "fifa_update_date", "potential",
+    "fifa_update", "fifa_update_date", "potential",
      "club_jersey_number", "club_loaned_from", "club_joined_date", "club_contract_valid_until_year",
     "nation_team_id", "nation_jersey_number", "work_rate", "body_type", "release_clause_eur",
     "ls", "st", "rs", "dob","lw", "lf", "cf", "rf", "rw", "lam", "cam", "ram", "lm", "lcm", "cm", "rcm", "rm",
