@@ -94,7 +94,7 @@ function createScatterplot(data) {
    .attr("fill", d => colorPalette[d.Cluster % colorPalette.length])
    .attr("stroke", "black")
    .attr("stroke-width", 0.5)
-   .attr("opacity", 0.6)
+   .attr("opacity", 0.8)
    .on("mouseover", function(event, d) {
      tooltip.style("display", "block")
        .html(`
@@ -421,13 +421,38 @@ function createBarChart(playerData, clusterPlayers) {
       .attr("width", barWidth)
       .attr("height", d => chartHeight - y(d))
       .attr("fill", "orange");
-
-  svg.append("text")
-      .attr("x", chartWidth / 2)
-      .attr("y", height - 10)
-      .attr("text-anchor", "middle")
-      .style("font-size", "14px")
-      .text("Player vs Cluster Average Attributes");
+      // Add legend
+    const legend = svg.append("g")
+    .attr("class", "legend")
+    .attr("transform", `translate(${chartWidth - 120},${-margin.top + 20})`); // Position at top-right
+  
+  // Legend items
+  const legendItems = [
+    { color: "steelblue", text: "Selected Player" },
+    { color: "orange", text: "Cluster Average" }
+  ];
+  
+  // Legend rectangles
+  legend.selectAll("rect")
+    .data(legendItems)
+    .enter()
+    .append("rect")
+    .attr("x", 0)
+    .attr("y", (d, i) => i * 20)
+    .attr("width", 18)
+    .attr("height", 18)
+    .attr("fill", d => d.color);
+  
+  // Legend text
+  legend.selectAll("text")
+    .data(legendItems)
+    .enter()
+    .append("text")
+    .attr("x", 24)
+    .attr("y", (d, i) => i * 20 + 14)
+    .text(d => d.text)
+    .style("font-size", "12px")
+    .style("alignment-baseline", "middle");
 }
 
 
@@ -483,13 +508,23 @@ function updatePlayerInfo(playerData) {
       .attr("class", "player-stat")
       .html(`<div class="stat-label">Club</div><div class="stat-value">${player.club_name}</div>`);
 
+    const valueInMillions = player.value_eur ? player.value_eur / 1000000 : 0;
+
     playerStats.append("div")
       .attr("class", "player-stat")
-      .html(`<div class="stat-label">Value</div><div class="stat-value">€${player.value_eur}</div>`);
+      .html(`<div class="stat-label">Value</div><div class="stat-value">€${valueInMillions} mln</div>`);
 
     playerStats.append("div")
       .attr("class", "player-stat")
       .html(`<div class="stat-label">Wage</div><div class="stat-value">€${player.wage_eur}</div>`);
+
+    playerStats.append("div")
+    .attr("class", "player-stat")
+    .html(`<div class="stat-label">Player traits</div><div class="stat-value">${player.player_traits}</div>`);
+
+    playerStats.append("div")
+    .attr("class", "player-stat")
+    .html(`<div class="stat-label">Player tags</div><div class="stat-value">${player.player_tags}</div>`);
 
   } else {
     // Se il giocatore non è trovato nel dataset

@@ -18,7 +18,7 @@ columns_to_drop = [
 
 # Load dataset (update file_path with your actual file)
 #file_path = "data/male_players (legacy)_23.csv"  # Change this to the actual dataset file
-file_path = "VisualAnalytics/data/male_players (legacy)_23.csv"
+file_path = "data/male_players (legacy)_23.csv"
 df = pd.read_csv(file_path)
 
 ## Filter only FIFA 23 players
@@ -128,4 +128,4 @@ plt.show()
 
 
 # Save the cleaned dataset
-df_output.to_csv("VisualAnalytics/dashboard/players_with_tsne_and_clusters_data.csv", index=False)
+df_output.to_csv("dashboard/players_with_tsne_and_clusters_data.csv", index=False)
