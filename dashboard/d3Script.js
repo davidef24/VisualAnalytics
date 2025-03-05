@@ -7,7 +7,7 @@ function loadCSVData(csvFilePath, callback) {
       d.Tsne_Dim2 = +d.Tsne_Dim2;
       d.Cluster = +d.Cluster;
       if (isNaN(d.Tsne_Dim1) || isNaN(d.Tsne_Dim2)) {
-        console.warn(`Row ${i}: Tsne_Dim1=${d.Tsne_Dim1}, Tsne_Dim2=${d.Tsne_Dim2}`);
+        console.warn(`Tsne_Dim1 and Tsne_Dim2 are NaN`);
       }
     });
   
@@ -114,8 +114,6 @@ function createScatterplot(data) {
    .on("click", function(event, d) {
       // Filter data to include only players from the same cluster
     const sameClusterData = data.filter(player => player.Cluster === d.Cluster);
-    console.log(d);
-    console.log(sameClusterData);
     createBarChart(d, sameClusterData); // Call the function to create the bar chart with the clicked player's data
 
     updatePlayerInfo(d);
@@ -319,7 +317,7 @@ function createBarChart(playerData, clusterPlayers) {
 
   const width = container.node().clientWidth;
   const height = container.node().clientHeight;
-  const margin = { top: 20, right: 30, bottom: 50, left: 50 };
+  const margin = { top: 20, right: 30, bottom: 120, left: 50 };
   const chartWidth = width - margin.left - margin.right;
   const chartHeight = height - margin.top - margin.bottom;
 
@@ -331,13 +329,27 @@ function createBarChart(playerData, clusterPlayers) {
 
   // Check if player is a goalkeeper
   const isGoalkeeper = playerData.player_positions === "GK";
+
+    // Define attributes based on position
+  // Define all attributes from playerData
+  const attributes = [
+    "pace", "shooting", "passing", "dribbling", "defending", "physic",
+    "attacking_crossing", "attacking_finishing", "attacking_heading_accuracy",
+    "attacking_short_passing", "attacking_volleys", "skill_dribbling", "skill_curve",
+    "skill_fk_accuracy", "skill_long_passing", "skill_ball_control", "movement_acceleration",
+    "movement_sprint_speed", "movement_agility", "movement_reactions", "movement_balance",
+    "power_shot_power", "power_jumping", "power_stamina", "power_strength",
+    "power_long_shots", "mentality_aggression", "mentality_interceptions",
+    "mentality_positioning", "mentality_vision", "mentality_penalties", "mentality_composure",
+    "defending_marking_awareness", "defending_standing_tackle", "defending_sliding_tackle",
+    "gk_diving", "gk_handling", "gk_kicking", "gk_positioning", "gk_reflexes", "gk_speed"
+  ];
+
   
   // Define attributes based on position
-  const attributes = isGoalkeeper 
-      ? ["Overall", "GK_Diving", "GK_Handling", "GK_Kicking", "GK_Positioning", "GK_Reflexes", "GK_Speed"]
-      : ["Overall", "Physic", "Pace", "Shooting", "Passing", "Dribbling", "Defending"];
-
-  const playerValues = attributes.map(attr => playerData[attr.toLowerCase()]);
+  //const attributes = isGoalkeeper 
+  //    ? ["Overall", "GK_Diving", "GK_Handling", "GK_Kicking", "GK_Positioning", "GK_Reflexes", "GK_Speed"]
+  //    : ["Overall", "Physic", "Pace", "Shooting", "Passing", "Dribbling", "Defending"];
 
   // Compute cluster averages dynamically
   const clusterAverages = {};
@@ -354,12 +366,19 @@ function createBarChart(playerData, clusterPlayers) {
 
       clusterAverages[lowerAttr] = avg; // Store computed average
   });
+  // Get the top 8 features with the highest average values
+  const topFeatures = Object.entries(clusterAverages)
+      .sort((a, b) => b[1] - a[1]) // Sort by value (descending)
+      .slice(0, 20); // Take the top 8
 
-
-  const clusterValues = attributes.map(attr => clusterAverages[attr.toLowerCase()]);
+  // Print the top 8 features in array format
+  console.log("Top 8 Features:", topFeatures.map(([feature, _]) => feature));
+  const topFeatureNames = topFeatures.map(([feature]) => feature);
+  const playerValues = topFeatureNames.map(feature => playerData[feature]);
+  const clusterValues = topFeatures.map(([_, value]) => value);
 
   const x = d3.scaleBand()
-      .domain(attributes)
+      .domain(topFeatureNames)
       .range([0, chartWidth])
       .padding(0.3);
 
@@ -371,7 +390,10 @@ function createBarChart(playerData, clusterPlayers) {
       .attr("transform", `translate(0,${chartHeight})`)
       .call(d3.axisBottom(x))
       .selectAll("text")
-      .style("text-anchor", "middle");
+      .style("text-anchor", "end")  // Change anchor to end
+      .attr("dx", "-.8em")          // Adjust horizontal position
+      .attr("dy", ".15em")          // Adjust vertical position
+      .attr("transform", "rotate(-45)");  // Rotate 45 degrees
 
   svg.append("g")
       .call(d3.axisLeft(y));
@@ -383,7 +405,7 @@ function createBarChart(playerData, clusterPlayers) {
       .enter()
       .append("rect")
       .attr("class", "player-bar")
-      .attr("x", (_, i) => x(attributes[i]))
+      .attr("x", (_, i) => x(topFeatureNames[i]))
       .attr("y", d => y(d))
       .attr("width", barWidth)
       .attr("height", d => chartHeight - y(d))
@@ -394,7 +416,7 @@ function createBarChart(playerData, clusterPlayers) {
       .enter()
       .append("rect")
       .attr("class", "cluster-bar")
-      .attr("x", (_, i) => x(attributes[i]) + barWidth)
+      .attr("x", (_, i) => x(topFeatureNames[i]) + barWidth)
       .attr("y", d => y(d))
       .attr("width", barWidth)
       .attr("height", d => chartHeight - y(d))
