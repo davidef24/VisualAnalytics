@@ -9,18 +9,16 @@ from sklearn.metrics import silhouette_score, silhouette_samples
 
 # Define the columns to drop
 columns_to_drop = [
-    "fifa_update", "fifa_update_date", "potential",
+    "potential",
      "club_jersey_number", "club_loaned_from", "club_joined_date", "club_contract_valid_until_year",
     "nation_team_id", "nation_jersey_number", "work_rate", "body_type", "release_clause_eur",
-    "ls", "st", "rs", "dob","lw", "lf", "cf", "rf", "rw", "lam", "cam", "ram", "lm", "lcm", "cm", "rcm", "rm",
-    "lwb", "ldm", "cdm", "rdm", "rwb", "lb", "lcb", "cb", "rcb", "rb", "gk", "nation_position"
+     "country_position"
 ]
 
 # Load dataset (update file_path with your actual file)
 #file_path = "data/male_players (legacy)_23.csv"  # Change this to the actual dataset file
-file_path = "data/male_players (legacy)_23.csv"
+file_path = "data/player-data-full.csv"
 df = pd.read_csv(file_path)
-
 ## Filter only FIFA 23 players
 df = df[df["fifa_version"] == 23]
 
