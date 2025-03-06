@@ -1,3 +1,6 @@
+let selectedPlayer = null; // Memorizza il giocatore selezionato
+
+
 // Function to load and process CSV data
 function loadCSVData(csvFilePath, callback) {
   d3.csv(csvFilePath).then(function(data) {
@@ -112,8 +115,12 @@ function createScatterplot(data) {
      tooltip.style("display", "none");
    })
    .on("click", function(event, d) {
-    // Find nearest players
-    const nearestPlayers = findNearestPlayers(d, data, 0); // Assuming 5 is the number of nearest players you want
+    // Memorizza il giocatore selezionato
+    selectedPlayer = d;
+
+    // Trova i giocatori più vicini in base al valore iniziale dello slider
+    const sliderValue = +document.getElementById("radar-slider").value;
+    const nearestPlayers = findNearestPlayers(d, data, sliderValue);
 
     // Filter data to include only players from the same cluster
     const sameClusterData = data.filter(player => player.Cluster === d.Cluster);
@@ -649,11 +656,8 @@ function createRadarChart(selectedPlayer, nearestPlayers) {
   // Seleziona il gruppo centrale esistente (creato in initializeRadarChart)
   const g = svg.select("g");
 
-  // Rimuovi l'area del radar chart esistente (se presente)
-  g.selectAll(".radar-area").remove();
-
-  // Rimuovi le vecchie etichette degli assi (perché cambiano tra giocatori e portieri)
-  g.selectAll(".axis").remove();
+  // Rimuovi tutti gli elementi esistenti del radar chart
+  g.selectAll("*").remove(); // Rimuove tutti gli elementi all'interno del gruppo <g>
 
   // Crea gli assi del radar chart
   const axis = g.selectAll(".axis")
@@ -702,10 +706,30 @@ function createRadarChart(selectedPlayer, nearestPlayers) {
       .style("fill", colorScale(index))
       .style("stroke", colorScale(index))
       .style("stroke-width", "2px")
-      .style("opacity", 0.6);
+      .style("opacity", 0.4);
   });
 }
 
+
+// Funzione per aggiornare il radar chart in base al valore dello slider
+function updateRadarChart() {
+  const sliderValue = +document.getElementById("radar-slider").value;
+  document.getElementById("radar-slider-value").textContent = sliderValue;
+
+  if (selectedPlayer) {
+      // Trova i giocatori più vicini in base al valore dello slider
+      const nearestPlayers = findNearestPlayers(selectedPlayer, window.dataset, sliderValue);
+      
+      // Aggiorna il radar chart con i nuovi giocatori
+      createRadarChart(selectedPlayer, nearestPlayers);
+  }
+}
+
+// Aggiungi un listener allo slider
+document.getElementById("radar-slider").addEventListener("input", function() {
+  console.log("Slider value changed!"); // Debug
+  updateRadarChart();
+});
 
 function findNearestPlayers(selectedPlayer, data, numNearest) {
   // Calcola la distanza euclidea tra il giocatore selezionato e tutti gli altri

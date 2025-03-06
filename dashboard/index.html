@@ -177,6 +177,29 @@
             grid-row: 1;
             grid-column: 3;
         }
+
+
+        #radar-chart-card .card-header {
+            display: grid;
+            grid-template-columns: 1fr auto; /* Titolo a sinistra, slider a destra */
+            align-items: center; /* Centra verticalmente */
+        }
+
+        #radar-slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Spazio tra lo slider e il valore */
+            justify-self: end; /* Allinea il contenitore dello slider a destra */
+        }
+
+        #radar-slider {
+            width: 100px; /* Larghezza dello slider */
+        }
+
+        #radar-slider-value {
+            font-size: 14px;
+        }
+
     </style>
 </head>
 <body>
@@ -222,11 +245,15 @@
         
         <!-- Radar Chart -->
         <div id="radar-chart-card" class="dashboard-card">
-            <div class="card-header">Player Attributes</div>
-            <div class="card-content">
-                <div id="radar-chart">
-                    <div class="no-data">Select a player to view attributes</div>
+            <div class="card-header">
+                <span>Player Attributes</span> <!-- Titolo -->
+                <div id="radar-slider-container">
+                    <input type="range" id="radar-slider" min="0" max="10" value="0">
+                    <span id="radar-slider-value">0</span>
                 </div>
+            </div>
+            <div class="card-content">
+                <div id="radar-chart"></div>
             </div>
         </div>
         
