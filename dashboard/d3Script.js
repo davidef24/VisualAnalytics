@@ -112,14 +112,21 @@ function createScatterplot(data) {
      tooltip.style("display", "none");
    })
    .on("click", function(event, d) {
-      // Filter data to include only players from the same cluster
-    const sameClusterData = data.filter(player => player.Cluster === d.Cluster);
-    createBarChart(d, sameClusterData); // Call the function to create the bar chart with the clicked player's data
+    // Find nearest players
+    const nearestPlayers = findNearestPlayers(d, data, 0); // Assuming 5 is the number of nearest players you want
 
+    // Filter data to include only players from the same cluster
+    const sameClusterData = data.filter(player => player.Cluster === d.Cluster);
+
+    // Call the function to create the bar chart with the clicked player's data
+    createBarChart(d, sameClusterData);
+
+    // Update player info
     updatePlayerInfo(d);
 
-    createRadarChart(d)
-  });
+    // Create the radar chart with the selected player and the nearest players
+    createRadarChart(d, nearestPlayers);
+ });
 
   // Add ResizeObserver
   const resizeObserver = new ResizeObserver(entries => {
@@ -168,6 +175,9 @@ loadCSVData(csvFilePath, function(data) {
   window.filterApplied = false;
   // Create the scatterplot.
   createScatterplot(data);
+
+  // Inizializza il radar chart
+  initializeRadarChart();
 });
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -301,7 +311,7 @@ document.addEventListener("DOMContentLoaded", function() {
           playerInfoDiv.html("<div class='no-data'>Select a player to view details</div>");
 
 
-          resetRadarChart();
+          initializeRadarChart();
         });
         
 
@@ -533,7 +543,6 @@ function updatePlayerInfo(playerData) {
 }
 
 
-
 function initializeRadarChart() {
   const containerId = "radar-chart"; // ID del contenitore
   const margin = { top: 50, right: 50, bottom: 50, left: 50 };
@@ -542,12 +551,12 @@ function initializeRadarChart() {
 
   // Definisci gli attributi (assi) del radar chart
   const attributes = [
-    { attribute: "Shooting", value: 0 },
-    { attribute: "Passing", value: 0 },
-    { attribute: "Dribbling", value: 0 },
-    { attribute: "Defending", value: 0 },
-    { attribute: "Movement Speed", value: 0 },
-    { attribute: "Power Stamina", value: 0 }
+    { attribute: "1", value: 0 },
+    { attribute: "2", value: 0 },
+    { attribute: "3", value: 0 },
+    { attribute: "4", value: 0 },
+    { attribute: "5", value: 0 },
+    { attribute: "6", value: 0 }
   ];
 
   const numAxes = attributes.length;
@@ -597,44 +606,58 @@ function initializeRadarChart() {
 }
 
 
-function createRadarChart(playerData) {
-  const containerId = "radar-chart"; // Definisci l'ID del contenitore qui
+function createRadarChart(selectedPlayer, nearestPlayers) {
+  const containerId = "radar-chart"; // ID del contenitore
 
-  // Estrai gli attributi del giocatore
-  const playerAttributes = [
-    { attribute: "Shooting", value: +playerData.shooting },
-    { attribute: "Passing", value: +playerData.passing },
-    { attribute: "Dribbling", value: +playerData.dribbling },
-    { attribute: "Defending", value: +playerData.defending },
-    { attribute: "Movement Speed", value: +playerData.movement_sprint_speed },
-    { attribute: "Power Stamina", value: +playerData.power_stamina }
-  ];
+  // Determina le statistiche da usare in base alla posizione del giocatore
+  const getAttributes = (player) => player.player_positions === "GK"
+    ? [
+        { attribute: "Diving", value: +player.gk_diving },
+        { attribute: "Handling", value: +player.gk_handling },
+        { attribute: "Kicking", value: +player.gk_kicking },
+        { attribute: "Positioning", value: +player.gk_positioning },
+        { attribute: "Reflexes", value: +player.gk_reflexes },
+        { attribute: "Speed", value: +player.gk_speed }
+      ]
+    : [
+        { attribute: "Shooting", value: +player.shooting },
+        { attribute: "Passing", value: +player.passing },
+        { attribute: "Dribbling", value: +player.dribbling },
+        { attribute: "Defending", value: +player.defending },
+        { attribute: "Movement Speed", value: +player.movement_sprint_speed },
+        { attribute: "Power Stamina", value: +player.power_stamina }
+      ];
 
+  // Dati del giocatore selezionato e dei giocatori vicini
+  const playersData = [selectedPlayer, ...nearestPlayers];
+  
+  // Impostazioni del grafico
   const margin = { top: 50, right: 50, bottom: 50, left: 50 };
   const width = 400 - margin.left - margin.right;
   const height = 400 - margin.top - margin.bottom;
 
-  const numAxes = playerAttributes.length;
+  const numAxes = getAttributes(selectedPlayer).length;
   const angleSlice = (Math.PI * 2) / numAxes;
 
   const rScale = d3.scaleLinear()
     .domain([0, 100])
-    .range([0, width / 2]);
+    .range([0, (Math.min(width, height) / 2)]); 
 
-  // Rimuovi qualsiasi SVG esistente
-  d3.select(`#${containerId}`).select("svg").remove();
+  // Seleziona l'elemento SVG esistente
+  const svg = d3.select(`#${containerId}`).select("svg");
 
-  // Crea l'elemento SVG
-  const svg = d3.select(`#${containerId}`)
-    .append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-    .append("g")
-    .attr("transform", `translate(${width / 2 + margin.left}, ${height / 2 + margin.top})`);
+  // Seleziona il gruppo centrale esistente (creato in initializeRadarChart)
+  const g = svg.select("g");
+
+  // Rimuovi l'area del radar chart esistente (se presente)
+  g.selectAll(".radar-area").remove();
+
+  // Rimuovi le vecchie etichette degli assi (perché cambiano tra giocatori e portieri)
+  g.selectAll(".axis").remove();
 
   // Crea gli assi del radar chart
-  const axis = svg.selectAll(".axis")
-    .data(playerAttributes)
+  const axis = g.selectAll(".axis")
+    .data(getAttributes(selectedPlayer))
     .enter()
     .append("g")
     .attr("class", "axis");
@@ -665,22 +688,43 @@ function createRadarChart(playerData) {
     .radius(d => rScale(d.value))
     .angle((d, i) => i * angleSlice);
 
-  // Aggiungi l'area al grafico
-  svg.append("path")
-    .datum(playerAttributes)
-    .attr("class", "radar-area")
-    .attr("d", radarLine)
-    .style("fill", "rgba(77, 146, 33, 0.6)")
-    .style("stroke", "#4d9221")
-    .style("stroke-width", "2px");
+  // Colori differenti per ciascun giocatore
+  const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+  // Funzione per aggiungere il radar per ciascun giocatore
+  playersData.forEach((player, index) => {
+    const playerAttributes = getAttributes(player);
+    
+    g.append("path")
+      .datum(playerAttributes)
+      .attr("class", "radar-area")
+      .attr("d", radarLine)
+      .style("fill", colorScale(index))
+      .style("stroke", colorScale(index))
+      .style("stroke-width", "2px")
+      .style("opacity", 0.6);
+  });
 }
 
-function resetRadarChart() {
-  const containerId = "radar-chart"; // ID del contenitore
-  d3.select(`#${containerId}`).select("svg").remove(); // Rimuovi il grafico esistente
-  d3.select(`#${containerId}`).html("<div class='no-data'>Select a player to view attributes</div>"); // Ripristina il messaggio predefinito
-}
 
+function findNearestPlayers(selectedPlayer, data, numNearest) {
+  // Calcola la distanza euclidea tra il giocatore selezionato e tutti gli altri
+  const distances = data.map(player => {
+      if (player.short_name === selectedPlayer.short_name) return null; // Salta il giocatore selezionato stesso
+
+      const dx = player.Tsne_Dim1 - selectedPlayer.Tsne_Dim1;
+      const dy = player.Tsne_Dim2 - selectedPlayer.Tsne_Dim2;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      return { player, distance };
+  }).filter(d => d !== null); // Rimuove il valore nullo (il giocatore selezionato)
+
+  // Ordina i giocatori per distanza crescente
+  distances.sort((a, b) => a.distance - b.distance);
+
+  // Prendi i primi N giocatori più vicini
+  return distances.slice(0, numNearest).map(d => d.player);
+}
 
 document.addEventListener("DOMContentLoaded", function() {
   const slider = document.getElementById("scatterplot-slider");
