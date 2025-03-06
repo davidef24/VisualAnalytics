@@ -21,13 +21,29 @@ function loadCSVData(csvFilePath, callback) {
   });
 }
 
-  // Define a color palette for clusters.
-  const customColorPalette = [
-    "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", // Blues, Oranges, Greens, Reds, Purples
-    "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf", // Browns, Pinks, Grays, Yellows, Cyans
-    "#aec7e8", "#ffbb78", "#98df8a", "#ff9896", "#c5b0d5", // Light Blues, Light Oranges, Light Greens, Light Reds, Light Purples
-    "#c49c94", "#f7b6d2", "#c7c7c7", "#dbdb8d", "#9edae5"  // Light Browns, Light Pinks, Light Grays, Light Yellows, Light Cyans
-  ];
+function calculateAge(dob) {
+  const birthDate = new Date(dob);
+  const today = new Date();
+  
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  const dayDiff = today.getDate() - birthDate.getDate();
+
+  // Adjust age if the birthday hasn't occurred yet this year
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+      age--;
+  }
+
+  return age;
+}
+
+// Define a color palette for clusters.
+const customColorPalette = [
+  "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", // Blues, Oranges, Greens, Reds, Purples
+  "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf", // Browns, Pinks, Grays, Yellows, Cyans
+  "#aec7e8", "#ffbb78", "#98df8a", "#ff9896", "#c5b0d5", // Light Blues, Light Oranges, Light Greens, Light Reds, Light Purples
+  "#c49c94", "#f7b6d2", "#c7c7c7", "#dbdb8d", "#9edae5"  // Light Browns, Light Pinks, Light Grays, Light Yellows, Light Cyans
+];
 
 // Function to create the scatterplot
 function createScatterplot(data) {
@@ -101,10 +117,10 @@ function createScatterplot(data) {
    .on("mouseover", function(event, d) {
      tooltip.style("display", "block")
        .html(`
-         <strong>${d.short_name}</strong><br/>
-         Position: ${d.player_positions}<br/>
-         Age: ${d.age}<br/>
-         Overall: ${d.overall}
+         <strong>${d.name}</strong><br/>
+         Position: ${d.positions}<br/>
+         Age: ${calculateAge(d.dob)}<br/>
+         Overall: ${d.overall_rating}
        `);
    })
    .on("mousemove", function(event) {
@@ -284,10 +300,10 @@ document.addEventListener("DOMContentLoaded", function() {
       
       // Filtriamo i dati mantenendo i giocatori che hanno almeno uno dei ruoli selezionati
       window.filteredDataset = window.filteredDataset.filter(d => {
-          if (!d.player_positions) return false; // Evita errori se manca il campo
+          if (!d.positions) return false; // Evita errori se manca il campo
 
           // Creiamo un array dei ruoli del giocatore
-          const playerRoles = d.player_positions.split(",").map(role => role.trim());
+          const playerRoles = d.positions.split(",").map(role => role.trim());
           
           // Controlliamo se almeno uno dei ruoli del giocatore è presente nei ruoli selezionati
           const hasMatchingRole = playerRoles.some(role => selectedRoles.includes(role));
@@ -345,21 +361,12 @@ function createBarChart(playerData, clusterPlayers) {
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
   // Check if player is a goalkeeper
-  const isGoalkeeper = playerData.player_positions === "GK";
+  const isGoalkeeper = playerData.positions === "GK";
 
     // Define attributes based on position
   // Define all attributes from playerData
   const attributes = [
-    "pace", "shooting", "passing", "dribbling", "defending", "physic",
-    "attacking_crossing", "attacking_finishing", "attacking_heading_accuracy",
-    "attacking_short_passing", "attacking_volleys", "skill_dribbling", "skill_curve",
-    "skill_fk_accuracy", "skill_long_passing", "skill_ball_control", "movement_acceleration",
-    "movement_sprint_speed", "movement_agility", "movement_reactions", "movement_balance",
-    "power_shot_power", "power_jumping", "power_stamina", "power_strength",
-    "power_long_shots", "mentality_aggression", "mentality_interceptions",
-    "mentality_positioning", "mentality_vision", "mentality_penalties", "mentality_composure",
-    "defending_marking_awareness", "defending_standing_tackle", "defending_sliding_tackle",
-    "gk_diving", "gk_handling", "gk_kicking", "gk_positioning", "gk_reflexes", "gk_speed"
+    "crossing","finishing","heading_accuracy","short_passing","volleys","dribbling","curve","fk_accuracy","long_passing","ball_control","acceleration","sprint_speed","agility","reactions","balance","shot_power","jumping","stamina","strength","long_shots","aggression","interceptions","positioning","vision","penalties","composure","defensive_awareness","standing_tackle","sliding_tackle","gk_diving","gk_handling","gk_kicking","gk_positioning","gk_reflexes"
   ];
 
   
@@ -485,17 +492,48 @@ function updatePlayerInfo(playerData) {
   if (player) {
     playerInfoDiv.html("");
 
+    const playerPhotoUrl = player.image;
+    console.log(player.image);
+    
+    // Function to check if an image URL fails to load
+    function checkImage(url, callback) {
+        const img = new Image();
+        img.src = url;
+    
+        img.onload = () => callback(url); // Use the image if it loads successfully
+        img.onerror = () => {
+            console.warn(`Image not found (404): ${url}`);
+            callback("../placeholder.png"); // Use placeholder if 404 or other error occurs
+        };
+    }
+    
+    // Check the image URL before setting/updating the image
+    checkImage(playerPhotoUrl, (finalUrl) => {
+        let imgElement = playerInfoDiv.select("img.player-photo");
+    
+        if (imgElement.empty()) {
+            // If no image exists, create one
+            playerInfoDiv.append("img")
+                .attr("class", "player-photo")
+                .attr("src", finalUrl)
+                .attr("alt", player.name);
+        } else {
+            // If image exists, update its src
+            imgElement.attr("src", finalUrl);
+        }
+    });
+
+
     // Controlla se il giocatore ha un'immagine reale
-    const hasRealFace = player.real_face === "Yes";
-    const playerPhotoUrl = hasRealFace && player.player_face_url && player.player_face_url.trim() !== ""
-      ? player.player_face_url 
-      : "../placeholder.png"; // Sostituisci con il percorso corretto del placeholder
+    //const playerPhotoUrl = player.real_face.trim() === "Yes"
+    //  ? player.image 
+    //  : "../placeholder.png"; // Sostituisci con il percorso corretto del placeholder
 
     // Aggiungi l'immagine del giocatore o il placeholder
     playerInfoDiv.append("img")
       .attr("class", "player-photo")
       .attr("src", playerPhotoUrl)
-      .attr("alt", player.short_name);
+      .attr("alt", player.name);
 
     // Aggiungi i dettagli del giocatore
     const playerDetails = playerInfoDiv.append("div")
@@ -503,7 +541,7 @@ function updatePlayerInfo(playerData) {
 
     playerDetails.append("div")
       .attr("class", "player-name")
-      .text(player.short_name);
+      .text(player.name);
 
     const playerStats = playerDetails.append("div")
       .attr("class", "player-stats");
@@ -511,38 +549,31 @@ function updatePlayerInfo(playerData) {
     // Aggiungi le statistiche del giocatore
     playerStats.append("div")
       .attr("class", "player-stat")
-      .html(`<div class="stat-label">Overall</div><div class="stat-value">${player.overall}</div>`);
+      .html(`<div class="stat-label">Overall</div><div class="stat-value">${player.overall_rating}</div>`);
 
     playerStats.append("div")
       .attr("class", "player-stat")
-      .html(`<div class="stat-label">Position</div><div class="stat-value">${player.player_positions}</div>`);
+      .html(`<div class="stat-label">Position</div><div class="stat-value">${player.positions}</div>`);
 
     playerStats.append("div")
       .attr("class", "player-stat")
-      .html(`<div class="stat-label">Age</div><div class="stat-value">${player.age}</div>`);
+      .html(`<div class="stat-label">Age</div><div class="stat-value">${calculateAge(player.dob)}</div>`);
 
     playerStats.append("div")
       .attr("class", "player-stat")
       .html(`<div class="stat-label">Club</div><div class="stat-value">${player.club_name}</div>`);
 
-    const valueInMillions = player.value_eur ? player.value_eur / 1000000 : 0;
+    playerStats.append("div")
+      .attr("class", "player-stat")
+      .html(`<div class="stat-label">Value</div><div class="stat-value">${player.value}</div>`);
 
     playerStats.append("div")
       .attr("class", "player-stat")
-      .html(`<div class="stat-label">Value</div><div class="stat-value">€${valueInMillions} mln</div>`);
-
-    playerStats.append("div")
-      .attr("class", "player-stat")
-      .html(`<div class="stat-label">Wage</div><div class="stat-value">€${player.wage_eur}</div>`);
+      .html(`<div class="stat-label">Wage</div><div class="stat-value">${player.wage}</div>`);
 
     playerStats.append("div")
     .attr("class", "player-stat")
-    .html(`<div class="stat-label">Player traits</div><div class="stat-value">${player.player_traits}</div>`);
-
-    playerStats.append("div")
-    .attr("class", "player-stat")
-    .html(`<div class="stat-label">Player tags</div><div class="stat-value">${player.player_tags}</div>`);
-
+    .html(`<div class="stat-label">Play styles</div><div class="stat-value">${player.play_styles}</div>`);
   } else {
     // Se il giocatore non è trovato nel dataset
     playerInfoDiv.html("<div class='no-data'>No player data available</div>");
@@ -624,15 +655,14 @@ function createRadarChart(selectedPlayer, nearestPlayers) {
         { attribute: "Kicking", value: +player.gk_kicking },
         { attribute: "Positioning", value: +player.gk_positioning },
         { attribute: "Reflexes", value: +player.gk_reflexes },
-        { attribute: "Speed", value: +player.gk_speed }
       ]
     : [
-        { attribute: "Shooting", value: +player.shooting },
-        { attribute: "Passing", value: +player.passing },
+        { attribute: "Shooting", value: +player.long_shots },
+        { attribute: "Passing", value: +player.long_passing },
         { attribute: "Dribbling", value: +player.dribbling },
-        { attribute: "Defending", value: +player.defending },
-        { attribute: "Movement Speed", value: +player.movement_sprint_speed },
-        { attribute: "Power Stamina", value: +player.power_stamina }
+        { attribute: "Defending", value: +player.defensive_awareness },
+        { attribute: "Movement Speed", value: +player.sprint_speed },
+        { attribute: "Power Stamina", value: +player.stamina }
       ];
 
   // Dati del giocatore selezionato e dei giocatori vicini
@@ -734,7 +764,7 @@ document.getElementById("radar-slider").addEventListener("input", function() {
 function findNearestPlayers(selectedPlayer, data, numNearest) {
   // Calcola la distanza euclidea tra il giocatore selezionato e tutti gli altri
   const distances = data.map(player => {
-      if (player.short_name === selectedPlayer.short_name) return null; // Salta il giocatore selezionato stesso
+      if (player.name === selectedPlayer.name) return null; // Salta il giocatore selezionato stesso
 
       const dx = player.Tsne_Dim1 - selectedPlayer.Tsne_Dim1;
       const dy = player.Tsne_Dim2 - selectedPlayer.Tsne_Dim2;
@@ -771,11 +801,10 @@ document.getElementById("scatterplot-slider").addEventListener("input", function
   }
   else{
     console.log("Gonna print dataset already filtered");
-    console.log(window.filteredDataset);
   }
 
   // Filter players based on the slider value
-  var filteredPlayers = window.filteredDataset.filter(player => player.overall >= sliderValue);
+  var filteredPlayers = window.filteredDataset.filter(player => player.overall_rating >= sliderValue);
 
   // Call the createScatterlot function with the filtered players
   createScatterplot(filteredPlayers);

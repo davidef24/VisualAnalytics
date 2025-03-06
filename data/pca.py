@@ -9,10 +9,10 @@ from sklearn.metrics import silhouette_score, silhouette_samples
 
 # Define the columns to drop
 columns_to_drop = [
-    "potential",
-     "club_jersey_number", "club_loaned_from", "club_joined_date", "club_contract_valid_until_year",
-    "nation_team_id", "nation_jersey_number", "work_rate", "body_type", "release_clause_eur",
-     "country_position"
+    "potential", "version", "club_kit_number", "club_rating", "club_league_name", "club_league_id", "club_id",
+     "club_jersey_number", "club_loaned_from", "club_joined", "club_contract_valid_until",
+    "nation_team_id", "nation_jersey_number", "work_rate", "body_type", "release_clause",
+     "country_position", "country_kit_number", "country_rating", "country_league_name", "country_league_id" 
 ]
 
 # Load dataset (update file_path with your actual file)
@@ -20,19 +20,19 @@ columns_to_drop = [
 file_path = "data/player-data-full.csv"
 df = pd.read_csv(file_path)
 ## Filter only FIFA 23 players
-df = df[df["fifa_version"] == 23]
 
 # Drop the unwanted columns
 df_cleaned = df.drop(columns=columns_to_drop, errors='ignore')
 
 # Drop rows where 'value_eur' is null
-df_cleaned = df_cleaned.dropna(subset=["value_eur"])
+df_cleaned = df_cleaned.dropna(subset=["value"])
 
 # Define columns to exclude for PCA and K-Means
 excluded_columns = [
-    "player_id", "fifa_version", "short_name", "dob", "player_positions",
+    "player_id", "short_name", "dob", "positions",
     "league_id", "league_name", "league_level", "club_team_id", "club_name",
-    "nationality_id", "real_face", "player_face_url", "long_name", "value_eur", "wage_eur", "player_traits", "player_tags"
+    "nationality_id",
+    "full_name", "value", "wage", "play_styles"
 ]
 
 # Drop the excluded columns
@@ -57,7 +57,7 @@ df_output = df_cleaned.fillna(column_means_original)
 #print(df_cleaned_gk2.info())
 # Columns to use for t-SNE
 columns_for_tsne = [
-    "overall", "pace", "dribbling", "shooting", "passing", "defending", "physic", "height_cm", "weight_kg"
+    "overall_rating", "acceleration", "sprint_speed", "dribbling", "shot_power", "long_shots", "short_passing",  "long_passing", "defensive_awareness", "strength", "stamina", "height_cm", "weight_kg"
 ]
 
 # Select only the columns for t-SNE
