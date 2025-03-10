@@ -17,7 +17,7 @@
         .dashboard-container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr 1fr;
             gap: 20px;
             height: 100vh;
             width: 100%;
@@ -54,10 +54,10 @@
         
         #soccer-field-card { grid-column: 1; grid-row: 1; }
         #scatterplot-card { grid-column: 2 / span 2; grid-row: 1 / span 2; }
-        #bar-chart-card { grid-column: 1; grid-row: 2; }
-        #player-image-card { grid-column: 3; grid-row: 3; }
-        #radar-chart-card { grid-column: 1; grid-row: 3; }
-        #time-series-card { grid-column: 2 / span 2; grid-row: 3; }
+        #bar-chart-card { grid-column: 2 / span 2; grid-row: 3; }
+        #player-image-card { grid-column: 1; grid-row: 2 / span 2; }
+        #radar-chart-card { grid-column: 1; grid-row: 4; }
+        #time-series-card { grid-column: 2 / span 2; grid-row: 4; }
         
         #soccer-field {
             width: 100%;
@@ -199,60 +199,6 @@
 
         #radar-slider-value {
             font-size: 14px;
-        }
-
-        .stat-grid {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 15px;
-        }
-
-        .stat-content {
-          flex: 1;
-        }
-
-        .club-logo {
-          object-fit: contain;
-          margin-left: auto; /* Pushes logo to the right */
-        }
-
-        .stat-label,
-        .stat-value {
-          text-align: left; /* Align text to the left */
-        }
-
-        #time-series-card select {
-            max-width: 150px; /* Imposta una larghezza massima per il menu a tendina */
-        }
-
-        #time-series {
-            width: 100%;
-            height: 100%;
-        }
-
-        .line {
-            fill: none;
-            stroke: steelblue;
-            stroke-width: 2px;
-        }
-
-        .dot {
-            fill: steelblue;
-            stroke: #fff;
-            stroke-width: 1.5px;
-        }
-
-        .axis path,
-        .axis line {
-            fill: none;
-            stroke: #ccc;
-            shape-rendering: crispEdges;
-        }
-
-        .axis text {
-            font-size: 12px;
-            fill: #666;
         }
 
     </style>
