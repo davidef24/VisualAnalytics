@@ -821,32 +821,58 @@ function loadAndCreateLineChart(selectedPlayer, selectedMetric) {
 
     // Funzione per calcolare le statistiche (esempio)
     function calculateStatistics(player, fifaVersion) {
-      if (fifaVersion === 25) {
-        // Statistiche per FIFA 25 (dove alcune sono medie di più valori)
-        return {
-          acceleration: +player.acceleration || 0,
-          sprint_speed: +player.sprint_speed || 0,
-          dribbling: +player.dribbling || 0,
-          stamina: +player.stamina || 0,
-          shooting: (+player.shot_power + +player.long_shots) / 2 || 0, // Media tra shot_power e long_shots
-          passing: (+player.short_passing + +player.long_passing) / 2 || 0, // Media tra short_passing e long_passing
-          defending: (+player.defensive_awareness + +player.standing_tackle + +player.sliding_tackle) / 3 || 0 // Media tra le statistiche difensive
-        };
-      } else if (fifaVersion >= 15 && fifaVersion <= 24) {
-        // Statistiche per FIFA 15-24 (nomi diversi)
-        return {
-          acceleration: +player.movement_acceleration || 0,
-          sprint_speed: +player.movement_sprint_speed || 0,
-          dribbling: +player.dribbling || 0,
-          stamina: +player.power_stamina || 0,
-          shooting: +player.shooting || 0, // Si usa il valore direttamente
-          passing: +player.passing || 0, // Si usa il valore direttamente
-          defending: +player.defending || 0 // Si usa il valore direttamente
-        };
+      const isGoalkeeper = fifaVersion >= 25 ? (player.positions === "GK") : (player.player_positions === "GK");  // Verifica correttamente la posizione in base alla versione di FIFA
+      
+      if (isGoalkeeper) {  // Controllo se il giocatore è un portiere
+        if (fifaVersion === 25) {
+          // Statistiche per i portieri in FIFA 25
+          return {
+            diving: +player.gk_diving || 0,
+            handling: +player.gk_handling || 0,
+            kicking: +player.gk_kicking || 0,
+            positioning: +player.gk_positioning || 0,
+            reflexes: +player.gk_reflexes || 0
+          };
+        } else if (fifaVersion >= 15 && fifaVersion <= 24) {
+          // Statistiche per i portieri nelle versioni FIFA 15-24
+          return {
+            diving: +player.goalkeeping_diving || 0,
+            handling: +player.goalkeeping_handling || 0,
+            kicking: +player.goalkeeping_kicking || 0,
+            positioning: +player.goalkeeping_positioning || 0,
+            reflexes: +player.goalkeeping_reflexes || 0
+          };
+        }
+      } else {
+        // Statistiche per i giocatori non portieri
+        if (fifaVersion === 25) {
+          return {
+            acceleration: +player.acceleration || 0,
+            sprint_speed: +player.sprint_speed || 0,
+            dribbling: +player.dribbling || 0,
+            stamina: +player.stamina || 0,
+            shooting: (+player.shot_power + +player.long_shots) / 2 || 0, // Media tra shot_power e long_shots
+            passing: (+player.short_passing + +player.long_passing) / 2 || 0, // Media tra short_passing e long_passing
+            defending: (+player.defensive_awareness + +player.standing_tackle + +player.sliding_tackle) / 3 || 0 // Media tra le statistiche difensive
+          };
+        } else if (fifaVersion >= 15 && fifaVersion <= 24) {
+          // Statistiche per FIFA 15-24 (nomi diversi)
+          return {
+            acceleration: +player.movement_acceleration || 0,
+            sprint_speed: +player.movement_sprint_speed || 0,
+            dribbling: +player.dribbling || 0,
+            stamina: +player.power_stamina || 0,
+            shooting: +player.shooting || 0, // Si usa il valore direttamente
+            passing: +player.passing || 0, // Si usa il valore direttamente
+            defending: +player.defending || 0 // Si usa il valore direttamente
+          };
+        }
       }
-      // Se la versione di FIFA non è riconosciuta, ritorna un oggetto vuoto
+      // Se la versione di FIFA non è riconosciuta o il giocatore non è un portiere, ritorna un oggetto vuoto
       return {};
     }
+
+
 
     // Normalizziamo i dati FIFA 25
     const fifa25Data = window.dataset.map(player => ({
@@ -944,14 +970,26 @@ function createLineChart(playerData, metric) {
     dribbling: "purple",
     stamina: "red",
     shooting: "brown",
-    defending: "blue"
+    defending: "blue",
+    diving: "blue",
+    handling: "green",
+    kicking: "orange",
+    positioning: "purple",
+    reflexes: "red"
   };
 
   let yScale;
+  let statistics = [];
 
   if (metric === "statistics") {
-    const statistics = ["acceleration", "sprint_speed", "passing", "dribbling", "stamina", "defending", "shooting"];
-
+    if (playerData[0].positions === "GK") {
+      // Statistiche per i portieri
+      statistics = ["diving", "handling", "kicking", "positioning", "reflexes"];
+    } else {
+      // Statistiche per i giocatori di campo
+      statistics = ["acceleration", "sprint_speed", "passing", "dribbling", "stamina", "defending", "shooting"];
+    }
+    
     statistics.forEach(stat => {
       yScale = d3.scaleLinear()
         .domain([0, d3.max(playerData, d => d.statistics[stat]) || 100])
@@ -1077,6 +1115,7 @@ function createLineChart(playerData, metric) {
     .style("text-anchor", "middle")
     .text(`${metric.charAt(0).toUpperCase() + metric.slice(1)}`);
 }
+
 
 
 
