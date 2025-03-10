@@ -149,6 +149,62 @@ function createScatterplot(data) {
 
     // Create the radar chart with the selected player and the nearest players
     createRadarChart(d, nearestPlayers);
+
+
+    // Carica i dati storici e crea il line chart
+    // Carica i dati storici e crea il line chart
+    d3.csv("../data/male_players.csv").then(function(malePlayers) {
+
+      // Funzione per formattare lo stipendio (in FIFA 25)
+      function formatWageFifa25(wage) {
+        // Rimuove il simbolo € e la 'K' (se presente)
+        let formattedWage = wage.replace(/[^0-9K]/g, "");
+        
+        // Se il valore termina con 'K', moltiplica per 1000
+        if (formattedWage.endsWith("K")) {
+          return parseInt(formattedWage.replace("K", ""), 10) * 1000;
+        }
+        
+        // Altrimenti ritorna il valore senza cambiamenti (in caso di stipendi già numerici)
+        return parseInt(formattedWage, 10);
+      }
+
+      // Normalizziamo i dati FIFA 25
+      const fifa25Data = window.dataset.map(player => ({
+        id: +player.player_id,  
+        year: 25, // Rappresentiamo FIFA 25 come "25" per coerenza con le versioni precedenti
+        wage: formatWageFifa25(player.wage) || 0 // Rimuove simbolo € e 'K' e moltiplica per 1000 se necessario
+      }));
+
+      // Normalizziamo i dati dal CSV (FIFA 15-24)
+      const formattedMalePlayers = malePlayers.map(player => ({
+          id: +player.player_id,   // Convertiamo l'ID in numero
+          year: +player.fifa_version, // Convertiamo la versione FIFA in numero
+          wage: +player.wage_eur || 0  // Assicuriamoci che sia un numero
+      }));
+
+      // Combiniamo i dataset
+      const combinedData = [...formattedMalePlayers, ...fifa25Data];
+
+      // LOG per debug
+      console.log("Dati combinati:", combinedData);
+
+      // Filtra i dati per il giocatore selezionato
+      const playerID = +selectedPlayer.player_id || -1;
+      const playerData = combinedData.filter(player => player.id === playerID);
+
+      // LOG per debug
+      console.log("Dati trovati per il giocatore:", playerData);
+
+      if (playerData.length === 0) {
+          console.warn("Nessun dato trovato per il giocatore con ID:", playerID);
+      } else {
+          createLineChart(playerData);
+      }
+    }).catch(function(error) {
+      console.error("Errore nel caricamento del file CSV:", error);
+    });
+
  });
 
   // Add ResizeObserver
@@ -648,7 +704,7 @@ function createRadarChart(selectedPlayer, nearestPlayers) {
   const containerId = "radar-chart"; // ID del contenitore
 
   // Determina le statistiche da usare in base alla posizione del giocatore
-  const getAttributes = (player) => player.player_positions === "GK"
+  const getAttributes = (player) => player.positions === "GK"
     ? [
         { attribute: "Diving", value: +player.gk_diving },
         { attribute: "Handling", value: +player.gk_handling },
@@ -779,6 +835,97 @@ function findNearestPlayers(selectedPlayer, data, numNearest) {
   // Prendi i primi N giocatori più vicini
   return distances.slice(0, numNearest).map(d => d.player);
 }
+
+
+function createLineChart(playerData) {
+  // Rimuovi il grafico precedente
+  d3.select("#time-series").selectAll("*").remove();
+
+  if (playerData.length === 0) {
+      console.warn("Nessun dato disponibile per questo giocatore.");
+      return;
+  }
+
+  // Ordina i dati in base all'anno
+  playerData.sort((a, b) => a.year - b.year);
+
+  // Trova il range di anni disponibili nel dataset del giocatore
+  const minYear = d3.min(playerData, d => d.year);
+  const maxYear = d3.max(playerData, d => d.year);
+
+  // Configurazione del grafico
+  const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+  const width = 600 - margin.left - margin.right;
+  const height = 300 - margin.top - margin.bottom;
+
+  // Crea l'elemento SVG
+  const svg = d3.select("#time-series")
+      .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // Scale per gli assi
+  const xScale = d3.scaleLinear()
+      .domain([minYear, maxYear]) 
+      .range([0, width]);
+
+  const yScale = d3.scaleLinear()
+      .domain([0, d3.max(playerData, d => d.wage) || 100]) 
+      .range([height, 0]);
+
+  // Line generator
+  const line = d3.line()
+      .x(d => xScale(d.year))
+      .y(d => yScale(d.wage))
+      .defined(d => d.wage !== null);
+
+  // Aggiungi la linea
+  svg.append("path")
+      .datum(playerData)
+      .attr("fill", "none")
+      .attr("stroke", "steelblue")
+      .attr("stroke-width", 2)
+      .attr("d", line);
+
+  // Aggiungi i punti per i dati disponibili
+  svg.selectAll(".dot")
+      .data(playerData.filter(d => d.wage !== null))
+      .enter()
+      .append("circle")
+      .attr("class", "dot")
+      .attr("cx", d => xScale(d.year))
+      .attr("cy", d => yScale(d.wage))
+      .attr("r", 4)
+      .attr("fill", "steelblue");
+
+  // Aggiungi gli assi
+  svg.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(xScale).tickFormat(d3.format("d")));
+
+  svg.append("g")
+      .call(d3.axisLeft(yScale));
+
+  // Aggiungi etichette agli assi
+  svg.append("text")
+      .attr("transform", `translate(${width / 2},${height + margin.top + 20})`)
+      .style("text-anchor", "middle")
+      .text("Year");
+
+  svg.append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 0 - margin.left)
+      .attr("x", 0 - (height / 2))
+      .attr("dy", "1em")
+      .style("text-anchor", "middle")
+      .text("Wage (€)");
+}
+
+
+
+
 
 document.addEventListener("DOMContentLoaded", function() {
   const slider = document.getElementById("scatterplot-slider");
