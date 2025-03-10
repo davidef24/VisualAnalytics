@@ -298,7 +298,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Funzione per aggiornare lo scatterplot in base ai ruoli selezionati
     function filterScatterplotByRole(selectedRoles) {
-      console.log("Ruoli selezionati:", selectedRoles); // Debug
+      //console.log("Ruoli selezionati:", selectedRoles); // Debug
 
       if(!window.filterApplied){
         window.filterApplied = true;
@@ -403,7 +403,7 @@ function createBarChart(playerData, clusterPlayers) {
       .slice(0, 20); // Take the top 8
 
   // Print the top 8 features in array format
-  console.log("Top 8 Features:", topFeatures.map(([feature, _]) => feature));
+  //console.log("Top 8 Features:", topFeatures.map(([feature, _]) => feature));
   const topFeatureNames = topFeatures.map(([feature]) => feature);
   const playerValues = topFeatureNames.map(feature => playerData[feature]);
   const clusterValues = topFeatures.map(([_, value]) => value);
@@ -536,8 +536,12 @@ function updatePlayerInfo(playerData) {
     //  ? player.image 
     //  : "../placeholder.png"; // Sostituisci con il percorso corretto del placeholder
 
+    // Create a container for the player photo
+    const playerPhotoContainer = playerInfoDiv.append("div")
+      .attr("class", "player-photo-container");
+
     // Aggiungi l'immagine del giocatore o il placeholder
-    playerInfoDiv.append("img")
+    playerPhotoContainer.append("img")
       .attr("class", "player-photo")
       .attr("src", playerPhotoUrl)
       .attr("alt", player.name);
@@ -589,7 +593,7 @@ function updatePlayerInfo(playerData) {
 
     playerStats.append("div")
     .attr("class", "player-stat")
-    .html(`<div class="stat-label">Play styles</div><div class="stat-value">${player.play_styles}</div>`);
+    .html(`<div class="stat-label" sty>Play styles</div><div class="stat-value">${player.play_styles}</div>`);
   } else {
     // Se il giocatore non è trovato nel dataset
     playerInfoDiv.html("<div class='no-data'>No player data available</div>");
@@ -908,7 +912,7 @@ function loadAndCreateLineChart(selectedPlayer, selectedMetric) {
     const playerData = combinedData.filter(player => player.id === playerID);
 
     // LOG per debug
-    console.log("Dati trovati per il giocatore:", playerData);
+    //console.log("Dati trovati per il giocatore:", playerData);
 
     if (playerData.length === 0) {
       console.warn("Nessun dato trovato per il giocatore con ID:", playerID);

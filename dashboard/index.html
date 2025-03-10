@@ -102,58 +102,69 @@
             height: 100%;
         }
         
-        /* Stile per il contenitore delle informazioni del giocatore */
         #player-info {
-        display: flex;
-        align-items: flex-start; /* Allinea gli elementi in alto */
-        gap: 20px; /* Spazio tra l'immagine e i dettagli */
-        width: 100%;
-        height: 100%;
+          height: 100%;
+          width: 100%;
+          display: grid;
+          grid-template-rows: 1fr 2.5fr; /* Define 2 rows */
+          grid-template-columns: 1fr; /* Define 1 column */
         }
 
-        /* Stile per l'immagine del giocatore */
+        .player-photo-container {
+          grid-row: 1; /* Place the container in the first row */
+          display: flex; /* Make the container a flex container */
+          justify-content: center; /* Center the image horizontally */
+          align-items: center; /* Center the image vertically */
+          width: 100%; /* Ensure the container takes full width */
+        }
+
         .player-photo {
-        width: 150px; /* Dimensioni dell'immagine */
-        height: 150px;
-        object-fit: cover;
-        border-radius: 50%;
-        border: 3px solid #4d9221;
+          width: 150px; /* Set image width */
+          height: 150px; /* Set image height */
+          border-radius: 50%; /* Make the image circular */
+          border: 3px solid #4d9221; /* Add a border */
+          object-fit: cover; /* Ensure the image fits */
         }
 
         /* Stile per i dettagli del giocatore */
         .player-details {
-        flex: 1; /* Occupa lo spazio rimanente */
-        display: flex;
-        flex-direction: column;
-        gap: 10px; /* Spazio tra le statistiche */
+            flex: 1; /* Occupa lo spazio rimanente */
+            grid-row: 2;
+            gap: 500px; /* Spazio tra le statistiche */
         }
 
         .player-name {
-        font-size: 24px;
-        font-weight: bold;
-        margin-bottom: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
         }
 
         .player-stats {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr); /* Due colonne per le statistiche */
-        gap: 10px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* Due colonne per le statistiche */
+            gap: 10px;
         }
 
         .player-stat {
-        background-color: #f8f8f8;
-        padding: 8px;
-        border-radius: 4px;
+            background-color: #f8f8f8;
+            max-width: 50%;
+            padding: 8px;
+            border-radius: 4px;
+            word-wrap: break-word; /* Break long words if necessary */
+            overflow-wrap: break-word; /* Ensure text wraps within the container */
+            white-space: normal; /* Allow text to wrap */
+            max-width: 100%; /* Ensure the div doesn't exceed its container's width */
         }
 
         .stat-label {
-        font-size: 12px;
-        color: #666;
+            font-size: 12px;
+            max-width: 50%;
+            color: #666;
         }
 
         .stat-value {
-        font-size: 16px;
-        font-weight: bold;
+            font-size: 16px;
+            font-weight: bold;
         }
 
         #scatterplot-container {
@@ -174,17 +185,17 @@
 
         /* Stile per il radar chart */
         .radar-area {
-        fill-opacity: 0.6;
+            fill-opacity: 0.6;
         }
 
         .line {
-        stroke: #ccc;
-        stroke-width: 1px;
+            stroke: #ccc;
+            stroke-width: 1px;
         }
 
         .legend {
-        font-size: 12px;
-        fill: #333;
+            font-size: 12px;
+            fill: #333;
         }
 
         #scatterplot-card-header {
@@ -257,7 +268,7 @@
         <!-- Player Image and Info -->
         <div id="player-image-card" class="dashboard-card">
             <div class="card-header">Player Information</div>
-            <div class="card-content">
+            <div class="card-content" id="player-image-content">
                 <div id="player-info">
                     <div class="no-data">Select a player to view details</div>
                 </div>
