@@ -105,7 +105,7 @@ df_tsne = pd.DataFrame(data=final_components, columns=["Dim1", "Dim2"])
 #print(f"\nBest Number of Clusters: {best_k}")
 
 # Apply K-Means with Best K
-kmeans = KMeans(n_clusters=20, random_state=None, n_init=10)
+kmeans = KMeans(n_clusters=10, random_state=None, n_init=10)
 df_tsne["Cluster"] = kmeans.fit_predict(df_tsne[["Dim1", "Dim2"]])
 
 # Copy the Tsne_Dim1, Tsne_Dim2, and Cluster columns from df_tsne into df_cleaned_gk

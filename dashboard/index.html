@@ -74,6 +74,7 @@
             border-radius: 5px;
             pointer-events: none;
             z-index: 10;
+            display: none;
         }
         
         svg {
@@ -198,6 +199,27 @@
 
         #radar-slider-value {
             font-size: 14px;
+        }
+
+        .stat-grid {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 15px;
+        }
+
+        .stat-content {
+          flex: 1;
+        }
+
+        .club-logo {
+          object-fit: contain;
+          margin-left: auto; /* Pushes logo to the right */
+        }
+
+        .stat-label,
+        .stat-value {
+          text-align: left; /* Align text to the left */
         }
 
         #time-series-card select {

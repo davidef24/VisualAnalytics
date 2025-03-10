@@ -133,6 +133,7 @@ function createScatterplot(data) {
    .on("click", function(event, d) {
     // Memorizza il giocatore selezionato
     selectedPlayer = d;
+    window.selectedPlayer = selectedPlayer;
 
     // Trova i giocatori più vicini in base al valore iniziale dello slider
     const sliderValue = +document.getElementById("radar-slider").value;
@@ -457,7 +458,7 @@ function createBarChart(playerData, clusterPlayers) {
   
   // Legend items
   const legendItems = [
-    { color: "steelblue", text: "Selected Player" },
+    { color: "steelblue", text: `${window.selectedPlayer.name} values` },
     { color: "orange", text: "Cluster Average" }
   ];
   
@@ -564,9 +565,18 @@ function updatePlayerInfo(playerData) {
       .attr("class", "player-stat")
       .html(`<div class="stat-label">Age</div><div class="stat-value">${calculateAge(player.dob)}</div>`);
 
-    playerStats.append("div")
+      playerStats.append("div")
       .attr("class", "player-stat")
-      .html(`<div class="stat-label">Club</div><div class="stat-value">${player.club_name}</div>`);
+      .html(`
+        <div class="stat-grid">
+          
+          <div class="stat-content">
+            <div class="stat-label">Club</div>
+            <div class="stat-value">${player.club_name}</div>
+          </div>
+          <img src="${player.club_logo}" class="club-logo" alt="Club Logo">
+        </div>
+      `);
 
     playerStats.append("div")
       .attr("class", "player-stat")
@@ -574,7 +584,7 @@ function updatePlayerInfo(playerData) {
 
     playerStats.append("div")
       .attr("class", "player-stat")
-      .html(`<div class="stat-label">Wage</div><div class="stat-value">${player.wage}</div>`);
+      .html(`<div class="stat-label">Weekly Wage</div><div class="stat-value">${player.wage}</div>`);
 
     playerStats.append("div")
     .attr("class", "player-stat")
