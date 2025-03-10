@@ -57,7 +57,7 @@
         #bar-chart-card { grid-column: 1; grid-row: 2; }
         #player-image-card { grid-column: 3; grid-row: 3; }
         #radar-chart-card { grid-column: 1; grid-row: 3; }
-        #time-series-card { grid-column: 2; grid-row: 3; }
+        #time-series-card { grid-column: 2 / span 2; grid-row: 3; }
         
         #soccer-field {
             width: 100%;
@@ -200,6 +200,39 @@
             font-size: 14px;
         }
 
+        #time-series-card select {
+            max-width: 150px; /* Imposta una larghezza massima per il menu a tendina */
+        }
+
+        #time-series {
+            width: 100%;
+            height: 100%;
+        }
+
+        .line {
+            fill: none;
+            stroke: steelblue;
+            stroke-width: 2px;
+        }
+
+        .dot {
+            fill: steelblue;
+            stroke: #fff;
+            stroke-width: 1.5px;
+        }
+
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #ccc;
+            shape-rendering: crispEdges;
+        }
+
+        .axis text {
+            font-size: 12px;
+            fill: #666;
+        }
+
     </style>
 </head>
 <body>
@@ -269,7 +302,15 @@
         
         <!-- Time Series Chart -->
         <div id="time-series-card" class="dashboard-card">
-            <div class="card-header">Player Progression</div>
+            <div class="card-header">
+                <span>Player Progression</span>
+                <!-- Dropdown Filter for Line Chart -->
+                <select id="line-chart-filter" style="margin-left: 10px;">
+                    <option value="wage">Wage</option>
+                    <option value="value">Value</option>
+                    <option value="statistics">Statistics</option>
+                </select>
+            </div>
             <div class="card-content">
                 <div id="time-series">
                     <div class="no-data">Select a player to view progression</div>

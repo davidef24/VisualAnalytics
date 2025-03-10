@@ -151,59 +151,8 @@ function createScatterplot(data) {
     createRadarChart(d, nearestPlayers);
 
 
-    // Carica i dati storici e crea il line chart
-    // Carica i dati storici e crea il line chart
-    d3.csv("../data/male_players.csv").then(function(malePlayers) {
-
-      // Funzione per formattare lo stipendio (in FIFA 25)
-      function formatWageFifa25(wage) {
-        // Rimuove il simbolo € e la 'K' (se presente)
-        let formattedWage = wage.replace(/[^0-9K]/g, "");
-        
-        // Se il valore termina con 'K', moltiplica per 1000
-        if (formattedWage.endsWith("K")) {
-          return parseInt(formattedWage.replace("K", ""), 10) * 1000;
-        }
-        
-        // Altrimenti ritorna il valore senza cambiamenti (in caso di stipendi già numerici)
-        return parseInt(formattedWage, 10);
-      }
-
-      // Normalizziamo i dati FIFA 25
-      const fifa25Data = window.dataset.map(player => ({
-        id: +player.player_id,  
-        year: 25, // Rappresentiamo FIFA 25 come "25" per coerenza con le versioni precedenti
-        wage: formatWageFifa25(player.wage) || 0 // Rimuove simbolo € e 'K' e moltiplica per 1000 se necessario
-      }));
-
-      // Normalizziamo i dati dal CSV (FIFA 15-24)
-      const formattedMalePlayers = malePlayers.map(player => ({
-          id: +player.player_id,   // Convertiamo l'ID in numero
-          year: +player.fifa_version, // Convertiamo la versione FIFA in numero
-          wage: +player.wage_eur || 0  // Assicuriamoci che sia un numero
-      }));
-
-      // Combiniamo i dataset
-      const combinedData = [...formattedMalePlayers, ...fifa25Data];
-
-      // LOG per debug
-      console.log("Dati combinati:", combinedData);
-
-      // Filtra i dati per il giocatore selezionato
-      const playerID = +selectedPlayer.player_id || -1;
-      const playerData = combinedData.filter(player => player.id === playerID);
-
-      // LOG per debug
-      console.log("Dati trovati per il giocatore:", playerData);
-
-      if (playerData.length === 0) {
-          console.warn("Nessun dato trovato per il giocatore con ID:", playerID);
-      } else {
-          createLineChart(playerData);
-      }
-    }).catch(function(error) {
-      console.error("Errore nel caricamento del file CSV:", error);
-    });
+    // Carica i dati storici e crea il line chart, passando il giocatore selezionato
+    loadAndCreateLineChart(d, "wage");
 
  });
 
@@ -837,21 +786,126 @@ function findNearestPlayers(selectedPlayer, data, numNearest) {
 }
 
 
-function createLineChart(playerData) {
+
+function loadAndCreateLineChart(selectedPlayer, selectedMetric) {
+  d3.csv("../data/male_players.csv").then(function(malePlayers) {
+    // Funzione per formattare lo stipendio (in FIFA 25)
+    function formatWageFifa25(wage) {
+      let formattedWage = wage.replace(/[^0-9K]/g, "");
+      if (formattedWage.endsWith("K")) {
+        return parseInt(formattedWage.replace("K", ""), 10) * 1000;
+      }
+      return parseInt(formattedWage, 10);
+    }
+
+    // Funzione per formattare il valore (in FIFA 25)
+    function formatValueFifa25(value) {
+      let formattedValue = value.replace(/[^0-9KMB]/g, "");
+      if (formattedValue.endsWith("M")) {
+        return parseFloat(formattedValue.replace("M", "")) * 1000000;
+      } else if (formattedValue.endsWith("K")) {
+        return parseFloat(formattedValue.replace("K", "")) * 1000;
+      }
+      return parseInt(formattedValue, 10);
+    }
+
+    // Funzione per calcolare le statistiche (esempio)
+    function calculateStatistics(player, fifaVersion) {
+      if (fifaVersion === 25) {
+        // Statistiche per FIFA 25 (dove alcune sono medie di più valori)
+        return {
+          acceleration: +player.acceleration || 0,
+          sprint_speed: +player.sprint_speed || 0,
+          dribbling: +player.dribbling || 0,
+          stamina: +player.stamina || 0,
+          shooting: (+player.shot_power + +player.long_shots) / 2 || 0, // Media tra shot_power e long_shots
+          passing: (+player.short_passing + +player.long_passing) / 2 || 0, // Media tra short_passing e long_passing
+          defending: (+player.defensive_awareness + +player.standing_tackle + +player.sliding_tackle) / 3 || 0 // Media tra le statistiche difensive
+        };
+      } else if (fifaVersion >= 15 && fifaVersion <= 24) {
+        // Statistiche per FIFA 15-24 (nomi diversi)
+        return {
+          acceleration: +player.movement_acceleration || 0,
+          sprint_speed: +player.movement_sprint_speed || 0,
+          dribbling: +player.dribbling || 0,
+          stamina: +player.power_stamina || 0,
+          shooting: +player.shooting || 0, // Si usa il valore direttamente
+          passing: +player.passing || 0, // Si usa il valore direttamente
+          defending: +player.defending || 0 // Si usa il valore direttamente
+        };
+      }
+      // Se la versione di FIFA non è riconosciuta, ritorna un oggetto vuoto
+      return {};
+    }
+
+    // Normalizziamo i dati FIFA 25
+    const fifa25Data = window.dataset.map(player => ({
+      id: +player.player_id,  
+      year: 25,
+      wage: formatWageFifa25(player.wage) || 0,
+      value: formatValueFifa25(player.value) || 0, 
+      statistics: calculateStatistics(player, 25) // Passa la versione di FIFA (25 in questo caso)
+    }));
+
+    // Normalizziamo i dati dal CSV (FIFA 15-24)
+    const formattedMalePlayers = malePlayers.map(player => ({
+      id: +player.player_id,
+      year: +player.fifa_version,
+      wage: +player.wage_eur || 0,
+      value: +player.value_eur || 0, 
+      statistics: calculateStatistics(player, +player.fifa_version) // Passa la versione di FIFA
+    }));
+        // Combiniamo i dataset
+    const combinedData = [...formattedMalePlayers, ...fifa25Data];
+
+    // Filtra i dati per il giocatore selezionato
+    const playerID = +selectedPlayer.player_id || -1;
+    const playerData = combinedData.filter(player => player.id === playerID);
+
+    // LOG per debug
+    console.log("Dati trovati per il giocatore:", playerData);
+
+    if (playerData.length === 0) {
+      console.warn("Nessun dato trovato per il giocatore con ID:", playerID);
+    } else {
+      // Passa la metrica selezionata al grafico
+      createLineChart(playerData, selectedMetric); // Usa la metrica selezionata
+    }
+  }).catch(function(error) {
+    console.error("Errore nel caricamento del file CSV:", error);
+  });
+}
+
+
+function createLineChart(playerData, metric) {
+  // Creazione della tooltip
+  const tooltip = d3.select("body")
+    .append("div")
+    .attr("class", "tooltip")
+    .style("position", "absolute")
+    .style("background", "rgba(0, 0, 0, 0.8)") // Sfondo scuro semi-trasparente
+    .style("color", "white") // Testo bianco per contrasto
+    .style("border", "1px solid white") // Bordo bianco per maggiore visibilità
+    .style("padding", "8px")
+    .style("border-radius", "5px")
+    .style("font-size", "12px")
+    .style("pointer-events", "none") // Evita interferenze con il mouse
+    .style("opacity", 0);
+
   // Rimuovi il grafico precedente
   d3.select("#time-series").selectAll("*").remove();
 
   if (playerData.length === 0) {
-      console.warn("Nessun dato disponibile per questo giocatore.");
-      return;
+    console.warn("Nessun dato disponibile per questo giocatore.");
+    return;
   }
 
-  // Ordina i dati in base all'anno
+  // Ordina i dati per anno
   playerData.sort((a, b) => a.year - b.year);
 
-  // Trova il range di anni disponibili nel dataset del giocatore
-  const minYear = d3.min(playerData, d => d.year);
-  const maxYear = d3.max(playerData, d => d.year);
+  // Filtra gli anni con dati validi
+  const yearsWithData = playerData.filter(d => d[metric] !== null).map(d => d.year);
+  const sortedYears = yearsWithData.sort((a, b) => a - b);
 
   // Configurazione del grafico
   const margin = { top: 20, right: 30, bottom: 40, left: 50 };
@@ -860,68 +914,168 @@ function createLineChart(playerData) {
 
   // Crea l'elemento SVG
   const svg = d3.select("#time-series")
-      .append("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  // Scale per gli assi
-  const xScale = d3.scaleLinear()
-      .domain([minYear, maxYear]) 
-      .range([0, width]);
+  // Scale per l'asse X
+  const xScale = d3.scaleBand()
+    .domain(sortedYears)
+    .range([0, width])
+    .padding(0.1);
 
-  const yScale = d3.scaleLinear()
-      .domain([0, d3.max(playerData, d => d.wage) || 100]) 
+  // Colori per le statistiche
+  const statisticColors = {
+    acceleration: "steelblue",
+    sprint_speed: "green",
+    passing: "orange",
+    dribbling: "purple",
+    stamina: "red",
+    shooting: "brown",
+    defending: "blue"
+  };
+
+  let yScale;
+
+  if (metric === "statistics") {
+    const statistics = ["acceleration", "sprint_speed", "passing", "dribbling", "stamina", "defending", "shooting"];
+
+    statistics.forEach(stat => {
+      yScale = d3.scaleLinear()
+        .domain([0, d3.max(playerData, d => d.statistics[stat]) || 100])
+        .range([height, 0]);
+
+      const line = d3.line()
+        .x(d => xScale(d.year) + xScale.bandwidth() / 2)
+        .y(d => yScale(d.statistics[stat]))
+        .defined(d => d.statistics[stat] !== null && d.statistics[stat] !== undefined);
+
+      svg.append("path")
+        .datum(playerData)
+        .attr("fill", "none")
+        .attr("stroke", statisticColors[stat])
+        .attr("stroke-width", 2)
+        .attr("d", line);
+
+      // Aggiungi i punti con tooltip
+      svg.selectAll(".dot-" + stat)
+        .data(playerData.filter(d => d.statistics[stat] !== null))
+        .enter()
+        .append("circle")
+        .attr("class", "dot-" + stat)
+        .attr("cx", d => xScale(d.year) + xScale.bandwidth() / 2)
+        .attr("cy", d => yScale(d.statistics[stat]))
+        .attr("r", 4)
+        .attr("fill", statisticColors[stat])
+        .on("mouseover", function (event, d) {
+          tooltip.transition().duration(200).style("opacity", 1);
+          tooltip.html(`Statistica: ${stat}<br>Valore: ${d.statistics[stat]}`)
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 10) + "px");
+
+          // Ingrandire il cerchio
+          d3.select(this)
+            .transition().duration(200)
+            .attr("r", 6);
+        })
+        .on("mousemove", function (event) {
+          tooltip.style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 10) + "px");
+        })
+        .on("mouseout", function () {
+          tooltip.transition().duration(200).style("opacity", 0);
+          
+          // Ridurre il cerchio
+          d3.select(this)
+            .transition().duration(200)
+            .attr("r", 4);
+        });
+    });
+  } else {
+    yScale = d3.scaleLinear()
+      .domain([0, d3.max(playerData, d => d[metric]) || 100000])
       .range([height, 0]);
 
-  // Line generator
-  const line = d3.line()
-      .x(d => xScale(d.year))
-      .y(d => yScale(d.wage))
-      .defined(d => d.wage !== null);
+    const line = d3.line()
+      .x(d => xScale(d.year) + xScale.bandwidth() / 2)
+      .y(d => yScale(d[metric]))
+      .defined(d => d[metric] !== null && d[metric] !== undefined);
 
-  // Aggiungi la linea
-  svg.append("path")
+    svg.append("path")
       .datum(playerData)
       .attr("fill", "none")
       .attr("stroke", "steelblue")
       .attr("stroke-width", 2)
       .attr("d", line);
 
-  // Aggiungi i punti per i dati disponibili
-  svg.selectAll(".dot")
-      .data(playerData.filter(d => d.wage !== null))
+    // Aggiungi i punti con tooltip
+    svg.selectAll(".dot")
+      .data(playerData.filter(d => d[metric] !== null))
       .enter()
       .append("circle")
       .attr("class", "dot")
-      .attr("cx", d => xScale(d.year))
-      .attr("cy", d => yScale(d.wage))
+      .attr("cx", d => xScale(d.year) + xScale.bandwidth() / 2)
+      .attr("cy", d => yScale(d[metric]))
       .attr("r", 4)
-      .attr("fill", "steelblue");
+      .attr("fill", "steelblue")
+      .on("mouseover", function (event, d) {
+        tooltip.transition().duration(200).style("opacity", 1);
+        tooltip.html(`Metrica: ${metric}<br>Valore: ${d[metric]}`)
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 10) + "px");
+
+        // Ingrandire il cerchio
+        d3.select(this)
+          .transition().duration(200)
+          .attr("r", 6);
+      })
+      .on("mousemove", function (event) {
+        tooltip.style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 10) + "px");
+      })
+      .on("mouseout", function () {
+        tooltip.transition().duration(200).style("opacity", 0);
+
+        // Ridurre il cerchio
+        d3.select(this)
+          .transition().duration(200)
+          .attr("r", 4);
+      });
+  }
 
   // Aggiungi gli assi
   svg.append("g")
-      .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(xScale).tickFormat(d3.format("d")));
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(xScale));
 
   svg.append("g")
-      .call(d3.axisLeft(yScale));
+    .call(d3.axisLeft(yScale));
 
   // Aggiungi etichette agli assi
   svg.append("text")
-      .attr("transform", `translate(${width / 2},${height + margin.top + 20})`)
-      .style("text-anchor", "middle")
-      .text("Year");
+    .attr("transform", `translate(${width / 2},${height + margin.top + 20})`)
+    .style("text-anchor", "middle")
+    .text("Year");
 
   svg.append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("y", 0 - margin.left)
-      .attr("x", 0 - (height / 2))
-      .attr("dy", "1em")
-      .style("text-anchor", "middle")
-      .text("Wage (€)");
+    .attr("transform", "rotate(-90)")
+    .attr("y", 0 - margin.left)
+    .attr("x", 0 - (height / 2))
+    .attr("dy", "1em")
+    .style("text-anchor", "middle")
+    .text(`${metric.charAt(0).toUpperCase() + metric.slice(1)}`);
 }
+
+
+
+document.getElementById("line-chart-filter").addEventListener("change", function() {
+  const selectedMetric = this.value; // Ottieni la metrica selezionata (wage, value, statistics)
+  
+  // Chiamata alla funzione per aggiornare il grafico
+  loadAndCreateLineChart(selectedPlayer, selectedMetric); 
+});
 
 
 
