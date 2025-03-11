@@ -4,7 +4,8 @@ let selectedPlayer = null; // Memorizza il giocatore selezionato
 // Function to load and process CSV data
 function loadCSVData(csvFilePath, callback) {
   d3.csv(csvFilePath).then(function(data) {
-    
+    window.filterApplied = false;
+    window.dataset = data;
     // Process the data: convert numeric attributes to numbers.
     data.forEach(function(d) {
       d.Tsne_Dim1 = +d.Tsne_Dim1;
@@ -279,30 +280,38 @@ document.addEventListener("DOMContentLoaded", function() {
     // Posizioni relative per la formazione 4-3-3
     const positions = [
       { role: "GK", x: 0.1, y: 0.5 },   // Portiere
-      { role: "LB - LWB", x: 0.3, y: 0.2 },  // Terzino sinistro
+      { role: "LB", x: 0.2, y: 0.2 },  // Terzino sinistro
       { role: "CB", x: 0.2, y: 0.5 },    // Difensore centrale
-      { role: "RB - RWB", x: 0.3, y: 0.8 }, // Terzino destro
-      { role: "LDM - LCM - LAM - LM", x: 0.5, y: 0.3 },  // Centrocampista sinistro
-      { role: "CDM - CM", x: 0.4, y: 0.5 }, // Centrocampista centrale
-      { role: "RDM - RCM - RAM - RM", x: 0.5, y: 0.7 }, // Centrocampista destro
-      { role: "CAM", x: 0.6, y: 0.5 }, // Trequartista
-      { role: "LW - LF - LS", x: 0.75, y: 0.2 },    // Attaccante sinistro
-      { role: "CF - ST", x: 0.8, y: 0.5 },   // Attaccante centrale
-      { role: "RW - RF - RS", x: 0.75, y: 0.8 }    // Attaccante destro
+      { role: "RB", x: 0.2, y: 0.8 }, // Terzino destro
+      { role: "RWB", x: 0.3, y: 0.85 },
+      { role: "LWB", x: 0.3, y: 0.15 },
+      { role: "LM", x: 0.55, y: 0.2 },  // Centrocampista sinistro
+      { role: "CDM", x: 0.4, y: 0.5 }, // Centrocampista centrale
+      { role: "CM", x: 0.54, y: 0.5 }, // Centrocampista destro
+      { role: "CAM", x: 0.64, y: 0.5 }, // Trequartista
+      { role: "LW", x: 0.75, y: 0.15 },    // Attaccante sinistro
+      { role: "CF", x: 0.74, y: 0.5 },   // Attaccante centrale
+      { role: "ST", x: 0.84, y: 0.5 },
+      { role: "RW", x: 0.75, y: 0.85 },    // Attaccante destro
+      { role: "RM", x: 0.55, y: 0.8 }    // Attaccante destro
     ];
 
     const positionColors = {
         "GK": "#ffff33",           
         "CB": "#377eb8",         
-        "RB - RWB": "#377eb8",
-        "LB - LWB": "#377eb8",
-        "CDM - CM": "#ff7f00", 
+        "RWB": "#377eb8",
+        "RB": "#377eb8",
+        "LWB": "#377eb8",
+        "LB": "#377eb8",
+        "CM": "#ff7f00",
+        "CDM": "#ff7f00", 
         "CAM": "#ff7f00", 
-        "LDM - LCM - LAM - LM": "#ff7f00",
-        "RDM - RCM - RAM - RM": "#ff7f00",     
-        "RW - RF - RS": "#e41a1c",     
-        "LW - LF - LS": "#e41a1c",
-        "CF - ST": "#e41a1c"       
+        "LM": "#ff7f00",
+        "RM": "#ff7f00",     
+        "RW": "#e41a1c",     
+        "LW": "#e41a1c",
+        "ST": "#e41a1c",
+        "CF": "#e41a1c"        
     };
 
     // Disegna i pallini per i ruoli
