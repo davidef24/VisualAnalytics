@@ -356,7 +356,7 @@ function createBarChart(playerData, clusterPlayers) {
 
   const width = container.node().clientWidth;
   const height = container.node().clientHeight;
-  const margin = { top: 20, right: 30, bottom: 120, left: 50 };
+  const margin = { top: 20, right: 30, bottom: 100, left: 50 };
   const chartWidth = width - margin.left - margin.right;
   const chartHeight = height - margin.top - margin.bottom;
 
@@ -672,28 +672,30 @@ function createRadarChart(selectedPlayer, nearestPlayers) {
         { attribute: "Reflexes", value: +player.gk_reflexes },
       ]
     : [
-        { attribute: "Shooting", value: +player.long_shots },
-        { attribute: "Passing", value: +player.long_passing },
-        { attribute: "Dribbling", value: +player.dribbling },
-        { attribute: "Defending", value: +player.defensive_awareness },
-        { attribute: "Movement Speed", value: +player.sprint_speed },
-        { attribute: "Power Stamina", value: +player.stamina }
+        { attribute: "Shooting", value: (+player.shot_power + +player.long_shots + +player.finishing + +player.positioning + +player.volleys + +player.penalties) / 6 },
+        { attribute: "Passing", value: (+player.short_passing + +player.long_passing + +player.crossing + +player.vision + +player.fk_accuracy + +player.curve) / 6 },
+        { attribute: "Dribbling", value: (+player.dribbling + +player.agility + +player.balance + +player.reactions + +player.composure + +player.ball_control) / 6 },
+        { attribute: "Defending", value: (+player.defensive_awareness + +player.standing_tackle + +player.sliding_tackle + +player.heading_accuracy + +player.interceptions) / 5 },
+        { attribute: "Pace", value: (+player.sprint_speed + +player.sprint_speed) / 2 },
+        { attribute: "Physics", value: (+player.stamina + +player.jumping + +player.strength + +player.aggression) / 4 }
       ];
 
   // Dati del giocatore selezionato e dei giocatori vicini
   const playersData = [selectedPlayer, ...nearestPlayers];
   
+
   // Impostazioni del grafico
-  const margin = { top: 50, right: 50, bottom: 50, left: 50 };
-  const width = 400 - margin.left - margin.right;
-  const height = 400 - margin.top - margin.bottom;
+  const margin = { top: 10, right: 50, bottom: 60, left: 50 };
+  const container = d3.select(`#${containerId}`);
+  const width = container.node().clientWidth - margin.left - margin.right;
+  const height = container.node().clientHeight - margin.top - margin.bottom;
 
   const numAxes = getAttributes(selectedPlayer).length;
   const angleSlice = (Math.PI * 2) / numAxes;
 
   const rScale = d3.scaleLinear()
     .domain([0, 100])
-    .range([0, (Math.min(width, height) / 2)]); 
+    .range([0, (Math.min(width, height) / 2)]);
 
   // Seleziona l'elemento SVG esistente
   const svg = d3.select(`#${containerId}`).select("svg");
@@ -727,8 +729,8 @@ function createRadarChart(selectedPlayer, nearestPlayers) {
     .style("font-size", "12px")
     .attr("text-anchor", "middle")
     .attr("dy", "0.35em")
-    .attr("x", (d, i) => rScale(110) * Math.cos(angleSlice * i - Math.PI / 2))
-    .attr("y", (d, i) => rScale(110) * Math.sin(angleSlice * i - Math.PI / 2))
+    .attr("x", (d, i) => rScale(100) * Math.cos(angleSlice * i - Math.PI / 2))
+    .attr("y", (d, i) => rScale(100) * Math.sin(angleSlice * i - Math.PI / 2))
     .text(d => d.attribute);
 
   // Crea l'area del radar chart
@@ -847,21 +849,19 @@ function loadAndCreateLineChart(selectedPlayer, selectedMetric) {
         // Statistiche per i giocatori non portieri
         if (fifaVersion === 25) {
           return {
-            acceleration: +player.acceleration || 0,
-            sprint_speed: +player.sprint_speed || 0,
-            dribbling: +player.dribbling || 0,
-            stamina: +player.stamina || 0,
-            shooting: (+player.shot_power + +player.long_shots) / 2 || 0, // Media tra shot_power e long_shots
-            passing: (+player.short_passing + +player.long_passing) / 2 || 0, // Media tra short_passing e long_passing
-            defending: (+player.defensive_awareness + +player.standing_tackle + +player.sliding_tackle) / 3 || 0 // Media tra le statistiche difensive
+            pace: (+player.sprint_speed + +player.sprint_speed) / 2 || 0,
+            dribbling: (+player.dribbling + +player.agility + +player.balance + +player.reactions + +player.composure + +player.ball_control) / 6 || 0,
+            physics: (+player.stamina + +player.jumping + +player.strength + +player.aggression) / 4  || 0,
+            shooting: (+player.shot_power + +player.long_shots + +player.finishing + +player.positioning + +player.volleys + +player.penalties) / 6 || 0, // Media tra shot_power e long_shots
+            passing: (+player.short_passing + +player.long_passing + +player.crossing + +player.vision + +player.fk_accuracy + +player.curve) / 6 || 0, // Media tra short_passing e long_passing
+            defending: (+player.defensive_awareness + +player.standing_tackle + +player.sliding_tackle + +player.heading_accuracy + +player.interceptions) / 5 || 0 // Media tra le statistiche difensive
           };
         } else if (fifaVersion >= 15 && fifaVersion <= 24) {
           // Statistiche per FIFA 15-24 (nomi diversi)
           return {
-            acceleration: +player.movement_acceleration || 0,
-            sprint_speed: +player.movement_sprint_speed || 0,
+            pace: +player.pace || 0,
             dribbling: +player.dribbling || 0,
-            stamina: +player.power_stamina || 0,
+            physics: +player.physic || 0,
             shooting: +player.shooting || 0, // Si usa il valore direttamente
             passing: +player.passing || 0, // Si usa il valore direttamente
             defending: +player.defending || 0 // Si usa il valore direttamente
@@ -914,19 +914,22 @@ function loadAndCreateLineChart(selectedPlayer, selectedMetric) {
 
 
 function createLineChart(playerData, metric) {
+  document.getElementById("line-chart-filter").value = "wage";
+
   // Creazione della tooltip
   const tooltip = d3.select("body")
     .append("div")
     .attr("class", "tooltip")
     .style("position", "absolute")
-    .style("background", "rgba(0, 0, 0, 0.8)") // Sfondo scuro semi-trasparente
-    .style("color", "white") // Testo bianco per contrasto
-    .style("border", "1px solid white") // Bordo bianco per maggiore visibilità
+    .style("background", "rgba(0, 0, 0, 0.8)")
+    .style("color", "white")
+    .style("border", "1px solid white")
     .style("padding", "8px")
     .style("border-radius", "5px")
     .style("font-size", "12px")
-    .style("pointer-events", "none") // Evita interferenze con il mouse
-    .style("opacity", 0);
+    .style("pointer-events", "none")
+    .style("opacity", 0)
+    .style("z-index", "1000");
 
   // Rimuovi il grafico precedente
   d3.select("#time-series").selectAll("*").remove();
@@ -939,37 +942,31 @@ function createLineChart(playerData, metric) {
   // Ordina i dati per anno
   playerData.sort((a, b) => a.year - b.year);
 
-  // Filtra gli anni con dati validi
-  const yearsWithData = playerData.filter(d => d[metric] !== null).map(d => d.year);
-  const sortedYears = yearsWithData.sort((a, b) => a - b);
-
   // Configurazione del grafico
-  const margin = { top: 20, right: 30, bottom: 40, left: 50 };
-  const width = 600 - margin.left - margin.right;
-  const height = 300 - margin.top - margin.bottom;
+  const margin = { top: 10, right: 80, bottom: 80, left: 80 };  // Aumentato margine destro e inferiore
+  const container = d3.select("#time-series");
+  const width = container.node().clientWidth - margin.left - margin.right;  // Calcola larghezza dinamica
+  const height = container.node().clientHeight - margin.top - margin.bottom;  // Calcola altezza dinamica
 
   // Crea l'elemento SVG
-  const svg = d3.select("#time-series")
-    .append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
+  const svg = container.append("svg")
+    .attr("viewBox", `0 0 ${width + margin.right} ${height}`) // Aggiungi margine destro al viewBox
+    .attr("preserveAspectRatio", "xMidYMid meet")  // Mantieni le proporzioni durante il ridimensionamento
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  // Scale per l'asse X
-  const xScale = d3.scaleBand()
-    .domain(sortedYears)
-    .range([0, width])
-    .padding(0.1);
+  // Scala per l'asse X (ora con d3.scaleTime() e formattazione dell'anno)
+  const xScale = d3.scaleTime()
+    .domain([new Date(d3.min(playerData, d => d.year) + 2000, 0), new Date(d3.max(playerData, d => d.year) + 2000, 0)])  // Aggiungi 2000 all'anno
+    .range([0, width]);
 
   // Colori per le statistiche
   const statisticColors = {
-    acceleration: "steelblue",
-    sprint_speed: "green",
-    passing: "orange",
+    pace: "steelblue",
+    passing: "green",
+    shooting: "orange",
     dribbling: "purple",
-    stamina: "red",
-    shooting: "brown",
+    physics: "brown",
     defending: "blue",
     diving: "blue",
     handling: "green",
@@ -987,18 +984,19 @@ function createLineChart(playerData, metric) {
       statistics = ["diving", "handling", "kicking", "positioning", "reflexes"];
     } else {
       // Statistiche per i giocatori di campo
-      statistics = ["acceleration", "sprint_speed", "passing", "dribbling", "stamina", "defending", "shooting"];
+      statistics = ["pace", "physics", "passing", "dribbling", "defending", "shooting"];
     }
-    
-    statistics.forEach(stat => {
-      yScale = d3.scaleLinear()
-        .domain([0, d3.max(playerData, d => d.statistics[stat]) || 100])
-        .range([height, 0]);
 
+    // Forza la scala Y tra 0 e 100
+    yScale = d3.scaleLinear()
+      .domain([0, 100])
+      .range([height, 0]);
+
+    statistics.forEach(stat => {
       const line = d3.line()
-        .x(d => xScale(d.year) + xScale.bandwidth() / 2)
-        .y(d => yScale(d.statistics[stat]))
-        .defined(d => d.statistics[stat] !== null && d.statistics[stat] !== undefined);
+        .x(d => xScale(new Date(d.year + 2000, 0))) // Usa la data per l'anno
+        .y(d => yScale(d.statistics?.[stat] || 0))
+        .defined(d => d.statistics?.[stat] !== null && d.statistics?.[stat] !== undefined);
 
       svg.append("path")
         .datum(playerData)
@@ -1009,33 +1007,31 @@ function createLineChart(playerData, metric) {
 
       // Aggiungi i punti con tooltip
       svg.selectAll(".dot-" + stat)
-        .data(playerData.filter(d => d.statistics[stat] !== null))
+        .data(playerData.filter(d => d.statistics?.[stat] !== null))
         .enter()
         .append("circle")
         .attr("class", "dot-" + stat)
-        .attr("cx", d => xScale(d.year) + xScale.bandwidth() / 2)
-        .attr("cy", d => yScale(d.statistics[stat]))
+        .attr("cx", d => xScale(new Date(d.year + 2000, 0))) // Usa la data per l'anno
+        .attr("cy", d => yScale(d.statistics?.[stat] || 0))
         .attr("r", 4)
         .attr("fill", statisticColors[stat])
         .on("mouseover", function (event, d) {
-          tooltip.transition().duration(200).style("opacity", 1);
-          tooltip.html(`Statistica: ${stat}<br>Valore: ${d.statistics[stat]}`)
-            .style("left", (event.pageX + 10) + "px")
-            .style("top", (event.pageY - 10) + "px");
+          tooltip.style("opacity", 1);
+          tooltip.html(`<strong>${stat.toUpperCase()}</strong>: ${d.statistics?.[stat] || "N/A"}`)
+            .style("left", `${event.pageX + 15}px`)
+            .style("top", `${event.pageY - 30}px`);
 
-          // Ingrandire il cerchio
           d3.select(this)
             .transition().duration(200)
             .attr("r", 6);
         })
         .on("mousemove", function (event) {
-          tooltip.style("left", (event.pageX + 10) + "px")
-            .style("top", (event.pageY - 10) + "px");
+          tooltip.style("left", `${event.pageX + 15}px`)
+            .style("top", `${event.pageY - 30}px`);
         })
         .on("mouseout", function () {
-          tooltip.transition().duration(200).style("opacity", 0);
-          
-          // Ridurre il cerchio
+          tooltip.style("opacity", 0);
+
           d3.select(this)
             .transition().duration(200)
             .attr("r", 4);
@@ -1047,7 +1043,7 @@ function createLineChart(playerData, metric) {
       .range([height, 0]);
 
     const line = d3.line()
-      .x(d => xScale(d.year) + xScale.bandwidth() / 2)
+      .x(d => xScale(new Date(d.year + 2000, 0))) // Usa la data per l'anno
       .y(d => yScale(d[metric]))
       .defined(d => d[metric] !== null && d[metric] !== undefined);
 
@@ -1064,29 +1060,27 @@ function createLineChart(playerData, metric) {
       .enter()
       .append("circle")
       .attr("class", "dot")
-      .attr("cx", d => xScale(d.year) + xScale.bandwidth() / 2)
+      .attr("cx", d => xScale(new Date(d.year + 2000, 0))) // Usa la data per l'anno
       .attr("cy", d => yScale(d[metric]))
       .attr("r", 4)
       .attr("fill", "steelblue")
       .on("mouseover", function (event, d) {
-        tooltip.transition().duration(200).style("opacity", 1);
-        tooltip.html(`Metrica: ${metric}<br>Valore: ${d[metric]}`)
-          .style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 10) + "px");
+        tooltip.style("opacity", 1);
+        tooltip.html(`<strong>${metric.toUpperCase()}</strong>: ${d[metric]}`)
+          .style("left", `${event.pageX + 15}px`)
+          .style("top", `${event.pageY - 30}px`);
 
-        // Ingrandire il cerchio
         d3.select(this)
           .transition().duration(200)
           .attr("r", 6);
       })
       .on("mousemove", function (event) {
-        tooltip.style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 10) + "px");
+        tooltip.style("left", `${event.pageX + 15}px`)
+          .style("top", `${event.pageY - 30}px`);
       })
       .on("mouseout", function () {
-        tooltip.transition().duration(200).style("opacity", 0);
+        tooltip.style("opacity", 0);
 
-        // Ridurre il cerchio
         d3.select(this)
           .transition().duration(200)
           .attr("r", 4);
@@ -1096,14 +1090,20 @@ function createLineChart(playerData, metric) {
   // Aggiungi gli assi
   svg.append("g")
     .attr("transform", `translate(0,${height})`)
-    .call(d3.axisBottom(xScale));
+    .call(d3.axisBottom(xScale).ticks(d3.timeYear.every(1))) // Forza la visualizzazione degli anni
+    .selectAll("text")
+    .style("font-size", "12px")
+    .attr("dy", "0.5em")
+    .attr("text-anchor", "middle")
+    .style("transform", "translateY(10px)")  // Aggiungi margine in basso per evitare sovrapposizione
+    .style("angle", "45deg"); // Ruota i tick per evitare sovrapposizioni
 
   svg.append("g")
     .call(d3.axisLeft(yScale));
 
   // Aggiungi etichette agli assi
   svg.append("text")
-    .attr("transform", `translate(${width / 2},${height + margin.top + 20})`)
+    .attr("transform", `translate(${width / 2},${height + margin.top + 40})`)
     .style("text-anchor", "middle")
     .text("Year");
 
@@ -1113,10 +1113,8 @@ function createLineChart(playerData, metric) {
     .attr("x", 0 - (height / 2))
     .attr("dy", "1em")
     .style("text-anchor", "middle")
-    .text(`${metric.charAt(0).toUpperCase() + metric.slice(1)}`);
+    .text(metric === "statistics" ? "Statistic Value" : metric);
 }
-
-
 
 
 document.getElementById("line-chart-filter").addEventListener("change", function() {
@@ -1125,9 +1123,6 @@ document.getElementById("line-chart-filter").addEventListener("change", function
   // Chiamata alla funzione per aggiornare il grafico
   loadAndCreateLineChart(selectedPlayer, selectedMetric); 
 });
-
-
-
 
 
 document.addEventListener("DOMContentLoaded", function() {
