@@ -4,6 +4,7 @@ let selectedPlayer = null; // Memorizza il giocatore selezionato
 // Function to load and process CSV data
 function loadCSVData(csvFilePath, callback) {
   d3.csv(csvFilePath).then(function(data) {
+    
     // Process the data: convert numeric attributes to numbers.
     data.forEach(function(d) {
       d.Tsne_Dim1 = +d.Tsne_Dim1;
@@ -13,7 +14,9 @@ function loadCSVData(csvFilePath, callback) {
         console.warn(`Tsne_Dim1 and Tsne_Dim2 are NaN`);
       }
     });
-  
+
+    initializeScales(data); // Set original domains
+
     callback(data);
 
   }).catch(function(error) {
@@ -40,8 +43,17 @@ function calculateAge(dob) {
 // Define a color palette for clusters.
 const customColorPalette = d3.schemeDark2;
 
+// Add these at the top of your script (global or in parent scope)
+let originalXDomain, originalYDomain;
+// Calculate once when first loading data
+function initializeScales(fullDataset) {
+  originalXDomain = d3.extent(fullDataset, d => d.Tsne_Dim1);
+  originalYDomain = d3.extent(fullDataset, d => d.Tsne_Dim2);
+}
+
 // Function to create the scatterplot
 function createScatterplot(data) {
+
   // Clear any existing scatterplot in the container.
   d3.select("#scatterplot-container").html("");
 
@@ -56,7 +68,7 @@ function createScatterplot(data) {
   }
 
   // Define margins and available width/height
-  const margin = { top: 20, right: 20, bottom: 30, left: 40 };
+  const margin = { top: 20, right: 200, bottom: 30, left: 40 };
   let width = containerWidth - margin.left - margin.right;
   let height = containerHeight - margin.top - margin.bottom;
 
@@ -68,13 +80,12 @@ function createScatterplot(data) {
     .append("g")
     .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-  // Define scales
   const xScale = d3.scaleLinear()
-    .domain(d3.extent(data, d => d.Tsne_Dim1))
+    .domain(originalXDomain) // Use stored domain instead of data's extent
     .range([0, width]);
 
   const yScale = d3.scaleLinear()
-    .domain(d3.extent(data, d => d.Tsne_Dim2))
+    .domain(originalYDomain) // Use stored domain instead of data's extent
     .range([height, 0]);
 
   // Append X axis
@@ -152,6 +163,40 @@ function createScatterplot(data) {
     document.getElementById("line-chart-filter").value = "wage";
 
  });
+ // Add Legend
+ const legendWidth = 10;
+ const legendHeight = 10;
+ const legendSpacing = 15;
+
+ const legend = scatterSvg.append("g")
+   .attr("transform", `translate(${width + 10}, 20)`); // Place legend to the right of the chart
+
+ // Legend categories
+ const legendData = [
+   { color: "#d95f02", label: "Defensive and Physical Players" },
+   { color: "#66a61e", label: "Athletic and Technical Players" },
+   { color: "#e7298a", label: "Goalkeepers" },
+   { color: "#9467bd", label: "Physical Finishers" },
+   { color: "#e6ab02", label: "Midfielders" },
+   { color: "#1b9e77", label: "Wingers and Attack" }
+ ];
+
+ // Add legend items (color boxes and text)
+ legendData.forEach((item, index) => {
+   legend.append("rect")
+     .attr("x", 0)
+     .attr("y", index * legendSpacing)
+     .attr("width", legendWidth)
+     .attr("height", legendHeight)
+     .attr("fill", item.color);
+
+   legend.append("text")
+     .attr("x", legendWidth + 5)
+     .attr("y", index * legendSpacing + legendHeight / 2)
+     .attr("dy", ".35em")
+     .text(item.label)
+     .style("font-size", "12px");
+ });
 
   // Add ResizeObserver
   const resizeObserver = new ResizeObserver(entries => {
@@ -178,6 +223,8 @@ function createScatterplot(data) {
   });
 
   resizeObserver.observe(container);
+
+  
 
   return scatterSvg;
 }
@@ -395,10 +442,10 @@ function createBarChart(playerData, clusterPlayers) {
   // Get the top 8 features with the highest average values
   const topFeatures = Object.entries(clusterAverages)
       .sort((a, b) => b[1] - a[1]) // Sort by value (descending)
-      .slice(0, 20); // Take the top 8
+      .slice(0, 10); // Take the top 8
 
   // Print the top 8 features in array format
-  //console.log("Top 8 Features:", topFeatures.map(([feature, _]) => feature));
+  //console.log("Top 20 Features:", topFeatures.map(([feature, _]) => feature));
   const topFeatureNames = topFeatures.map(([feature]) => feature);
   const playerValues = topFeatureNames.map(feature => playerData[feature]);
   const clusterValues = topFeatures.map(([_, value]) => value);

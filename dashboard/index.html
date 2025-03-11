@@ -63,28 +63,7 @@
             height: 100%;
             display: flex;
         }
-
-        #time-series-card .card-content {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            width: 100%;
-            overflow: visible; /* Permetti la visualizzazione completa */
-        }
-
-
-        #time-series {
-            width: 100%;
-            height: 100%;
-        }       
-        
-        .chart-container {
-        display: flex;
-        justify-content: space-between;
-        width: 100%;
-        height: 100%;
-        }
+                
         
         .tooltip {
             position: absolute;
@@ -218,6 +197,34 @@
             display: flex;
             align-items: center;
         }
+
+                /* Update existing slider rules */
+        #min-slider {
+            left: 0;
+            z-index: 3; /* Higher than max-slider */
+        }
+        
+        #max-slider {
+            right: 0;
+            z-index: 2; /* Lower than min-slider */
+        }
+        
+        /* Ensure both sliders span full width */
+        #min-slider,
+        #max-slider {
+            width: 100%;
+            margin: 0;
+            pointer-events: none; /* Let thumbs handle interactions */
+        }
+        
+        /* Enable pointer events only on thumbs */
+        input[type="range"]::-webkit-slider-thumb {
+            pointer-events: auto;
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            pointer-events: auto;
+        }
         
         /* Track Background */
         #slider-track {
@@ -231,8 +238,8 @@
         }
         
         /* Slider appearance */
-        input[type="range"] {
-            position: relative;
+        #slider-container input[type="range"]  {
+            position: absolute;
             width: 100%;
             appearance: none;
             background: none;
@@ -315,7 +322,6 @@
         <div id="scatterplot-card" class="dashboard-card">
             <div class="card-header" id="scatterplot-card-header">
                 <div id="slider-container">
-                    <div id="slider-container">
                         <div class="range-slider">
                             <!-- Track Highlight -->
                             <div id="slider-track"></div>
@@ -326,7 +332,6 @@
                         <div class="slider-values">
                             Selected overall range: <span id="min-value">65</span> - <span id="max-value">94</span>
                         </div>
-                    </div>
                 </div>
                 Player Clusters (t-SNE)
             </div>
@@ -371,10 +376,10 @@
         
         <!-- Time Series Chart -->
         <div id="time-series-card" class="dashboard-card">
-            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="card-header">
                 <span>Player Progression</span>
                 <!-- Dropdown Filter for Line Chart -->
-                <select id="line-chart-filter">
+                <select id="line-chart-filter" style="margin-left: 10px;">
                     <option value="wage">Wage</option>
                     <option value="value">Value</option>
                     <option value="statistics">Statistics</option>
@@ -385,7 +390,7 @@
                     <div class="no-data">Select a player to view progression</div>
                 </div>
             </div>
-</div>
+        </div>
     </div>
 
     <script src="d3Script.js"></script>
