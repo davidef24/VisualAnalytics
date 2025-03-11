@@ -154,6 +154,7 @@ function createScatterplot(data) {
 
     // Carica i dati storici e crea il line chart, passando il giocatore selezionato
     loadAndCreateLineChart(d, "wage");
+    document.getElementById("line-chart-filter").value = "wage";
 
  });
 
@@ -812,14 +813,20 @@ function loadAndCreateLineChart(selectedPlayer, selectedMetric) {
 
     // Funzione per formattare il valore (in FIFA 25)
     function formatValueFifa25(value) {
-      let formattedValue = value.replace(/[^0-9KMB]/g, "");
+      if (!value) return 0;
+    
+      // Rimuove simboli come € e spazi
+      let formattedValue = value.replace(/[^\dKM.]/g, ""); 
+    
       if (formattedValue.endsWith("M")) {
-        return parseFloat(formattedValue.replace("M", "")) * 1000000;
+        return parseFloat(formattedValue.replace("M", "")) * 1_000_000;
       } else if (formattedValue.endsWith("K")) {
-        return parseFloat(formattedValue.replace("K", "")) * 1000;
+        return parseFloat(formattedValue.replace("K", "")) * 1_000;
       }
-      return parseInt(formattedValue, 10);
+      
+      return parseInt(formattedValue, 10) || 0; // Se non c'è M o K, restituisce un numero normale
     }
+    
 
     // Funzione per calcolare le statistiche (esempio)
     function calculateStatistics(player, fifaVersion) {
@@ -880,6 +887,7 @@ function loadAndCreateLineChart(selectedPlayer, selectedMetric) {
       year: 25,
       wage: formatWageFifa25(player.wage) || 0,
       value: formatValueFifa25(player.value) || 0, 
+      positions: player.positions || "",
       statistics: calculateStatistics(player, 25) // Passa la versione di FIFA (25 in questo caso)
     }));
 
@@ -889,6 +897,7 @@ function loadAndCreateLineChart(selectedPlayer, selectedMetric) {
       year: +player.fifa_version,
       wage: +player.wage_eur || 0,
       value: +player.value_eur || 0, 
+      positions: player.player_positions || "",
       statistics: calculateStatistics(player, +player.fifa_version) // Passa la versione di FIFA
     }));
         // Combiniamo i dataset
@@ -914,7 +923,6 @@ function loadAndCreateLineChart(selectedPlayer, selectedMetric) {
 
 
 function createLineChart(playerData, metric) {
-  document.getElementById("line-chart-filter").value = "wage";
 
   // Creazione della tooltip
   const tooltip = d3.select("body")
@@ -943,7 +951,7 @@ function createLineChart(playerData, metric) {
   playerData.sort((a, b) => a.year - b.year);
 
   // Configurazione del grafico
-  const margin = { top: 10, right: 80, bottom: 80, left: 80 };  // Aumentato margine destro e inferiore
+  const margin = { top: -20, right: 110, bottom: 120, left: 90 };  // Aumentato margine destro e inferiore
   const container = d3.select("#time-series");
   const width = container.node().clientWidth - margin.left - margin.right;  // Calcola larghezza dinamica
   const height = container.node().clientHeight - margin.top - margin.bottom;  // Calcola altezza dinamica
@@ -986,6 +994,8 @@ function createLineChart(playerData, metric) {
       // Statistiche per i giocatori di campo
       statistics = ["pace", "physics", "passing", "dribbling", "defending", "shooting"];
     }
+
+    console.log(playerData[0]);
 
     // Forza la scala Y tra 0 e 100
     yScale = d3.scaleLinear()
@@ -1103,9 +1113,10 @@ function createLineChart(playerData, metric) {
 
   // Aggiungi etichette agli assi
   svg.append("text")
-    .attr("transform", `translate(${width / 2},${height + margin.top + 40})`)
+    .attr("transform", `translate(${width / 2},${height + margin.bottom - 80})`) // Sposta più in basso
     .style("text-anchor", "middle")
-    .text("Year");
+    .style("font-size", "18px") // Opzionale: migliora leggibilità
+    .text("year");
 
   svg.append("text")
     .attr("transform", "rotate(-90)")
@@ -1113,7 +1124,8 @@ function createLineChart(playerData, metric) {
     .attr("x", 0 - (height / 2))
     .attr("dy", "1em")
     .style("text-anchor", "middle")
-    .text(metric === "statistics" ? "Statistic Value" : metric);
+    .style("font-size", "18px")
+    .text(metric === "statistics" ? "statistic value" : metric);
 }
 
 
