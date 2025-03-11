@@ -384,6 +384,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
           initializeRadarChart();
+          
         });
         
 
@@ -1001,7 +1002,7 @@ function createLineChart(playerData, metric) {
   playerData.sort((a, b) => a.year - b.year);
 
   // Configurazione del grafico
-  const margin = { top: -20, right: 110, bottom: 120, left: 90 };  // Aumentato margine destro e inferiore
+  const margin = { top: -20, right: 120, bottom: 120, left: 90 };  // Aumentato margine destro e inferiore
   const container = d3.select("#time-series");
   const width = container.node().clientWidth - margin.left - margin.right;  // Calcola larghezza dinamica
   const height = container.node().clientHeight - margin.top - margin.bottom;  // Calcola altezza dinamica

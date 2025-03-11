@@ -34,11 +34,19 @@
         }
         
         .card-header {
+            display: flex;
+            justify-content: space-between; /* Distribuisce lo spazio tra il titolo e il pulsante */
+            align-items: center; /* Allinea verticalmente il contenuto */
             border-bottom: 1px solid #eee;
             padding-bottom: 10px;
             margin-bottom: 10px;
             font-weight: bold;
             font-size: 16px;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center; /* Allinea verticalmente il titolo e il pulsante */
         }
 
 
@@ -81,6 +89,27 @@
             height: 100%;
         }
         
+        /* Pulsante di reset */
+        .reset-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 8px;
+            font-size: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s ease-in-out, transform 0.1s;
+            margin-left: auto; /* Spinge il pulsante a destra */
+        }
+
+        .reset-button:hover {
+            background-color: #0056b3;
+        }
+
+        .reset-button:active {
+            transform: scale(0.90);
+        }
+
         #player-info {
           height: 100%;
           width: 100%;
@@ -282,12 +311,12 @@
         #radar-slider-container {
             display: flex;
             align-items: center;
-            gap: 10px; /* Spazio tra lo slider e il valore */
+            gap: 10px; 
             justify-self: end; /* Allinea il contenitore dello slider a destra */
         }
 
         #radar-slider {
-            width: 100px; /* Larghezza dello slider */
+            width: 100px; 
         }
 
         #radar-slider-value {
@@ -299,6 +328,28 @@
             grid-row: 2;
         }
 
+        #time-series-card .card-content {
+             display: flex;
+             justify-content: center;
+             align-items: center;
+             height: 100%;
+             width: 100%;
+             overflow: visible; /* Permetti la visualizzazione completa */
+         }
+ 
+ 
+         #time-series {
+             width: 100%;
+             height: 100%;
+         }
+
+         .chart-container {
+         display: flex;
+         justify-content: space-between;
+         width: 100%;
+         height: 100%;
+         }
+
     </style>
 </head>
 <body>
@@ -306,12 +357,8 @@
         <!-- Soccer Field Visualization -->
         <div id="soccer-field-card" class="dashboard-card">
             <div class="card-header">
-                <div class="header-content" >
-                    <span>Soccer Field Formation</span>
-                    <button id="reset-filter">
-                        Reset Filter
-                    </button>
-                </div>
+                <span>Soccer Field Formation</span>
+                <button id="reset-filter" class="reset-button">Reset Filter</button>
             </div>
             <div class="card-content">
                 <div id="soccer-field"></div>
