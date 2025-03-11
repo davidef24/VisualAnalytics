@@ -38,12 +38,7 @@ function calculateAge(dob) {
 }
 
 // Define a color palette for clusters.
-const customColorPalette = [
-  "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", // Blues, Oranges, Greens, Reds, Purples
-  "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf", // Browns, Pinks, Grays, Yellows, Cyans
-  "#aec7e8", "#ffbb78", "#98df8a", "#ff9896", "#c5b0d5", // Light Blues, Light Oranges, Light Greens, Light Reds, Light Purples
-  "#c49c94", "#f7b6d2", "#c7c7c7", "#dbdb8d", "#9edae5"  // Light Browns, Light Pinks, Light Grays, Light Yellows, Light Cyans
-];
+const customColorPalette = d3.schemeDark2;
 
 // Function to create the scatterplot
 function createScatterplot(data) {
@@ -565,6 +560,10 @@ function updatePlayerInfo(playerData) {
     playerStats.append("div")
       .attr("class", "player-stat")
       .html(`<div class="stat-label">Position</div><div class="stat-value">${player.positions}</div>`);
+
+    playerStats.append("div")
+      .attr("class", "player-stat")
+      .html(`<div class="stat-label" sty>Height</div><div class="stat-value">${player.height_cm} cm</div>`);
 
     playerStats.append("div")
       .attr("class", "player-stat")
@@ -1142,31 +1141,86 @@ document.getElementById("line-chart-filter").addEventListener("change", function
 
 
 document.addEventListener("DOMContentLoaded", function() {
-  const slider = document.getElementById("scatterplot-slider");
-  const sliderValue = document.getElementById("slider-value");
+  const minSlider = document.getElementById("min-slider");
+  const maxSlider = document.getElementById("max-slider");
+  const minValueDisplay = document.getElementById("min-value");
+  const maxValueDisplay = document.getElementById("max-value");
+  const sliderTrack = document.getElementById("slider-track");
 
-  // Update slider value on input event
-  slider.addEventListener("input", function() {
-      sliderValue.textContent = slider.value;  // Update the text content of the value
+  function updateSliderValues() {
+      const minVal = parseInt(minSlider.value);
+      const maxVal = parseInt(maxSlider.value);
+
+      // Prevent overlap
+      if (minVal > maxVal) minSlider.value = maxVal;
+      if (maxVal < minVal) maxSlider.value = minVal;
+
+      // Update displayed values
+      minValueDisplay.textContent = minSlider.value;
+      maxValueDisplay.textContent = maxSlider.value;
+
+      // Dynamically update track highlight between sliders
+      const minPercent = ((minVal - minSlider.min) / (minSlider.max - minSlider.min)) * 100;
+      const maxPercent = ((maxVal - minSlider.min) / (minSlider.max - minSlider.min)) * 100;
+      sliderTrack.style.left = minPercent + "%";
+      sliderTrack.style.width = (maxPercent - minPercent) + "%";
+      sliderTrack.classList.add("active");
+  }
+
+  // Attach event listeners
+  minSlider.addEventListener("input", updateSliderValues);
+  maxSlider.addEventListener("input", updateSliderValues);
+
+  // Initialize values on load
+  updateSliderValues();
+});
+
+
+
+// Event listener for slider change
+document.addEventListener("DOMContentLoaded", function() {
+  const minSlider = document.getElementById("min-slider");
+  const maxSlider = document.getElementById("max-slider");
+  const minValueDisplay = document.getElementById("min-value");
+  const maxValueDisplay = document.getElementById("max-value");
+
+  function updateScatterplot() {
+      const minValue = parseInt(minSlider.value);
+      const maxValue = parseInt(maxSlider.value);
+
+      minValueDisplay.textContent = minValue;
+      maxValueDisplay.textContent = maxValue;
+
+      if (!window.filterApplied) {
+          window.filterApplied = true;
+          window.filteredDataset = window.dataset;
+      } else {
+          console.log("Gonna print dataset already filtered");
+      }
+
+      // Filter players based on the slider values (between min and max)
+      const filteredPlayers = window.filteredDataset.filter(player => 
+          player.overall_rating >= minValue && player.overall_rating <= maxValue
+      );
+
+      // Call the scatterplot function with filtered players
+      createScatterplot(filteredPlayers);
+  }
+
+  // Event listeners for both sliders
+  minSlider.addEventListener("input", function() {
+      if (parseInt(minSlider.value) > parseInt(maxSlider.value)) {
+          minSlider.value = maxSlider.value;
+      }
+      updateScatterplot();
+  });
+
+  maxSlider.addEventListener("input", function() {
+      if (parseInt(maxSlider.value) < parseInt(minSlider.value)) {
+          maxSlider.value = minSlider.value;
+      }
+      updateScatterplot();
   });
 });
 
-// Event listener for slider change
-document.getElementById("scatterplot-slider").addEventListener("input", function() {
-  const sliderValue = this.value;
-  document.getElementById("slider-value").textContent = sliderValue;
 
-  if(!window.filterApplied){
-    window.filterApplied = true;
-    window.filteredDataset = window.dataset;
-  }
-  else{
-    console.log("Gonna print dataset already filtered");
-  }
-
-  // Filter players based on the slider value
-  var filteredPlayers = window.filteredDataset.filter(player => player.overall_rating >= sliderValue);
-
-  // Call the createScatterlot function with the filtered players
-  createScatterplot(filteredPlayers);
-});

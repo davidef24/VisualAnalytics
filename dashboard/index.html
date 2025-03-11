@@ -34,7 +34,6 @@
         }
         
         .card-header {
-            display: grid;
             border-bottom: 1px solid #eee;
             padding-bottom: 10px;
             margin-bottom: 10px;
@@ -95,6 +94,7 @@
             border-radius: 5px;
             pointer-events: none;
             z-index: 10;
+            display: none;
         }
         
         svg {
@@ -199,21 +199,76 @@
         }
 
         #scatterplot-card-header {
-            grid-template-columns: 3;
+            display: grid;
+            grid-template-columns: 3fr 1fr;
             grid-template-rows: 1;
         }
 
         #slider-container {
-            margin-left: 10px;
-            width: 100px;
+            width: 300px;
+            grid-column: 2;
             grid-row: 1;
-            grid-column: 3;
+            position: relative;
         }
-
+        
+        .range-slider {
+            position: relative;
+            width: 100%;
+            height: 6px;
+            display: flex;
+            align-items: center;
+        }
+        
+        /* Track Background */
+        #slider-track {
+            position: absolute;
+            width: 100%;
+            height: 6px;
+            background-color: #ce1c1c;
+            border-radius: 3px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        /* Slider appearance */
+        input[type="range"] {
+            position: relative;
+            width: 100%;
+            appearance: none;
+            background: none;
+            z-index: 2; /* Ensure sliders are above the track */
+        }
+        
+        /* Slider thumb */
+        input[type="range"]::-webkit-slider-thumb {
+            pointer-events: auto;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            background: #007bff;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid white;
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            pointer-events: auto;
+            width: 15px;
+            height: 15px;
+            background: #007bff;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid white;
+        }
+        
+        /* Highlight between min and max */
+        #slider-track.active {
+            background: #007bff;
+        }
 
         #radar-chart-card .card-header {
             display: grid;
-            grid-template-columns: 1fr auto; /* Titolo a sinistra, slider a destra */
+            grid-template-columns: 1fr 1fr; /* Titolo a sinistra, slider a destra */
             align-items: center; /* Centra verticalmente */
         }
 
@@ -230,6 +285,11 @@
 
         #radar-slider-value {
             font-size: 14px;
+        }
+
+        .slider-values{
+            margin-top: 10px;
+            grid-row: 2;
         }
 
     </style>
@@ -255,8 +315,18 @@
         <div id="scatterplot-card" class="dashboard-card">
             <div class="card-header" id="scatterplot-card-header">
                 <div id="slider-container">
-                    <input type="range" id="scatterplot-slider" min="40" max="100" value="40">
-                    <span id="slider-value">40</span>
+                    <div id="slider-container">
+                        <div class="range-slider">
+                            <!-- Track Highlight -->
+                            <div id="slider-track"></div>
+                            <!-- Sliders -->
+                            <input type="range" id="min-slider" min="65" max="94" value="65">
+                            <input type="range" id="max-slider" min="65" max="94" value="94">
+                        </div>
+                        <div class="slider-values">
+                            Selected overall range: <span id="min-value">65</span> - <span id="max-value">94</span>
+                        </div>
+                    </div>
                 </div>
                 Player Clusters (t-SNE)
             </div>
