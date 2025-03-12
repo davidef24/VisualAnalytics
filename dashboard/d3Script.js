@@ -145,6 +145,9 @@ function createScatterplot(data) {
     // Trova i giocatori più vicini in base al valore iniziale dello slider
     const sliderValue = +document.getElementById("radar-slider").value;
     const nearestPlayers = findNearestPlayers(d, data, sliderValue);
+    const fiveNearest = findNearestPlayers(d, data, 5);
+    window.nearestPlayers = fiveNearest;
+
 
     // Filter data to include only players from the same cluster
     const sameClusterData = data.filter(player => player.Cluster === d.Cluster);
@@ -283,8 +286,8 @@ document.addEventListener("DOMContentLoaded", function() {
       { role: "LB", x: 0.2, y: 0.2 },  // Terzino sinistro
       { role: "CB", x: 0.2, y: 0.5 },    // Difensore centrale
       { role: "RB", x: 0.2, y: 0.8 }, // Terzino destro
-      { role: "RWB", x: 0.3, y: 0.85 },
-      { role: "LWB", x: 0.3, y: 0.15 },
+      { role: "RWB", x: 0.3, y: 0.83 },
+      { role: "LWB", x: 0.3, y: 0.16 },
       { role: "LM", x: 0.55, y: 0.2 },  // Centrocampista sinistro
       { role: "CDM", x: 0.4, y: 0.5 }, // Centrocampista centrale
       { role: "CM", x: 0.54, y: 0.5 }, // Centrocampista destro
@@ -404,6 +407,7 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 function createBarChart(playerData, clusterPlayers) {
+  console.log(playerData);
   const container = d3.select("#bar-chart-card-content");
   container.selectAll("*").remove(); // Clear previous chart
 
@@ -650,10 +654,47 @@ function updatePlayerInfo(playerData) {
     playerStats.append("div")
     .attr("class", "player-stat")
     .html(`<div class="stat-label" sty>Play styles</div><div class="stat-value">${player.play_styles}</div>`);
+
+    playerStats.append("div")
+    .attr("class", "player-stat")
+    .attr("id", "nearest-div")
+    .html(`
+        <div class="stat-label">Similar players</div>
+        <div class="stat-value">
+            ${window.nearestPlayers.map(player => 
+                `<a href="#" onclick="handlePlayerClick('${player.player_id}')">${player.name}</a>`
+            ).join(", ")}
+        </div>
+    `);
+    
   } else {
     // Se il giocatore non è trovato nel dataset
     playerInfoDiv.html("<div class='no-data'>No player data available</div>");
   }
+}
+
+// Define the function to handle clicks
+function handlePlayerClick(playerID) {
+  const selectedPlayer = window.dataset.find(player => player.player_id === playerID);
+  console.log(selectedPlayer);
+  // Filter data to include only players from the same cluster
+  const sameClusterData = window.dataset.filter(pla => pla.Cluster === selectedPlayer.Cluster);
+
+  // Call the function to create the bar chart with the clicked player's data
+  createBarChart(selectedPlayer, sameClusterData);
+
+  // Update player info
+  updatePlayerInfo(selectedPlayer);
+
+  const nearestPlayers = findNearestPlayers(selectedPlayer, window.dataset, 0);
+
+  // Create the radar chart with the selected player and the nearest players
+  createRadarChart(selectedPlayer, nearestPlayers);
+
+
+  // Carica i dati storici e crea il line chart, passando il giocatore selezionato
+  loadAndCreateLineChart(selectedPlayer, "wage");
+  document.getElementById("line-chart-filter").value = "wage";
 }
 
 
