@@ -393,7 +393,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
           initializeRadarChart();
-          
+
+          // *** Reset del Line Chart ***
+          d3.select("#time-series").html('<div class="no-data">Select a player to view progression</div>');
+
+          // Reset della variabile del giocatore selezionato
+          selectedPlayer = null;
         });
         
 
@@ -691,6 +696,29 @@ function initializeRadarChart() {
     .append("g")
     .attr("transform", `translate(${width / 2 + margin.left}, ${height / 2 + margin.top})`);
 
+  // Aggiungi la griglia ogni 20 unità (esagoni o pentagoni tratteggiati)
+  const gridLevels = [20, 40, 60, 80, 100];
+  gridLevels.forEach(level => {
+    const polygonData = Array.from({ length: numAxes }, (_, i) => ({
+      value: level,
+      angle: i * angleSlice
+    }));
+
+    const polygonLine = d3.lineRadial()
+      .curve(d3.curveLinearClosed)
+      .radius(d => rScale(d.value))
+      .angle(d => d.angle);
+
+    svg.append("path")
+      .datum(polygonData)
+      .attr("class", "grid-polygon")
+      .attr("d", polygonLine)
+      .style("fill", "none")
+      .style("stroke", "#ccc")
+      .style("stroke-width", "2px")
+      .style("stroke-dasharray", "3,3"); // Linee tratteggiate
+  });
+
   // Crea gli assi del radar chart
   const axis = svg.selectAll(".axis")
     .data(attributes)
@@ -706,19 +734,18 @@ function initializeRadarChart() {
     .attr("y2", (d, i) => rScale(100) * Math.sin(angleSlice * i - Math.PI / 2))
     .attr("class", "line")
     .style("stroke", "#ccc")
-    .style("stroke-width", "1px");
+    .style("stroke-width", "1.5px");
 
-  // Aggiungi le etichette degli assi
+  // Aggiungi le etichette degli assi (più lontane)
   axis.append("text")
     .attr("class", "legend")
     .style("font-size", "12px")
     .attr("text-anchor", "middle")
     .attr("dy", "0.35em")
-    .attr("x", (d, i) => rScale(110) * Math.cos(angleSlice * i - Math.PI / 2))
+    .attr("x", (d, i) => rScale(110) * Math.cos(angleSlice * i - Math.PI / 2)) // Aumentato il raggio per allontanare le etichette
     .attr("y", (d, i) => rScale(110) * Math.sin(angleSlice * i - Math.PI / 2))
     .text(d => d.attribute);
 }
-
 
 function createRadarChart(selectedPlayer, nearestPlayers) {
   const containerId = "radar-chart"; // ID del contenitore
@@ -767,6 +794,29 @@ function createRadarChart(selectedPlayer, nearestPlayers) {
   // Rimuovi tutti gli elementi esistenti del radar chart
   g.selectAll("*").remove(); // Rimuove tutti gli elementi all'interno del gruppo <g>
 
+  // Aggiungi la griglia ogni 20 unità (esagoni o pentagoni tratteggiati)
+  const gridLevels = [20, 40, 60, 80, 100];
+  gridLevels.forEach(level => {
+    const polygonData = Array.from({ length: numAxes }, (_, i) => ({
+      value: level,
+      angle: i * angleSlice
+    }));
+
+    const polygonLine = d3.lineRadial()
+      .curve(d3.curveLinearClosed)
+      .radius(d => rScale(d.value))
+      .angle(d => d.angle);
+
+    g.append("path")
+      .datum(polygonData)
+      .attr("class", "grid-polygon")
+      .attr("d", polygonLine)
+      .style("fill", "none")
+      .style("stroke", "#ccc")
+      .style("stroke-width", "1.5px")
+      .style("stroke-dasharray", "2,2"); // Linee tratteggiate
+  });
+
   // Crea gli assi del radar chart
   const axis = g.selectAll(".axis")
     .data(getAttributes(selectedPlayer))
@@ -782,16 +832,16 @@ function createRadarChart(selectedPlayer, nearestPlayers) {
     .attr("y2", (d, i) => rScale(100) * Math.sin(angleSlice * i - Math.PI / 2))
     .attr("class", "line")
     .style("stroke", "#ccc")
-    .style("stroke-width", "1px");
+    .style("stroke-width", "2px");
 
-  // Aggiungi le etichette degli assi
+  // Aggiungi le etichette degli assi (più lontane)
   axis.append("text")
     .attr("class", "legend")
     .style("font-size", "12px")
     .attr("text-anchor", "middle")
     .attr("dy", "0.35em")
-    .attr("x", (d, i) => rScale(100) * Math.cos(angleSlice * i - Math.PI / 2))
-    .attr("y", (d, i) => rScale(100) * Math.sin(angleSlice * i - Math.PI / 2))
+    .attr("x", (d, i) => rScale(115) * Math.cos(angleSlice * i - Math.PI / 2)) // Aumentato il raggio per allontanare le etichette
+    .attr("y", (d, i) => rScale(115) * Math.sin(angleSlice * i - Math.PI / 2))
     .text(d => d.attribute);
 
   // Crea l'area del radar chart
@@ -801,7 +851,7 @@ function createRadarChart(selectedPlayer, nearestPlayers) {
     .angle((d, i) => i * angleSlice);
 
   // Colori differenti per ciascun giocatore
-  const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+  const colorScale = d3.scaleOrdinal(d3.schemeTableau10);
 
   // Funzione per aggiungere il radar per ciascun giocatore
   playersData.forEach((player, index) => {
@@ -811,13 +861,12 @@ function createRadarChart(selectedPlayer, nearestPlayers) {
       .datum(playerAttributes)
       .attr("class", "radar-area")
       .attr("d", radarLine)
-      .style("fill", colorScale(index))
+      .style("fill", "none") // Rimuove il riempimento
       .style("stroke", colorScale(index))
       .style("stroke-width", "2px")
-      .style("opacity", 0.4);
+      .style("opacity", 1); // Mantiene il bordo ben visibile
   });
 }
-
 
 // Funzione per aggiornare il radar chart in base al valore dello slider
 function updateRadarChart() {
@@ -1185,7 +1234,7 @@ function createLineChart(playerData, metric) {
     .attr("dy", "1em")
     .style("text-anchor", "middle")
     .style("font-size", "18px")
-    .text(metric === "statistics" ? "statistic value" : metric);
+    .text(metric === "statistics" ? "aggregated statistic" : metric);
 }
 
 
