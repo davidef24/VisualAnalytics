@@ -1,6 +1,3 @@
-let selectedPlayer = null; // Memorizza il giocatore selezionato
-
-
 // Function to load and process CSV data
 function loadCSVData(csvFilePath, callback) {
   d3.csv(csvFilePath).then(function(data) {
@@ -140,14 +137,15 @@ function createScatterplot(data) {
    })
    .on("click", function(event, d) {
     // Memorizza il giocatore selezionato
-    selectedPlayer = d;
-    window.selectedPlayer = selectedPlayer;
+    window.selectedPlayer = d;
 
     // Trova i giocatori più vicini in base al valore iniziale dello slider
-    const sliderValue = +document.getElementById("radar-slider").value;
-    const nearestPlayers = findNearestPlayers(d, data, sliderValue);
+    //const sliderValue = +document.getElementById("radar-slider").value;
+    document.getElementById("radar-slider").value = 0;
+    document.getElementById("radar-slider-value").textContent = "0";
+    const nearestPlayers = findNearestPlayers(d, data, 0);
     const fiveNearest = findNearestPlayers(d, data, 5);
-    window.nearestPlayers = fiveNearest;
+    window.np = fiveNearest;
 
 
     // Filter data to include only players from the same cluster
@@ -258,7 +256,7 @@ loadCSVData(csvFilePath, function(data) {
 });
 
 document.addEventListener("DOMContentLoaded", function() {
-  console.log("D3 script loaded!");
+  //console.log("D3 script loaded!");
 
   // Definisci il container dell'immagine del campo da calcio
   const container = d3.select("#soccer-field")
@@ -283,7 +281,7 @@ document.addEventListener("DOMContentLoaded", function() {
   d3.csv(csvFilePath).then(function(data) {
     // Posizioni relative per la formazione 4-3-3
     const positions = [
-      { role: "GK", x: 0.1, y: 0.5 },   // Portiere
+      { role: "GK", x: 0.11, y: 0.5 },   // Portiere
       { role: "LB", x: 0.2, y: 0.2 },  // Terzino sinistro
       { role: "CB", x: 0.2, y: 0.5 },    // Difensore centrale
       { role: "RB", x: 0.2, y: 0.8 }, // Terzino destro
@@ -385,7 +383,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
 
         document.getElementById("reset-filter").addEventListener("click", function() {
-          console.log("Resetting Scatterplot and Player Information");
+          //console.log("Resetting Scatterplot and Player Information");
 
           window.filterApplied = false;
         
@@ -418,7 +416,7 @@ function createBarChart(playerData, clusterPlayers) {
 
   const width = container.node().clientWidth;
   const height = container.node().clientHeight;
-  const margin = { top: 20, right: 30, bottom: 100, left: 50 };
+  const margin = { top: 20, right: 60, bottom: 100, left: 50 };
   const chartWidth = width - margin.left - margin.right;
   const chartHeight = height - margin.top - margin.bottom;
 
@@ -501,7 +499,7 @@ function createBarChart(playerData, clusterPlayers) {
       .attr("y", d => y(d))
       .attr("width", barWidth)
       .attr("height", d => chartHeight - y(d))
-      .attr("fill", "steelblue");
+      .attr("fill", "#DA5A2A");
 
   svg.selectAll(".cluster-bar")
       .data(clusterValues)
@@ -512,7 +510,7 @@ function createBarChart(playerData, clusterPlayers) {
       .attr("y", d => y(d))
       .attr("width", barWidth)
       .attr("height", d => chartHeight - y(d))
-      .attr("fill", "orange");
+      .attr("fill", "#3B1877");
       // Add legend
     const legend = svg.append("g")
     .attr("class", "legend")
@@ -520,8 +518,8 @@ function createBarChart(playerData, clusterPlayers) {
   
   // Legend items
   const legendItems = [
-    { color: "steelblue", text: `${window.selectedPlayer.name} values` },
-    { color: "orange", text: "Cluster Average" }
+    { color: "#DA5A2A", text: `${window.selectedPlayer.name} values` },
+    { color: "#3B1877", text: "Cluster Average" }
   ];
   
   // Legend rectangles
@@ -531,8 +529,8 @@ function createBarChart(playerData, clusterPlayers) {
     .append("rect")
     .attr("x", 0)
     .attr("y", (d, i) => i * 20)
-    .attr("width", 18)
-    .attr("height", 18)
+    .attr("width", 15)
+    .attr("height", 15)
     .attr("fill", d => d.color);
   
   // Legend text
@@ -659,7 +657,7 @@ function updatePlayerInfo(playerData) {
     .attr("class", "player-stat")
     .html(`<div class="stat-label" sty>Play styles</div><div class="stat-value">${player.play_styles}</div>`);
 
-    console.log(window.nearestPlayers);
+    //console.log(window.np);
 
     playerStats.append("div")
     .attr("class", "player-stat")
@@ -667,7 +665,7 @@ function updatePlayerInfo(playerData) {
     .html(`
         <div class="stat-label">Similar players</div>
         <div class="stat-value">
-            ${window.nearestPlayers.map(player => 
+            ${window.np.map(player => 
                 `<a href="#" onclick="handlePlayerClick('${player.player_id}')">${player.name}</a>`
             ).join(", ")}
         </div>
@@ -688,11 +686,10 @@ function handlePlayerClick(playerID) {
   // Call the function to create the bar chart with the clicked player's data
   createBarChart(selectedPlayer, sameClusterData);
 
-
-
   const nearestPlayers = findNearestPlayers(selectedPlayer, window.dataset, 5);
 
-  window.nearestPlayers = nearestPlayers;
+  window.np = nearestPlayers;
+  window.selectedPlayer = selectedPlayer;
 
   // Update player info
   updatePlayerInfo(selectedPlayer);
@@ -700,6 +697,7 @@ function handlePlayerClick(playerID) {
   // Create the radar chart with the selected player and the nearest players
   createRadarChart(selectedPlayer, []);
 
+  document.getElementById("radar-slider").value = 0;
 
   // Carica i dati storici e crea il line chart, passando il giocatore selezionato
   loadAndCreateLineChart(selectedPlayer, "wage");
@@ -793,6 +791,7 @@ function initializeRadarChart() {
 }
 
 function createRadarChart(selectedPlayer, nearestPlayers) {
+  //console.log(nearestPlayers);
   const containerId = "radar-chart"; // ID del contenitore
 
   // Determina le statistiche da usare in base alla posizione del giocatore
@@ -944,22 +943,23 @@ function updateRadarChart() {
   const sliderValue = +document.getElementById("radar-slider").value;
   document.getElementById("radar-slider-value").textContent = sliderValue;
 
-  if (selectedPlayer) {
+  if (window.selectedPlayer) {
       // Trova i giocatori più vicini in base al valore dello slider
-      const nearestPlayers = findNearestPlayers(selectedPlayer, window.dataset, sliderValue);
+      const nearestPlayers = findNearestPlayers(window.selectedPlayer, window.dataset, sliderValue);
       
       // Aggiorna il radar chart con i nuovi giocatori
-      createRadarChart(selectedPlayer, nearestPlayers);
+      createRadarChart(window.selectedPlayer, nearestPlayers);
   }
 }
 
 // Aggiungi un listener allo slider
 document.getElementById("radar-slider").addEventListener("input", function() {
-  console.log("Slider value changed!"); // Debug
+  //console.log("Slider value changed!"); // Debug
   updateRadarChart();
 });
 
 function findNearestPlayers(selectedPlayer, data, numNearest) {
+  //console.log(selectedPlayer);
   // Calcola la distanza euclidea tra il giocatore selezionato e tutti gli altri
   const distances = data.map(player => {
       if (player.name === selectedPlayer.name) return null; // Salta il giocatore selezionato stesso
@@ -1175,7 +1175,7 @@ function createLineChart(playerData, metric) {
       statistics = ["pace", "physics", "passing", "dribbling", "defending", "shooting"];
     }
 
-    console.log(playerData[0]);
+    //console.log(playerData[0]);
 
     // Forza la scala Y tra 0 e 100
     yScale = d3.scaleLinear()
