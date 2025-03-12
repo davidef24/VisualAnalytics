@@ -41,6 +41,7 @@ function calculateAge(dob) {
   return age;
 }
 
+
 // Define a color palette for clusters.
 const customColorPalette = d3.schemeDark2;
 
@@ -412,7 +413,6 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 function createBarChart(playerData, clusterPlayers) {
-  console.log(playerData);
   const container = d3.select("#bar-chart-card-content");
   container.selectAll("*").remove(); // Clear previous chart
 
@@ -561,7 +561,6 @@ function updatePlayerInfo(playerData) {
     playerInfoDiv.html("");
 
     const playerPhotoUrl = player.image;
-    console.log(player.image);
     
     // Function to check if an image URL fails to load
     function checkImage(url, callback) {
@@ -660,6 +659,8 @@ function updatePlayerInfo(playerData) {
     .attr("class", "player-stat")
     .html(`<div class="stat-label" sty>Play styles</div><div class="stat-value">${player.play_styles}</div>`);
 
+    console.log(window.nearestPlayers);
+
     playerStats.append("div")
     .attr("class", "player-stat")
     .attr("id", "nearest-div")
@@ -681,20 +682,23 @@ function updatePlayerInfo(playerData) {
 // Define the function to handle clicks
 function handlePlayerClick(playerID) {
   const selectedPlayer = window.dataset.find(player => player.player_id === playerID);
-  console.log(selectedPlayer);
   // Filter data to include only players from the same cluster
   const sameClusterData = window.dataset.filter(pla => pla.Cluster === selectedPlayer.Cluster);
 
   // Call the function to create the bar chart with the clicked player's data
   createBarChart(selectedPlayer, sameClusterData);
 
+
+
+  const nearestPlayers = findNearestPlayers(selectedPlayer, window.dataset, 5);
+
+  window.nearestPlayers = nearestPlayers;
+
   // Update player info
   updatePlayerInfo(selectedPlayer);
 
-  const nearestPlayers = findNearestPlayers(selectedPlayer, window.dataset, 0);
-
   // Create the radar chart with the selected player and the nearest players
-  createRadarChart(selectedPlayer, nearestPlayers);
+  createRadarChart(selectedPlayer, []);
 
 
   // Carica i dati storici e crea il line chart, passando il giocatore selezionato
@@ -1369,5 +1373,3 @@ document.addEventListener("DOMContentLoaded", function() {
       updateScatterplot();
   });
 });
-
-
