@@ -178,6 +178,19 @@
             font-weight: bold;
         }
 
+        #radar-tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            border: 1px solid red; /* Aggiungi un bordo rosso per debug */
+        }
+
         #scatterplot-container {
             width: 100%;
             height: 100%;
@@ -465,6 +478,7 @@
             </div>
         </div>
     </div>
+    <div id="radar-tooltip" class="tooltip"></div>
 
     <script src="d3Script.js"></script>
     

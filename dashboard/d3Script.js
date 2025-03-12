@@ -894,18 +894,44 @@ function createRadarChart(selectedPlayer, nearestPlayers) {
   // Colori differenti per ciascun giocatore
   const colorScale = d3.scaleOrdinal(d3.schemeTableau10);
 
-  // Funzione per aggiungere il radar per ciascun giocatore
-  playersData.forEach((player, index) => {
+  // Seleziona l'elemento tooltip
+const tooltip = d3.select("#radar-tooltip");
+
+// Funzione per aggiungere il radar per ciascun giocatore
+playersData.forEach((player, index) => {
     const playerAttributes = getAttributes(player);
     
-    g.append("path")
-      .datum(playerAttributes)
-      .attr("class", "radar-area")
-      .attr("d", radarLine)
-      .style("fill", "none") // Rimuove il riempimento
-      .style("stroke", colorScale(index))
-      .style("stroke-width", "2px")
-      .style("opacity", 1); // Mantiene il bordo ben visibile
+    const radarPath = g.append("path")
+        .datum(playerAttributes)
+        .attr("class", "radar-area")
+        .attr("d", radarLine)
+        .style("fill", colorScale(index)) // Riempimento con colore
+        .style("fill-opacity", 0.2) // Trasparenza per migliorare la leggibilità
+        .style("stroke", colorScale(index)) // Colore del bordo
+        .style("stroke-width", "2px") // Spessore del bordo aumentato
+        .style("opacity", 1)
+        .on("mouseover", function (event) {
+            // Mostra la tooltip con il nome del giocatore
+            tooltip
+                .style("opacity", 1)
+                .html(player.name) // Usa il nome del giocatore
+                .style("left", `${event.pageX + 10}px`) // Posiziona la tooltip
+                .style("top", `${event.pageY - 10}px`);
+
+            // Evidenzia il radar
+            d3.select(this)
+                .style("stroke-width", "4px") // Aumenta lo spessore del bordo
+                .style("fill-opacity", 0.5); // Aumenta l'opacità del riempimento
+        })
+        .on("mouseout", function () {
+            // Nascondi la tooltip
+            tooltip.style("opacity", 0);
+
+            // Ripristina lo stile originale del radar
+            d3.select(this)
+                .style("stroke-width", "2px") // Ripristina lo spessore del bordo
+                .style("fill-opacity", 0.2); // Ripristina l'opacità del riempimento
+        });
   });
 }
 
