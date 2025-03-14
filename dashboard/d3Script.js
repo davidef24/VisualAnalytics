@@ -1,3 +1,44 @@
+const filters = {
+  overall_rating: { min: null, max: null },
+  role: null,
+  league: null
+};
+
+function applyFilters() {
+  let filtered = window.dataset;
+  if (filters.overall_rating.min !== null && filters.overall_rating.max !== null) {
+    filtered = filtered.filter(player =>
+      player.overall_rating >= filters.overall_rating.min &&
+      player.overall_rating <= filters.overall_rating.max
+    );
+  }
+  if (filters.role) {
+    filtered = filtered.filter(player => {
+        if (!player.positions) return false; // Avoid errors if missing
+
+        // Convert player positions (comma-separated string) into an array
+        const playerRoles = player.positions.split(",").map(role => role.trim());
+
+        // Check if at least one of the player's roles is in the selected filters
+        return playerRoles.some(role => filters.role.includes(role));
+    });
+  }
+  if (filters.league) {
+    const league = filters.league;
+    if (league === "All Leagues") {
+      return data; // Nessun filtro, restituisci tutti i dati
+    }
+    filtered =  filtered.filter((d) => d.club_league_name === league); // Filtra per lega
+  }
+
+  return filtered;
+}
+
+function updateScatterplot() {
+  const filteredPlayers = applyFilters();
+  createScatterplot(filteredPlayers);
+}
+
 // Function to load and process CSV data
 function loadCSVData(csvFilePath, callback) {
   d3.csv(csvFilePath).then(function(data) {
@@ -226,25 +267,14 @@ function createScatterplot(data) {
   });
 
   resizeObserver.observe(container);
-
-  
-
   return scatterSvg;
 }
 
 document.getElementById("league-filter").addEventListener("change", function () {
   const selectedLeague = this.value; // Ottieni il valore selezionato dal menù
-  const filteredData = filterDataByLeague(window.dataset, selectedLeague); // Filtra i dati
-  createScatterplot(filteredData); // Aggiorna lo scatterplot con i dati filtrati
+  filters.league = selectedLeague;
+  updateScatterplot(); 
 });
-
-
-function filterDataByLeague(data, league) {
-  if (league === "All Leagues") {
-      return data; // Nessun filtro, restituisci tutti i dati
-  }
-  return data.filter((d) => d.club_league_name === league); // Filtra per lega
-}
 
 // Placeholder function to update other visualizations
 function updateOtherVisualizations(clusterData) {
@@ -327,11 +357,7 @@ document.addEventListener("DOMContentLoaded", function() {
       .attr("r", 12)
       .attr("fill", d => positionColors[d.role] || "gray")
       .attr("stroke", "black")
-      .attr("stroke-width", 1.5)
-      .on("click", function(event, d) {
-        const selectedRoles = d.role.split("-").map(role => role.trim());
-        filterScatterplotByRole(selectedRoles);
-      });
+      .attr("stroke-width", 1.5);
 
     // Testi per i ruoli
     container.selectAll("text")
@@ -348,64 +374,30 @@ document.addEventListener("DOMContentLoaded", function() {
       .attr("font-size", "10px")
       .attr("font-weight", "bold")
       .text(d => d.role);
-
-    // Funzione per aggiornare lo scatterplot in base ai ruoli selezionati
-    function filterScatterplotByRole(selectedRoles) {
-      //console.log("Ruoli selezionati:", selectedRoles); // Debug
-
-      if(!window.filterApplied){
-        window.filterApplied = true;
-        window.filteredDataset = window.dataset;
-      }
-      
-      // Filtriamo i dati mantenendo i giocatori che hanno almeno uno dei ruoli selezionati
-      window.filteredDataset = window.filteredDataset.filter(d => {
-          if (!d.positions) return false; // Evita errori se manca il campo
-
-          // Creiamo un array dei ruoli del giocatore
-          const playerRoles = d.positions.split(",").map(role => role.trim());
-          
-          // Controlliamo se almeno uno dei ruoli del giocatore è presente nei ruoli selezionati
-          const hasMatchingRole = playerRoles.some(role => selectedRoles.includes(role));
-
-          return hasMatchingRole;
-      });
-      // Ricrea lo scatterplot con i dati filtrati
-      createScatterplot(filteredDataset);
-    }
     
 
-      // Aggiungi un evento di click ai pallini dei ruoli
-      container.selectAll("circle.role")
-        .on("click", function(event, d) {
-            const selectedRoles = d.role.split(" - ");
-            filterScatterplotByRole(selectedRoles);
-        });
-
-        document.getElementById("reset-filter").addEventListener("click", function() {
-          //console.log("Resetting Scatterplot and Player Information");
-
-          window.filterApplied = false;
-        
-          // Ripristina lo scatterplot con tutti i dati originali
-          createScatterplot(window.dataset); // Assicurati che `window.dataset` contenga i dati originali
-          document.getElementById("league-filter").value = "All Leagues";
-
-          const playerInfoDiv = d3.select("#player-info");
-          playerInfoDiv.html("<div class='no-data'>Select a player to view details</div>");
-
-
-          initializeRadarChart();
-
-          // *** Reset del Line Chart ***
-          d3.select("#time-series").html('<div class="no-data">Select a player to view progression</div>');
-
-          // Reset della variabile del giocatore selezionato
-          selectedPlayer = null;
-        });
-        
-
+    // Aggiungi un evento di click ai pallini dei ruoli
+    container.selectAll("circle.role")
+      .on("click", function(event, d) {
+          const selectedRoles = d.role.split("-").map(role => role.trim());
+          filters.role = selectedRoles;
+          updateScatterplot();
+      });
+      document.getElementById("reset-filter").addEventListener("click", function() {
+        //console.log("Resetting Scatterplot and Player Information");
+        window.filterApplied = false;
       
+        // Ripristina lo scatterplot con tutti i dati originali
+        createScatterplot(window.dataset); // Assicurati che `window.dataset` contenga i dati originali
+        document.getElementById("league-filter").value = "All Leagues";
+        const playerInfoDiv = d3.select("#player-info");
+        playerInfoDiv.html("<div class='no-data'>Select a player to view details</div>");
+        initializeRadarChart();
+        // *** Reset del Line Chart ***
+        d3.select("#time-series").html('<div class="no-data">Select a player to view progression</div>');
+        // Reset della variabile del giocatore selezionato
+        selectedPlayer = null;
+      }); 
   }).catch(error => {
       console.error("Error loading CSV:", error);
   });
@@ -1323,6 +1315,8 @@ document.addEventListener("DOMContentLoaded", function() {
   const maxSlider = document.getElementById("max-slider");
   const minValueDisplay = document.getElementById("min-value");
   const maxValueDisplay = document.getElementById("max-value");
+  filters.overall_rating.min = parseInt(minSlider.value);
+  filters.overall_rating.max = parseInt(maxSlider.value);
   const sliderTrack = document.getElementById("slider-track");
 
   function updateSliderValues() {
@@ -1359,44 +1353,27 @@ document.addEventListener("DOMContentLoaded", function() {
 document.addEventListener("DOMContentLoaded", function() {
   const minSlider = document.getElementById("min-slider");
   const maxSlider = document.getElementById("max-slider");
-  const minValueDisplay = document.getElementById("min-value");
-  const maxValueDisplay = document.getElementById("max-value");
-
-  function updateScatterplot() {
+  // Event listeners for both sliders
+  minSlider.addEventListener("input", function() {
+      const maxSlider = document.getElementById("max-slider");
       const minValue = parseInt(minSlider.value);
       const maxValue = parseInt(maxSlider.value);
 
-      minValueDisplay.textContent = minValue;
-      maxValueDisplay.textContent = maxValue;
-
-      if (!window.filterApplied) {
-          window.filterApplied = true;
-          window.filteredDataset = window.dataset;
-      } else {
-          console.log("Gonna print dataset already filtered");
-      }
-
-      // Filter players based on the slider values (between min and max)
-      const filteredPlayers = window.filteredDataset.filter(player => 
-          player.overall_rating >= minValue && player.overall_rating <= maxValue
-      );
-
-      // Call the scatterplot function with filtered players
-      createScatterplot(filteredPlayers);
-  }
-
-  // Event listeners for both sliders
-  minSlider.addEventListener("input", function() {
-      if (parseInt(minSlider.value) > parseInt(maxSlider.value)) {
+      if (minValue > maxValue) {
           minSlider.value = maxSlider.value;
       }
+      filters.overall_rating.min = minValue;
       updateScatterplot();
   });
 
   maxSlider.addEventListener("input", function() {
-      if (parseInt(maxSlider.value) < parseInt(minSlider.value)) {
+      const minSlider = document.getElementById("min-slider");
+      const minValue = parseInt(minSlider.value);
+      const maxValue = parseInt(maxSlider.value);
+      if (maxValue < minValue) {
           maxSlider.value = minSlider.value;
       }
+      filters.overall_rating.max = maxValue;
       updateScatterplot();
   });
 });
