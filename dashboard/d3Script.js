@@ -232,6 +232,24 @@ function createScatterplot(data) {
   return scatterSvg;
 }
 
+document.getElementById("league-filter").addEventListener("change", function () {
+  const selectedLeague = this.value; // Ottieni il valore selezionato dal menù
+  const filteredData = filterDataByLeague(window.dataset, selectedLeague); // Filtra i dati
+  createScatterplot(filteredData); // Aggiorna lo scatterplot con i dati filtrati
+});
+
+/**
+* Filtra i dati in base alla lega selezionata.
+* @param {Array} data - Il dataset completo.
+* @param {string} league - La lega selezionata ("all" per nessun filtro).
+* @returns {Array} - Il dataset filtrato.
+*/
+function filterDataByLeague(data, league) {
+  if (league === "All Leagues") {
+      return data; // Nessun filtro, restituisci tutti i dati
+  }
+  return data.filter((d) => d.club_league_name === league); // Filtra per lega
+}
 
 // Placeholder function to update other visualizations
 function updateOtherVisualizations(clusterData) {
@@ -282,20 +300,20 @@ document.addEventListener("DOMContentLoaded", function() {
     // Posizioni relative per la formazione 4-3-3
     const positions = [
       { role: "GK", x: 0.11, y: 0.5 },   // Portiere
-      { role: "LB", x: 0.2, y: 0.2 },  // Terzino sinistro
-      { role: "CB", x: 0.2, y: 0.5 },    // Difensore centrale
-      { role: "RB", x: 0.2, y: 0.8 }, // Terzino destro
-      { role: "RWB", x: 0.3, y: 0.83 },
-      { role: "LWB", x: 0.3, y: 0.16 },
-      { role: "LM", x: 0.55, y: 0.2 },  // Centrocampista sinistro
-      { role: "CDM", x: 0.4, y: 0.5 }, // Centrocampista centrale
+      { role: "LB", x: 0.27, y: 0.28 },  // Terzino sinistro
+      { role: "CB", x: 0.23, y: 0.5 },    // Difensore centrale
+      { role: "RB", x: 0.27, y: 0.72 }, // Terzino destro
+      { role: "RWB", x: 0.33, y: 0.80 },
+      { role: "LWB", x: 0.33, y: 0.20 },
+      { role: "LM", x: 0.51, y: 0.28 },  // Centrocampista sinistro
+      { role: "CDM", x: 0.41, y: 0.5 }, // Centrocampista centrale
       { role: "CM", x: 0.54, y: 0.5 }, // Centrocampista destro
-      { role: "CAM", x: 0.64, y: 0.5 }, // Trequartista
-      { role: "LW", x: 0.75, y: 0.15 },    // Attaccante sinistro
-      { role: "CF", x: 0.74, y: 0.5 },   // Attaccante centrale
-      { role: "ST", x: 0.84, y: 0.5 },
-      { role: "RW", x: 0.75, y: 0.85 },    // Attaccante destro
-      { role: "RM", x: 0.55, y: 0.8 }    // Attaccante destro
+      { role: "CAM", x: 0.66, y: 0.5 }, // Trequartista
+      { role: "LW", x: 0.75, y: 0.22 },    // Attaccante sinistro
+      { role: "CF", x: 0.77, y: 0.5 },   // Attaccante centrale
+      { role: "ST", x: 0.87, y: 0.5 },
+      { role: "RW", x: 0.75, y: 0.78 },    // Attaccante destro
+      { role: "RM", x: 0.51, y: 0.72 }    // Attaccante destro
     ];
 
     const positionColors = {
@@ -389,6 +407,7 @@ document.addEventListener("DOMContentLoaded", function() {
         
           // Ripristina lo scatterplot con tutti i dati originali
           createScatterplot(window.dataset); // Assicurati che `window.dataset` contenga i dati originali
+          document.getElementById("league-filter").value = "All Leagues";
 
           const playerInfoDiv = d3.select("#player-info");
           playerInfoDiv.html("<div class='no-data'>Select a player to view details</div>");

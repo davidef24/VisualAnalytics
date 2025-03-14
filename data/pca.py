@@ -9,7 +9,7 @@ from sklearn.metrics import silhouette_score, silhouette_samples
 
 # Define the columns to drop
 columns_to_drop = [
-    "potential", "version", "club_kit_number", "club_rating", "club_league_name", "club_league_id", "club_id",
+    "potential", "version", "club_kit_number", "club_rating", "club_league_id", "club_id",
      "club_jersey_number", "club_loaned_from", "club_joined", "club_contract_valid_until",
     "nation_team_id", "nation_jersey_number", "work_rate", "body_type", "release_clause",
      "country_position", "country_kit_number", "country_rating", "country_league_name", "country_league_id" 
@@ -33,7 +33,7 @@ df_cleaned = df_cleaned.dropna(subset=["value"])
 excluded_columns = [
     "player_id", "short_name", "dob", "positions",
     "league_id", "league_name", "league_level", "club_team_id", "club_name",
-    "nationality_id",
+    "nationality_id", "club_league_name", 
     "full_name", "value", "wage", "play_styles"
 ]
 
@@ -55,6 +55,7 @@ column_means_pca = np.round(df_pca_kmeans[numeric_columns_pca].min())
 df_cleaned_pca = df_pca_kmeans.fillna(column_means_pca)
 df_output = df_cleaned.fillna(column_means_original)
 
+print(df_cleaned["club_league_name"].unique())
 
 #print(df_cleaned_gk2.info())
 # Columns to use for t-SNE
@@ -129,3 +130,4 @@ plt.show()
 
 # Save the cleaned dataset
 df_output.to_csv("dashboard/players_with_tsne_and_clusters_data.csv", index=False)
+print(df_cleaned["club_league_name"].unique)
