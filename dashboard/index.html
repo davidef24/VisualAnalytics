@@ -388,6 +388,70 @@
          width: 100%;
          height: 100%;
          }
+         
+
+         /* Stile per il menù a tendina */
+         #league-filter {
+            width: 200px; /* Larghezza del menù */
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            appearance: none; /* Rimuove lo stile predefinito del browser */
+            -webkit-appearance: none; /* Per browser WebKit (Chrome, Safari) */
+            -moz-appearance: none; /* Per Firefox */
+            cursor: pointer;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        #league-filter:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+        }
+
+        #league-filter:focus {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+            outline: none; /* Rimuove l'outline predefinito */
+        }
+
+        /* Stile per il menù a tendina quando è aperto */
+        #league-filter option {
+            padding: 8px;
+            font-size: 14px;
+            background-color: #fff;
+            color: #333;
+        }
+
+        #league-filter option:checked {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        /* Limita l'altezza del menù a tendina quando è aperto */
+        #league-filter {
+            max-height: 200px; /* Altezza massima del menù aperto */
+            overflow-y: auto; /* Abilita lo scroll verticale */
+        }
+
+        /* Aggiungi una freccia personalizzata al menù */
+        .custom-select-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .custom-select-wrapper::after {
+            content: "▼";
+            font-size: 12px;
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: #666;
+        }
 
     </style>
 </head>
@@ -419,7 +483,8 @@
                 </div>
                 <div>
                     Player Clusters (t-SNE)
-                    <select id="league-filter">
+                    <div class="custom-select-wrapper">
+                        <select id="league-filter">
                         <option value="All Leagues">All Leagues</option>
                         <option value="Serie A">Serie A</option>
                         <option value="La Liga">La Liga</option>
@@ -464,6 +529,7 @@
                     </select>
                 </div>
             </div>
+        </div>
             <div class="card-content">
                 <div id="scatterplot-container"></div>
             </div>

@@ -238,12 +238,7 @@ document.getElementById("league-filter").addEventListener("change", function () 
   createScatterplot(filteredData); // Aggiorna lo scatterplot con i dati filtrati
 });
 
-/**
-* Filtra i dati in base alla lega selezionata.
-* @param {Array} data - Il dataset completo.
-* @param {string} league - La lega selezionata ("all" per nessun filtro).
-* @returns {Array} - Il dataset filtrato.
-*/
+
 function filterDataByLeague(data, league) {
   if (league === "All Leagues") {
       return data; // Nessun filtro, restituisci tutti i dati
