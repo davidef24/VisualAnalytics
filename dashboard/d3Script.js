@@ -26,11 +26,10 @@ function applyFilters() {
   if (filters.league) {
     const league = filters.league;
     if (league === "All Leagues") {
-      return data; // Nessun filtro, restituisci tutti i dati
+      return filtered;
     }
     filtered =  filtered.filter((d) => d.club_league_name === league); // Filtra per lega
   }
-
   return filtered;
 }
 
@@ -42,7 +41,6 @@ function updateScatterplot() {
 // Function to load and process CSV data
 function loadCSVData(csvFilePath, callback) {
   d3.csv(csvFilePath).then(function(data) {
-    window.filterApplied = false;
     window.dataset = data;
     // Process the data: convert numeric attributes to numbers.
     data.forEach(function(d) {
@@ -190,7 +188,7 @@ function createScatterplot(data) {
 
 
     // Filter data to include only players from the same cluster
-    const sameClusterData = data.filter(player => player.Cluster === d.Cluster);
+    const sameClusterData = window.dataset.filter(player => player.Cluster === d.Cluster);
 
     // Call the function to create the bar chart with the clicked player's data
     createBarChart(d, sameClusterData);
@@ -384,16 +382,14 @@ document.addEventListener("DOMContentLoaded", function() {
           updateScatterplot();
       });
       document.getElementById("reset-filter").addEventListener("click", function() {
-        //console.log("Resetting Scatterplot and Player Information");
-        window.filterApplied = false;
-      
         // Ripristina lo scatterplot con tutti i dati originali
-        createScatterplot(window.dataset); // Assicurati che `window.dataset` contenga i dati originali
+        createScatterplot(window.dataset); 
         document.getElementById("league-filter").value = "All Leagues";
         const playerInfoDiv = d3.select("#player-info");
         playerInfoDiv.html("<div class='no-data'>Select a player to view details</div>");
         initializeRadarChart();
-        // *** Reset del Line Chart ***
+        const barChartDiv = d3.select("#bar-chart-card-content");
+        barChartDiv.html("<div class='no-data'>Select a player to compare with cluster</div>");
         d3.select("#time-series").html('<div class="no-data">Select a player to view progression</div>');
         // Reset della variabile del giocatore selezionato
         selectedPlayer = null;
@@ -1383,7 +1379,6 @@ loadCSVData(csvFilePath, function(data) {
   // Save the data for later use (e.g., updating other visualizations).
   //console.log(data);
   window.dataset = data;
-  window.filterApplied = false;
   // Create the scatterplot.
   createScatterplot(data);
 
