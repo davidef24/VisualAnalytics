@@ -255,19 +255,6 @@ function updateOtherVisualizations(clusterData) {
 // Define the path to your CSV file.
 const csvFilePath = "players_with_tsne_and_clusters_data.csv"; // Update this path
 
-// Load the CSV data and create the scatterplot.
-loadCSVData(csvFilePath, function(data) {
-  // Save the data for later use (e.g., updating other visualizations).
-  //console.log(data);
-  window.dataset = data;
-  window.filterApplied = false;
-  // Create the scatterplot.
-  createScatterplot(data);
-
-  // Inizializza il radar chart
-  initializeRadarChart();
-});
-
 document.addEventListener("DOMContentLoaded", function() {
   //console.log("D3 script loaded!");
 
@@ -295,20 +282,20 @@ document.addEventListener("DOMContentLoaded", function() {
     // Posizioni relative per la formazione 4-3-3
     const positions = [
       { role: "GK", x: 0.11, y: 0.5 },   // Portiere
-      { role: "LB", x: 0.27, y: 0.28 },  // Terzino sinistro
-      { role: "CB", x: 0.23, y: 0.5 },    // Difensore centrale
-      { role: "RB", x: 0.27, y: 0.72 }, // Terzino destro
-      { role: "RWB", x: 0.33, y: 0.80 },
-      { role: "LWB", x: 0.33, y: 0.20 },
-      { role: "LM", x: 0.51, y: 0.28 },  // Centrocampista sinistro
+      { role: "LB", x: 0.27, y: 0.18 },  // Terzino sinistro
+      { role: "CB", x: 0.27, y: 0.5 },    // Difensore centrale
+      { role: "RB", x: 0.27, y: 0.82 }, // Terzino destro
+      { role: "RWB", x: 0.4, y: 0.85 },
+      { role: "LWB", x: 0.4, y: 0.16 },
+      { role: "LM", x: 0.6, y: 0.18 },  // Centrocampista sinistro
       { role: "CDM", x: 0.41, y: 0.5 }, // Centrocampista centrale
       { role: "CM", x: 0.54, y: 0.5 }, // Centrocampista destro
       { role: "CAM", x: 0.66, y: 0.5 }, // Trequartista
-      { role: "LW", x: 0.75, y: 0.22 },    // Attaccante sinistro
+      { role: "LW", x: 0.8, y: 0.23 },    // Attaccante sinistro
       { role: "CF", x: 0.77, y: 0.5 },   // Attaccante centrale
       { role: "ST", x: 0.87, y: 0.5 },
-      { role: "RW", x: 0.75, y: 0.78 },    // Attaccante destro
-      { role: "RM", x: 0.51, y: 0.72 }    // Attaccante destro
+      { role: "RW", x: 0.8, y: 0.8 },    // Attaccante destro
+      { role: "RM", x: 0.6, y: 0.82 }    // Attaccante destro
     ];
 
     const positionColors = {
@@ -1412,4 +1399,17 @@ document.addEventListener("DOMContentLoaded", function() {
       }
       updateScatterplot();
   });
+});
+
+// Load the CSV data and create the scatterplot.
+loadCSVData(csvFilePath, function(data) {
+  // Save the data for later use (e.g., updating other visualizations).
+  //console.log(data);
+  window.dataset = data;
+  window.filterApplied = false;
+  // Create the scatterplot.
+  createScatterplot(data);
+
+  // Inizializza il radar chart
+  initializeRadarChart();
 });
