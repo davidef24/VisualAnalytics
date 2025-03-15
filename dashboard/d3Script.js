@@ -44,21 +44,21 @@ let compareMode = false;
 
 document.getElementById("compare-mode").addEventListener("change", function() {
   compareMode = this.checked;
+  document.getElementById("radar-slider").value = 0;
+  document.getElementById("radar-slider-value").textContent = "0";
   const slider = document.getElementById("radar-slider")
+  createRadarChart(window.selectedPlayer, []);
   // Controlla se viene disattivata la modalità confronto
-  console.log("Compare Mode:", compareMode);
+  //console.log("Compare Mode:", compareMode);
   if (!compareMode) {
     comparedPlayer = null;
     slider.disabled = false;
     // In questo caso, mostri solo il giocatore originale (quello selezionato inizialmente)
-    if (window.selectedPlayer) {
-        console.log("Radar Chart solo per il giocatore originale:", window.selectedPlayer);
-        // Qui chiami il radar chart con solo il giocatore originale
-        createRadarChart(window.selectedPlayer, []);  // Passi solo il primo giocatore, senza il confronto
-    }
   }
   else{
     slider.disabled = true;
+    //console.log("Radar Chart solo per il giocatore originale:", window.selectedPlayer);
+    createRadarChart(window.selectedPlayer, []); 
   }
 });
 
