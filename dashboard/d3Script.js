@@ -33,6 +33,30 @@ function applyFilters() {
   return filtered;
 }
 
+
+let comparedPlayer = null;
+let compareMode = false;
+
+document.getElementById("compare-mode").addEventListener("change", function() {
+  compareMode = this.checked;
+  const slider = document.getElementById("radar-slider")
+  // Controlla se viene disattivata la modalità confronto
+  //console.log("Compare Mode:", compareMode);
+  if (!compareMode) {
+    comparedPlayer = null;
+    slider.disabled = false;
+    // In questo caso, mostri solo il giocatore originale (quello selezionato inizialmente)
+    if (window.selectedPlayer) {
+        //console.log("Radar Chart solo per il giocatore originale:", window.selectedPlayer);
+        // Qui chiami il radar chart con solo il giocatore originale
+        createRadarChart(window.selectedPlayer, []);  // Passi solo il primo giocatore, senza il confronto
+    }
+  }
+  else{
+    slider.disabled = true;
+  }
+});
+
 function updateScatterplot() {
   const filteredPlayers = applyFilters();
   createScatterplot(filteredPlayers);
@@ -175,34 +199,43 @@ function createScatterplot(data) {
      tooltip.style("display", "none");
    })
    .on("click", function(event, d) {
+
+    if (compareMode) {
+      if (!comparedPlayer) {
+          comparedPlayer = d;
+          //console.log("Giocatore comparato selezionato:", comparedPlayer);
+          createRadarChart(selectedPlayer, [comparedPlayer]); // Confronta solo sul radar chart
+      }
+    } else {
     // Memorizza il giocatore selezionato
-    window.selectedPlayer = d;
+      window.selectedPlayer = d;
 
-    // Trova i giocatori più vicini in base al valore iniziale dello slider
-    //const sliderValue = +document.getElementById("radar-slider").value;
-    document.getElementById("radar-slider").value = 0;
-    document.getElementById("radar-slider-value").textContent = "0";
-    const nearestPlayers = findNearestPlayers(d, data, 0);
-    const fiveNearest = findNearestPlayers(d, data, 5);
-    window.np = fiveNearest;
-
-
-    // Filter data to include only players from the same cluster
-    const sameClusterData = window.dataset.filter(player => player.Cluster === d.Cluster);
-
-    // Call the function to create the bar chart with the clicked player's data
-    createBarChart(d, sameClusterData);
-
-    // Update player info
-    updatePlayerInfo(d);
-
-    // Create the radar chart with the selected player and the nearest players
-    createRadarChart(d, nearestPlayers);
+      // Trova i giocatori più vicini in base al valore iniziale dello slider
+      //const sliderValue = +document.getElementById("radar-slider").value;
+      document.getElementById("radar-slider").value = 0;
+      document.getElementById("radar-slider-value").textContent = "0";
+      const nearestPlayers = findNearestPlayers(d, data, 0);
+      const fiveNearest = findNearestPlayers(d, data, 5);
+      window.np = fiveNearest;
 
 
-    // Carica i dati storici e crea il line chart, passando il giocatore selezionato
-    loadAndCreateLineChart(d, "wage");
-    document.getElementById("line-chart-filter").value = "wage";
+      // Filter data to include only players from the same cluster
+      const sameClusterData = window.dataset.filter(player => player.Cluster === d.Cluster);
+
+      // Call the function to create the bar chart with the clicked player's data
+      createBarChart(d, sameClusterData);
+
+      // Update player info
+      updatePlayerInfo(d);
+
+      // Create the radar chart with the selected player and the nearest players
+      createRadarChart(d, nearestPlayers);
+
+
+      // Carica i dati storici e crea il line chart, passando il giocatore selezionato
+      loadAndCreateLineChart(d, "wage");
+      document.getElementById("line-chart-filter").value = "wage";
+    }
 
  });
  // Add Legend
@@ -385,6 +418,8 @@ document.addEventListener("DOMContentLoaded", function() {
         // Ripristina lo scatterplot con tutti i dati originali
         createScatterplot(window.dataset); 
         document.getElementById("league-filter").value = "All Leagues";
+        document.getElementById("compare-mode").checked = false;
+        document.getElementById("radar-slider").disabled = false;
         const playerInfoDiv = d3.select("#player-info");
         playerInfoDiv.html("<div class='no-data'>Select a player to view details</div>");
         initializeRadarChart();

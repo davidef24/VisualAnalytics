@@ -343,23 +343,39 @@
 
         #radar-chart-card .card-header {
             display: grid;
-            grid-template-columns: 1fr 1fr; /* Titolo a sinistra, slider a destra */
+            grid-template-columns: 1fr 1fr 1fr; /* Titolo a sinistra, checkbox e slider a destra */
             align-items: center; /* Centra verticalmente */
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        #compare-mode-container {
+            display: flex;
+            align-items: center;
+            gap: 5px; /* Distanza tra la checkbox e la label */
+            order: 1; /* Garantisce che la checkbox venga prima del label */
+        }
+
+        #compare-mode {
+            transform: scale(1.2); /* Ingrossa la checkbox per renderla più visibile */
         }
 
         #radar-slider-container {
             display: flex;
             align-items: center;
-            gap: 10px; 
-            justify-self: end; /* Allinea il contenitore dello slider a destra */
+            gap: 10px; /* Distanza tra slider e valore */
+            order: 2; /* Garantisce che lo slider venga dopo la checkbox */
+            margin-top: 0; /* Rimuove il margine aggiuntivo */
+            justify-self: start; /* Allinea lo slider a sinistra */
         }
 
         #radar-slider {
-            width: 100px; 
+            width: 100%; /* Imposta la larghezza dello slider */
         }
 
         #radar-slider-value {
-            font-size: 14px;
+            font-size: 18px;
+            color: #333;
         }
 
         .slider-values{
@@ -551,6 +567,10 @@
         <div id="radar-chart-card" class="dashboard-card">
             <div class="card-header">
                 <span>Player Attributes</span> <!-- Titolo -->
+                <div id="compare-mode-container">
+                    <label for="compare-mode">Compare Mode</label>
+                    <input type="checkbox" id="compare-mode">
+                </div>
                 <div id="radar-slider-container">
                     <input type="range" id="radar-slider" min="0" max="5" value="0">
                     <span id="radar-slider-value">0</span>
