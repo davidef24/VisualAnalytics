@@ -33,6 +33,11 @@ function applyFilters() {
   return filtered;
 }
 
+function isGoalkeeper(player) {
+  return player.positions === "GK"; // Verifica se la posizione è "GK"
+}
+
+
 
 let comparedPlayer = null;
 let compareMode = false;
@@ -200,13 +205,27 @@ function createScatterplot(data) {
    })
    .on("click", function(event, d) {
 
-    if (compareMode) {
-      if (!comparedPlayer) {
-          comparedPlayer = d;
-          //console.log("Giocatore comparato selezionato:", comparedPlayer);
-          createRadarChart(selectedPlayer, [comparedPlayer]); // Confronta solo sul radar chart
+    // Controllo per il compare mode
+if (compareMode) {
+  if (!comparedPlayer) {
+      // Se non è stato ancora selezionato un giocatore da confrontare
+      comparedPlayer = d;
+
+      // Verifica se il giocatore selezionato è un portiere
+      const isSelectedPlayerGK = isGoalkeeper(selectedPlayer);
+      const isComparedPlayerGK = isGoalkeeper(comparedPlayer);
+
+      // Se i ruoli sono diversi, non permettere la selezione
+      if (isSelectedPlayerGK !== isComparedPlayerGK) {
+          alert("Puoi confrontare solo giocatori dello stesso tipo (Portieri con Portieri, Altri ruoli con Altri ruoli).");
+          comparedPlayer = null; // Resetta il giocatore comparato se non valido
+          return;
       }
-    } else {
+
+      // Se la selezione è valida, procedi con la creazione del radar chart
+      createRadarChart(selectedPlayer, [comparedPlayer]); // Confronta solo sul radar chart
+  }
+} else {
     // Memorizza il giocatore selezionato
       window.selectedPlayer = d;
 
