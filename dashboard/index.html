@@ -224,13 +224,13 @@
 
         #scatterplot-card-header {
             display: grid;
-            grid-template-columns: 3fr 1fr;
+            grid-template-columns: 4fr 2fr 1fr 2fr;
             grid-template-rows: 1;
         }
 
         #slider-container {
             width: 300px;
-            grid-column: 3;
+            grid-column: 4;
             grid-row: 1;
             position: relative;
         }
@@ -409,7 +409,7 @@
          /* Stile per il menù a tendina */
          #league-filter {
             grid-column: 2;
-            width: 200px; /* Larghezza del menù */
+            width: 100%; /* Larghezza del menù */
             padding: 8px;
             font-size: 14px;
             border: 1px solid #ccc;
@@ -500,54 +500,54 @@
                     </div>
                 </div>
                 <div>
-                    Player Clusters (t-SNE)
-                    <div class="custom-select-wrapper">
-                        <select id="league-filter">
-                        <option value="All Leagues">All Leagues</option>
-                        <option value="Serie A">Serie A</option>
-                        <option value="La Liga">La Liga</option>
-                        <option value="Premier League">Premier League</option>
-                        <option value="Ligue 1">Ligue 1</option>
-                        <option value="Bundesliga">Bundesliga</option>
-                        <option value="Pro League">Pro League</option>
-                        <option value="Major League Soccer">Major League Soccer</option>
-                        <option value="Primeira Liga">Primeira Liga</option>
-                        <option value="Süper Lig">Süper Lig</option>
-                        <option value="Série A">Brasil Série A</option>
-                        <option value="Eredivisie">Eredivisie</option>
-                        <option value="Championship">Championship</option>
-                        <option value="Premiership">Premiership</option>
-                        <option value="Liga Profesional de Fútbol">Primera División Argentina</option>
-                        <option value="Categoría Primera A">Colombian Primera A</option>
-                        <option value="Super League">Super League</option>
-                        <option value="First League">Czech First League</option>
-                        <option value="Nemzeti Bajnokság I">Nemzeti Bajnokság I</option>
-                        <option value="Hrvatska nogometna liga">Hrvatska nogometna liga</option>
-                        <option value="La Liga 2">La Liga 2</option>
-                        <option value="Primera Division">Chilean Primera Division</option>
-                        <option value="Primera División">Uruguayan Primera División</option>
-                        <option value="Eliteserien">Eliteserien</option>
-                        <option value="2. Bundesliga">2. Bundesliga</option>
-                        <option value="Serie B">Serie B</option>
-                        <option value="Superliga">Superliga</option>
-                        <option value="Ekstraklasa">Ekstraklasa</option>
-                        <option value="A-League Men">A-League Men</option>
-                        <option value="Liga Pro">Liga Pro</option>
-                        <option value="K League 1">K League 1</option>
-                        <option value="Ligue 2">Ligue 2</option>
-                        <option value="Allsvenskan">Allsvenskan</option>
-                        <option value="División de Fútbol Profesional">División de Fútbol Profesional</option>
-                        <option value="1. Division">1. Division</option>
-                        <option value="Liga I">Romanian Liga I</option>
-                        <option value="3. Liga">3. Liga</option>
-                        <option value="League One">League One</option>
-                        <option value="Premier Division">Premier Division</option>
-                        <option value="League Two">League Two</option>
-                        <option value="Veikkausliiga">Veikkausliiga</option>        
-                    </select>
+                    Player Clusters (t-SNE) 
                 </div>
+                <div class="custom-select-wrapper">
+                    <select id="league-filter">
+                    <option value="All Leagues">All Leagues</option>
+                    <option value="Serie A">Serie A</option>
+                    <option value="La Liga">La Liga</option>
+                    <option value="Premier League">Premier League</option>
+                    <option value="Ligue 1">Ligue 1</option>
+                    <option value="Bundesliga">Bundesliga</option>
+                    <option value="Pro League">Pro League</option>
+                    <option value="Major League Soccer">Major League Soccer</option>
+                    <option value="Primeira Liga">Primeira Liga</option>
+                    <option value="Süper Lig">Süper Lig</option>
+                    <option value="Série A">Brasil Série A</option>
+                    <option value="Eredivisie">Eredivisie</option>
+                    <option value="Championship">Championship</option>
+                    <option value="Premiership">Premiership</option>
+                    <option value="Liga Profesional de Fútbol">Primera División Argentina</option>
+                    <option value="Categoría Primera A">Colombian Primera A</option>
+                    <option value="Super League">Super League</option>
+                    <option value="First League">Czech First League</option>
+                    <option value="Nemzeti Bajnokság I">Nemzeti Bajnokság I</option>
+                    <option value="Hrvatska nogometna liga">Hrvatska nogometna liga</option>
+                    <option value="La Liga 2">La Liga 2</option>
+                    <option value="Primera Division">Chilean Primera Division</option>
+                    <option value="Primera División">Uruguayan Primera División</option>
+                    <option value="Eliteserien">Eliteserien</option>
+                    <option value="2. Bundesliga">2. Bundesliga</option>
+                    <option value="Serie B">Serie B</option>
+                    <option value="Superliga">Superliga</option>
+                    <option value="Ekstraklasa">Ekstraklasa</option>
+                    <option value="A-League Men">A-League Men</option>
+                    <option value="Liga Pro">Liga Pro</option>
+                    <option value="K League 1">K League 1</option>
+                    <option value="Ligue 2">Ligue 2</option>
+                    <option value="Allsvenskan">Allsvenskan</option>
+                    <option value="División de Fútbol Profesional">División de Fútbol Profesional</option>
+                    <option value="1. Division">1. Division</option>
+                    <option value="Liga I">Romanian Liga I</option>
+                    <option value="3. Liga">3. Liga</option>
+                    <option value="League One">League One</option>
+                    <option value="Premier Division">Premier Division</option>
+                    <option value="League Two">League Two</option>
+                    <option value="Veikkausliiga">Veikkausliiga</option>        
+                </select>
             </div>
-        </div>
+            </div>
             <div class="card-content">
                 <div id="scatterplot-container"></div>
             </div>

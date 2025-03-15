@@ -13,14 +13,15 @@ function applyFilters() {
     );
   }
   if (filters.role) {
+    console.log(filters.role);
     filtered = filtered.filter(player => {
         if (!player.positions) return false; // Avoid errors if missing
 
         // Convert player positions (comma-separated string) into an array
         const playerRoles = player.positions.split(",").map(role => role.trim());
 
-        // Check if at least one of the player's roles is in the selected filters
-        return playerRoles.some(role => filters.role.includes(role));
+        // Check if the first role matches the specified role
+      return playerRoles.length > 0 && playerRoles[0] === filters.role[0];
     });
   }
   if (filters.league) {
@@ -135,7 +136,7 @@ function createScatterplot(data) {
   }
 
   // Define margins and available width/height
-  const margin = { top: 20, right: 200, bottom: 30, left: 40 };
+  const margin = { top: 20, right: 230, bottom: 30, left: 40 };
   let width = containerWidth - margin.left - margin.right;
   let height = containerHeight - margin.top - margin.bottom;
 
@@ -172,6 +173,7 @@ function createScatterplot(data) {
   // Define tooltip (ensure it exists)
   const tooltip = d3.select("body")
     .append("div")
+    .style("display", "none")
     .attr("class", "tooltip");
 
    // Draw all data points
@@ -282,12 +284,12 @@ function createScatterplot(data) {
 
  // Legend categories
  const legendData = [
-   { color: "#d95f02", label: "Defensive and Physical Players" },
-   { color: "#66a61e", label: "Athletic and Technical Players" },
+   { color: "#d95f02", label: "Playmakers and Versatile Midfielders" },
+   { color: "#66a61e", label: "Full Backs and Side Midifielders" },
    { color: "#e7298a", label: "Goalkeepers" },
-   { color: "#9467bd", label: "Physical Finishers" },
-   { color: "#e6ab02", label: "Midfielders" },
-   { color: "#1b9e77", label: "Wingers and Attack" }
+   { color: "#9467bd", label: "Physical and Athletic Strikers" },
+   { color: "#e6ab02", label: "Wingers and Agile Attackers" },
+   { color: "#1b9e77", label: "Defensive and Physical Players" }
  ];
 
  // Add legend items (color boxes and text)
