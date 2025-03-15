@@ -46,13 +46,13 @@ document.getElementById("compare-mode").addEventListener("change", function() {
   compareMode = this.checked;
   const slider = document.getElementById("radar-slider")
   // Controlla se viene disattivata la modalità confronto
-  //console.log("Compare Mode:", compareMode);
+  console.log("Compare Mode:", compareMode);
   if (!compareMode) {
     comparedPlayer = null;
     slider.disabled = false;
     // In questo caso, mostri solo il giocatore originale (quello selezionato inizialmente)
     if (window.selectedPlayer) {
-        //console.log("Radar Chart solo per il giocatore originale:", window.selectedPlayer);
+        console.log("Radar Chart solo per il giocatore originale:", window.selectedPlayer);
         // Qui chiami il radar chart con solo il giocatore originale
         createRadarChart(window.selectedPlayer, []);  // Passi solo il primo giocatore, senza il confronto
     }
@@ -206,26 +206,41 @@ function createScatterplot(data) {
    .on("click", function(event, d) {
 
     // Controllo per il compare mode
-if (compareMode) {
-  if (!comparedPlayer) {
-      // Se non è stato ancora selezionato un giocatore da confrontare
-      comparedPlayer = d;
-
-      // Verifica se il giocatore selezionato è un portiere
-      const isSelectedPlayerGK = isGoalkeeper(selectedPlayer);
-      const isComparedPlayerGK = isGoalkeeper(comparedPlayer);
-
-      // Se i ruoli sono diversi, non permettere la selezione
-      if (isSelectedPlayerGK !== isComparedPlayerGK) {
-          alert("Puoi confrontare solo giocatori dello stesso tipo (Portieri con Portieri, Altri ruoli con Altri ruoli).");
-          comparedPlayer = null; // Resetta il giocatore comparato se non valido
-          return;
+    if (compareMode) {
+      if (!comparedPlayer) {
+        // Se non è stato ancora selezionato un giocatore da confrontare
+        comparedPlayer = d;
+        // Verifica se il giocatore selezionato è un portiere
+        const isSelectedPlayerGK = isGoalkeeper(selectedPlayer);
+        const isComparedPlayerGK = isGoalkeeper(comparedPlayer);
+  
+        // Se i ruoli sono diversi, non permettere la selezione
+        if (isSelectedPlayerGK !== isComparedPlayerGK) {
+            alert("Puoi confrontare solo giocatori dello stesso tipo (Portieri con Portieri, Altri ruoli con Altri ruoli).");
+            comparedPlayer = null; // Resetta il giocatore comparato se non valido
+            return;
+        }
+  
+        // Se la selezione è valida, procedi con la creazione del radar chart
+        createRadarChart(selectedPlayer, [comparedPlayer]); // Confronta solo sul radar chart
+      } else {
+        // Se un altro giocatore è già stato selezionato per il confronto, sostituiscilo
+        comparedPlayer = d;
+  
+        // Verifica se i giocatori hanno lo stesso tipo
+        const isSelectedPlayerGK = isGoalkeeper(selectedPlayer);
+        const isComparedPlayerGK = isGoalkeeper(comparedPlayer);
+  
+        if (isSelectedPlayerGK !== isComparedPlayerGK) {
+            alert("Puoi confrontare solo giocatori dello stesso tipo (Portieri con Portieri, Altri ruoli con Altri ruoli).");
+            comparedPlayer = null; // Resetta il giocatore comparato se non valido
+            return;
+        }
+  
+        // Procedi con la creazione del radar chart aggiornato
+        createRadarChart(selectedPlayer, [comparedPlayer]); // Confronta sul radar chart con il nuovo giocatore
       }
-
-      // Se la selezione è valida, procedi con la creazione del radar chart
-      createRadarChart(selectedPlayer, [comparedPlayer]); // Confronta solo sul radar chart
-  }
-} else {
+    } else {
     // Memorizza il giocatore selezionato
       window.selectedPlayer = d;
 
