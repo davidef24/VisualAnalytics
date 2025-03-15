@@ -851,7 +851,7 @@ function createRadarChart(selectedPlayer, nearestPlayers) {
         { attribute: "Passing", value: (+player.short_passing + +player.long_passing + +player.crossing + +player.vision + +player.fk_accuracy + +player.curve) / 6 },
         { attribute: "Dribbling", value: (+player.dribbling + +player.agility + +player.balance + +player.reactions + +player.composure + +player.ball_control) / 6 },
         { attribute: "Defending", value: (+player.defensive_awareness + +player.standing_tackle + +player.sliding_tackle + +player.heading_accuracy + +player.interceptions) / 5 },
-        { attribute: "Pace", value: (+player.sprint_speed + +player.sprint_speed) / 2 },
+        { attribute: "Pace", value: (+player.sprint_speed + +player.acceleration) / 2 },
         { attribute: "Physics", value: (+player.stamina + +player.jumping + +player.strength + +player.aggression) / 4 }
       ];
 
@@ -1079,7 +1079,7 @@ function loadAndCreateLineChart(selectedPlayer, selectedMetric) {
         // Statistiche per i giocatori non portieri
         if (fifaVersion === 25) {
           return {
-            pace: (+player.sprint_speed + +player.sprint_speed) / 2 || 0,
+            pace: (+player.sprint_speed + +player.acceleration) / 2 || 0,
             dribbling: (+player.dribbling + +player.agility + +player.balance + +player.reactions + +player.composure + +player.ball_control) / 6 || 0,
             physics: (+player.stamina + +player.jumping + +player.strength + +player.aggression) / 4  || 0,
             shooting: (+player.shot_power + +player.long_shots + +player.finishing + +player.positioning + +player.volleys + +player.penalties) / 6 || 0, // Media tra shot_power e long_shots
