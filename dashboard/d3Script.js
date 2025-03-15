@@ -4,6 +4,16 @@ const filters = {
   league: null
 };
 
+const clustersColors = [
+  "#ffff33",
+  "#377eb8",
+  "#4daf4a",
+  "#a65628",
+  "#ff7f00",
+  "#984ea3"
+];
+
+
 function applyFilters() {
   let filtered = window.dataset;
   if (filters.overall_rating.min !== null && filters.overall_rating.max !== null) {
@@ -109,7 +119,7 @@ function calculateAge(dob) {
 
 
 // Define a color palette for clusters.
-const customColorPalette = d3.schemeDark2;
+const customColorPalette = clustersColors;
 
 // Add these at the top of your script (global or in parent scope)
 let originalXDomain, originalYDomain;
@@ -475,6 +485,8 @@ document.addEventListener("DOMContentLoaded", function() {
 function createBarChart(playerData, clusterPlayers) {
   const container = d3.select("#bar-chart-card-content");
   container.selectAll("*").remove(); // Clear previous chart
+  const playerCluster = playerData["Cluster"];
+  const clusterColor = clustersColors[playerCluster % clustersColors.length];
 
   const width = container.node().clientWidth;
   const height = container.node().clientHeight;
@@ -488,22 +500,12 @@ function createBarChart(playerData, clusterPlayers) {
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  // Check if player is a goalkeeper
-  const isGoalkeeper = playerData.positions === "GK";
-
     // Define attributes based on position
   // Define all attributes from playerData
   const attributes = [
     "crossing","finishing","heading_accuracy","short_passing","volleys","dribbling","curve","fk_accuracy","long_passing","ball_control","acceleration","sprint_speed","agility","reactions","balance","shot_power","jumping","stamina","strength","long_shots","aggression","interceptions","positioning","vision","penalties","composure","defensive_awareness","standing_tackle","sliding_tackle","gk_diving","gk_handling","gk_kicking","gk_positioning","gk_reflexes"
   ];
 
-  
-  // Define attributes based on position
-  //const attributes = isGoalkeeper 
-  //    ? ["Overall", "GK_Diving", "GK_Handling", "GK_Kicking", "GK_Positioning", "GK_Reflexes", "GK_Speed"]
-  //    : ["Overall", "Physic", "Pace", "Shooting", "Passing", "Dribbling", "Defending"];
-
-  // Compute cluster averages dynamically
   const clusterAverages = {};
   attributes.forEach(attr => {
       const lowerAttr = attr.toLowerCase();
@@ -561,7 +563,7 @@ function createBarChart(playerData, clusterPlayers) {
       .attr("y", d => y(d))
       .attr("width", barWidth)
       .attr("height", d => chartHeight - y(d))
-      .attr("fill", "#DA5A2A");
+      .attr("fill", "#e41a1c");
 
   svg.selectAll(".cluster-bar")
       .data(clusterValues)
@@ -572,7 +574,7 @@ function createBarChart(playerData, clusterPlayers) {
       .attr("y", d => y(d))
       .attr("width", barWidth)
       .attr("height", d => chartHeight - y(d))
-      .attr("fill", "#3B1877");
+      .attr("fill", clusterColor);
       // Add legend
     const legend = svg.append("g")
     .attr("class", "legend")
@@ -580,8 +582,8 @@ function createBarChart(playerData, clusterPlayers) {
   
   // Legend items
   const legendItems = [
-    { color: "#DA5A2A", text: `${window.selectedPlayer.name} values` },
-    { color: "#3B1877", text: "Cluster Average" }
+    { color: "#e41a1c", text: `${window.selectedPlayer.name} values` },
+    { color: clusterColor, text: "Cluster Average" }
   ];
   
   // Legend rectangles
