@@ -456,6 +456,8 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById("league-filter").value = "All Leagues";
         document.getElementById("compare-mode").checked = false;
         document.getElementById("radar-slider").disabled = false;
+        document.getElementById("radar-slider").value = 0;
+        document.getElementById("radar-slider-value").textContent = "0";
         const playerInfoDiv = d3.select("#player-info");
         playerInfoDiv.html("<div class='no-data'>Select a player to view details</div>");
         initializeRadarChart();
