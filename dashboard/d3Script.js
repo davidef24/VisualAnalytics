@@ -5,12 +5,12 @@ const filters = {
 };
 
 const clustersColors = [
-  "#ffff33",
-  "#377eb8",
-  "#4daf4a",
-  "#a65628",
-  "#ff7f00",
-  "#984ea3"
+  "#ff595e", 
+  "#ff924c", 
+  "#ffca3a",  
+  "#6a4c93",  
+  "#1982c4",  
+  "#8ac926" 
 ];
 
 
@@ -292,14 +292,14 @@ function createScatterplot(data) {
  const legend = scatterSvg.append("g")
    .attr("transform", `translate(${width + 10}, 20)`); // Place legend to the right of the chart
 
- // Legend categories
+ // Automatically generate legend categories based on the color palette
  const legendData = [
-   { color: "#d95f02", label: "Playmakers and Versatile Midfielders" },
-   { color: "#66a61e", label: "Full Backs and Side Midifielders" },
-   { color: "#e7298a", label: "Goalkeepers" },
-   { color: "#9467bd", label: "Physical and Athletic Strikers" },
-   { color: "#e6ab02", label: "Wingers and Agile Attackers" },
-   { color: "#1b9e77", label: "Defensive and Physical Players" }
+   { color: colorPalette[0], label: "Defensive and Physical Players" },
+   { color: colorPalette[1], label: "Playmakers and Versatile Midfielders" },
+   { color: colorPalette[2], label: "Physical and Athletic Strikers" },
+   { color: colorPalette[3], label: "Goalkeepers" },
+   { color: colorPalette[4], label: "Full Backs and Side Midifielders" },
+   { color: colorPalette[5], label: "Wingers and Agile Attackers" }
  ];
 
  // Add legend items (color boxes and text)
@@ -406,7 +406,7 @@ document.addEventListener("DOMContentLoaded", function() {
     ];
 
     const positionColors = {
-        "GK": "#ffff33",           
+        "GK": "#333333",           
         "CB": "#377eb8",         
         "RWB": "#377eb8",
         "RB": "#377eb8",
@@ -422,6 +422,7 @@ document.addEventListener("DOMContentLoaded", function() {
         "ST": "#e41a1c",
         "CF": "#e41a1c"        
     };
+  
 
     // Disegna i pallini per i ruoli
     container.selectAll("circle.role")
@@ -431,10 +432,27 @@ document.addEventListener("DOMContentLoaded", function() {
       .attr("class", "role")
       .attr("cx", d => d.x * containerWidth)  // Posizione dinamica
       .attr("cy", d => d.y * containerHeight)  // Posizione dinamica
-      .attr("r", 12)
+      .attr("r", 15)
       .attr("fill", d => positionColors[d.role] || "gray")
       .attr("stroke", "black")
-      .attr("stroke-width", 1.5);
+      .attr("stroke-width", 1.5)
+      .style("cursor", "pointer")  // Set cursor to pointer to indicate interactivity
+      .on("mouseenter", function() {
+        d3.select(this)
+          .transition()
+          .duration(200)
+          .attr("r", 15)  // Slightly increase size
+          .attr("stroke-width", 2.5)
+          .attr("stroke", "#ffffff");  // Highlight effect
+      })
+      .on("mouseleave", function() {
+          d3.select(this)
+            .transition()
+            .duration(200)
+            .attr("r", 15)  // Restore original size
+            .attr("stroke-width", 1.5)
+            .attr("stroke", "black");  // Restore original stroke
+      });
 
     // Testi per i ruoli
     container.selectAll("text")
@@ -442,10 +460,9 @@ document.addEventListener("DOMContentLoaded", function() {
       .enter()
       .append("text")
       .attr("x", d => d.x * containerWidth)
-      .attr("y", d => d.y * containerHeight - 15)  // Aggiungi spazio sopra il pallino
+      .attr("y", d => d.y * containerHeight + 3)  // Aggiungi spazio sopra il pallino
       .attr("text-anchor", "middle")
       .attr("fill", "white")
-      .attr("stroke", "black")
       .attr("stroke-width", "2")
       .attr("paint-order", "stroke")
       .attr("font-size", "10px")
@@ -486,7 +503,9 @@ function createBarChart(playerData, clusterPlayers) {
   const container = d3.select("#bar-chart-card-content");
   container.selectAll("*").remove(); // Clear previous chart
   const playerCluster = playerData["Cluster"];
-  const clusterColor = clustersColors[playerCluster % clustersColors.length];
+  //const clusterColor = clustersColors[playerCluster % clustersColors.length];
+  const clusterColor = "#d62828";
+  const playerColor = "#003049"
 
   const width = container.node().clientWidth;
   const height = container.node().clientHeight;
@@ -563,7 +582,7 @@ function createBarChart(playerData, clusterPlayers) {
       .attr("y", d => y(d))
       .attr("width", barWidth)
       .attr("height", d => chartHeight - y(d))
-      .attr("fill", "#e41a1c");
+      .attr("fill", playerColor);
 
   svg.selectAll(".cluster-bar")
       .data(clusterValues)
@@ -582,7 +601,7 @@ function createBarChart(playerData, clusterPlayers) {
   
   // Legend items
   const legendItems = [
-    { color: "#e41a1c", text: `${window.selectedPlayer.name} values` },
+    { color: playerColor, text: `${window.selectedPlayer.name} values` },
     { color: clusterColor, text: "Cluster Average" }
   ];
   
@@ -602,8 +621,8 @@ function createBarChart(playerData, clusterPlayers) {
     .data(legendItems)
     .enter()
     .append("text")
-    .attr("x", 24)
-    .attr("y", (d, i) => i * 20 + 14)
+    .attr("x", 18)
+    .attr("y", (d, i) => i * 20 + 8)
     .text(d => d.text)
     .style("font-size", "12px")
     .style("alignment-baseline", "middle");
