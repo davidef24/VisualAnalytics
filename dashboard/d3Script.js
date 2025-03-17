@@ -479,12 +479,17 @@ document.addEventListener("DOMContentLoaded", function() {
       });
       document.getElementById("reset-filter").addEventListener("click", function() {
         // Ripristina lo scatterplot con tutti i dati originali
-        createScatterplot(window.dataset); 
+        createScatterplot(window.dataset);
         document.getElementById("league-filter").value = "All Leagues";
+        filters.league = "All Leagues";
         document.getElementById("compare-mode").checked = false;
         document.getElementById("radar-slider").disabled = false;
         document.getElementById("radar-slider").value = 0;
         document.getElementById("radar-slider-value").textContent = "0";
+        document.getElementById("min-slider").value = 65;
+        document.getElementById("max-slider").value = 94;
+        document.getElementById("min-slider").textContent = 65;
+        document.getElementById("max-slider").textContent = 94;
         const playerInfoDiv = d3.select("#player-info");
         playerInfoDiv.html("<div class='no-data'>Select a player to view details</div>");
         initializeRadarChart();
