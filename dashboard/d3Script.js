@@ -1,7 +1,7 @@
 const filters = {
-  overall_rating: { min: null, max: null },
+  overall_rating: { min: 65, max: 94 },
   role: null,
-  league: null
+  league: "All Leagues"
 };
 
 const clustersColors = [
@@ -379,79 +379,113 @@ document.addEventListener("DOMContentLoaded", function() {
   container.append("image")
     .attr("x", 0)
     .attr("y", 0)
-    .attr("width", containerWidth)  // Impostiamo la larghezza in base al contenitore
-    .attr("height", containerHeight) // Impostiamo l'altezza in base al contenitore
-    .attr("xlink:href", "../field.jpg") // Modifica con il percorso corretto
-    .attr("preserveAspectRatio", "xMidYMid meet"); // Mantieni le proporzioni dell'immagine
+    .attr("width", containerWidth)
+    .attr("height", containerHeight)
+    .attr("xlink:href", "../field.jpg")
+    .attr("preserveAspectRatio", "xMidYMid meet");
+
+  // Variabile per tenere traccia del cerchio fissato
+  let fixedCircle = null;
 
   // Carica il CSV e gestisci i giocatori
   d3.csv(csvFilePath).then(function(data) {
     // Posizioni relative per la formazione 4-3-3
     const positions = [
-      { role: "GK", x: 0.11, y: 0.5 },   // Portiere
-      { role: "LB", x: 0.27, y: 0.25 },  // Terzino sinistro
-      { role: "CB", x: 0.27, y: 0.5 },    // Difensore centrale
-      { role: "RB", x: 0.27, y: 0.75 }, // Terzino destro
+      { role: "GK", x: 0.11, y: 0.5 },
+      { role: "LB", x: 0.27, y: 0.25 },
+      { role: "CB", x: 0.27, y: 0.5 },
+      { role: "RB", x: 0.27, y: 0.75 },
       { role: "RWB", x: 0.4, y: 0.77 },
       { role: "LWB", x: 0.4, y: 0.23 },
-      { role: "LM", x: 0.6, y: 0.23 },  // Centrocampista sinistro
-      { role: "CDM", x: 0.41, y: 0.5 }, // Centrocampista centrale
-      { role: "CM", x: 0.54, y: 0.5 }, // Centrocampista destro
-      { role: "CAM", x: 0.66, y: 0.5 }, // Trequartista
-      { role: "LW", x: 0.8, y: 0.25 },    // Attaccante sinistro
-      { role: "CF", x: 0.77, y: 0.5 },   // Attaccante centrale
+      { role: "LM", x: 0.6, y: 0.23 },
+      { role: "CDM", x: 0.41, y: 0.5 },
+      { role: "CM", x: 0.54, y: 0.5 },
+      { role: "CAM", x: 0.66, y: 0.5 },
+      { role: "LW", x: 0.8, y: 0.25 },
+      { role: "CF", x: 0.77, y: 0.5 },
       { role: "ST", x: 0.87, y: 0.5 },
-      { role: "RW", x: 0.8, y: 0.75 },    // Attaccante destro
-      { role: "RM", x: 0.6, y: 0.77 }    // Attaccante destro
+      { role: "RW", x: 0.8, y: 0.75 },
+      { role: "RM", x: 0.6, y: 0.77 }
     ];
 
     const positionColors = {
-        "GK": "#333333",           
-        "CB": "#377eb8",         
-        "RWB": "#377eb8",
-        "RB": "#377eb8",
-        "LWB": "#377eb8",
-        "LB": "#377eb8",
-        "CM": "#ff7f00",
-        "CDM": "#ff7f00", 
-        "CAM": "#ff7f00", 
-        "LM": "#ff7f00",
-        "RM": "#ff7f00",     
-        "RW": "#e41a1c",     
-        "LW": "#e41a1c",
-        "ST": "#e41a1c",
-        "CF": "#e41a1c"        
+      "GK": "#333333",           
+      "CB": "#377eb8",         
+      "RWB": "#377eb8",
+      "RB": "#377eb8",
+      "LWB": "#377eb8",
+      "LB": "#377eb8",
+      "CM": "#ff7f00",
+      "CDM": "#ff7f00", 
+      "CAM": "#ff7f00", 
+      "LM": "#ff7f00",
+      "RM": "#ff7f00",     
+      "RW": "#e41a1c",     
+      "LW": "#e41a1c",
+      "ST": "#e41a1c",
+      "CF": "#e41a1c"        
     };
-  
 
-    // Disegna i pallini per i ruoli
+    // Disegna i pallini per i ruoli con i gestori di eventi aggiornati
     container.selectAll("circle.role")
       .data(positions)
       .enter()
       .append("circle")
       .attr("class", "role")
-      .attr("cx", d => d.x * containerWidth)  // Posizione dinamica
-      .attr("cy", d => d.y * containerHeight)  // Posizione dinamica
+      .attr("cx", d => d.x * containerWidth)
+      .attr("cy", d => d.y * containerHeight)
       .attr("r", 12)
       .attr("fill", d => positionColors[d.role] || "gray")
       .attr("stroke", "black")
       .attr("stroke-width", 1.5)
-      .style("cursor", "pointer")  // Set cursor to pointer to indicate interactivity
+      .style("cursor", "pointer")
       .on("mouseenter", function() {
-        d3.select(this)
-          .transition()
-          .duration(200)
-          .attr("r", 15)  // Slightly increase size
-          .attr("stroke-width", 2.5)
-          .attr("stroke", "#ffffff");  // Highlight effect
-      })
-      .on("mouseleave", function() {
+        // Se il cerchio non è fissato, applica l'effetto di highlight
+        if (!d3.select(this).classed("fixed")) {
           d3.select(this)
             .transition()
             .duration(200)
-            .attr("r", 13)  // Restore original size
+            .attr("r", 15)
+            .attr("stroke-width", 2.5)
+            .attr("stroke", "#ffffff");
+        }
+      })
+      .on("mouseleave", function() {
+        // Se il cerchio non è fissato, ripristina lo stato originale
+        if (!d3.select(this).classed("fixed")) {
+          d3.select(this)
+            .transition()
+            .duration(200)
+            .attr("r", 12)
             .attr("stroke-width", 1.5)
-            .attr("stroke", "black");  // Restore original stroke
+            .attr("stroke", "black");
+        }
+      })
+      .on("click", function(event, d) {
+        // Rimuovi l'effetto fisso dal precedente cerchio, se presente
+        if (fixedCircle && fixedCircle !== this) {
+          d3.select(fixedCircle)
+            .classed("fixed", false)
+            .transition()
+            .duration(200)
+            .attr("r", 12)
+            .attr("stroke-width", 1.5)
+            .attr("stroke", "black");
+        }
+        // Imposta questo cerchio come fisso
+        fixedCircle = this;
+        d3.select(this)
+          .classed("fixed", true)
+          .transition()
+          .duration(200)
+          .attr("r", 15)
+          .attr("stroke-width", 2.5)
+          .attr("stroke", "#ffffff");
+
+        // Aggiorna i filtri e lo scatterplot
+        const selectedRoles = d.role.split("-").map(role => role.trim());
+        filters.role = selectedRoles;
+        updateScatterplot();
       });
 
     // Testi per i ruoli
@@ -460,7 +494,7 @@ document.addEventListener("DOMContentLoaded", function() {
       .enter()
       .append("text")
       .attr("x", d => d.x * containerWidth)
-      .attr("y", d => d.y * containerHeight + 3)  // Aggiungi spazio sopra il pallino
+      .attr("y", d => d.y * containerHeight + 3)
       .attr("text-anchor", "middle")
       .attr("fill", "white")
       .attr("stroke-width", "2")
@@ -468,41 +502,81 @@ document.addEventListener("DOMContentLoaded", function() {
       .attr("font-size", "8px")
       .attr("font-weight", "bold")
       .text(d => d.role);
-    
 
-    // Aggiungi un evento di click ai pallini dei ruoli
-    container.selectAll("circle.role")
-      .on("click", function(event, d) {
-          const selectedRoles = d.role.split("-").map(role => role.trim());
-          filters.role = selectedRoles;
-          updateScatterplot();
-      });
-      document.getElementById("reset-filter").addEventListener("click", function() {
-        // Ripristina lo scatterplot con tutti i dati originali
-        createScatterplot(window.dataset);
-        document.getElementById("league-filter").value = "All Leagues";
-        filters.league = "All Leagues";
-        document.getElementById("compare-mode").checked = false;
-        document.getElementById("radar-slider").disabled = false;
-        document.getElementById("radar-slider").value = 0;
-        document.getElementById("radar-slider-value").textContent = "0";
-        document.getElementById("min-slider").value = 65;
-        document.getElementById("max-slider").value = 94;
-        document.getElementById("min-slider").textContent = 65;
-        document.getElementById("max-slider").textContent = 94;
-        const playerInfoDiv = d3.select("#player-info");
-        playerInfoDiv.html("<div class='no-data'>Select a player to view details</div>");
-        initializeRadarChart();
-        const barChartDiv = d3.select("#bar-chart-card-content");
-        barChartDiv.html("<div class='no-data'>Select a player to compare with cluster</div>");
-        d3.select("#time-series").html('<div class="no-data">Select a player to view progression</div>');
-        // Reset della variabile del giocatore selezionato
-        selectedPlayer = null;
-      }); 
+    function updateSliderValues() {
+        const minSlider = document.getElementById("min-slider");
+        const maxSlider = document.getElementById("max-slider");
+        const minValueDisplay = document.getElementById("min-value");
+        const maxValueDisplay = document.getElementById("max-value");
+        filters.overall_rating.min = parseInt(minSlider.value);
+        filters.overall_rating.max = parseInt(maxSlider.value);
+        const sliderTrack = document.getElementById("slider-track");
+        const minVal = parseInt(minSlider.value);
+        const maxVal = parseInt(maxSlider.value);
+  
+        // Prevent overlap
+        if (minVal > maxVal) minSlider.value = maxVal;
+        if (maxVal < minVal) maxSlider.value = minVal;
+  
+        // Update displayed values
+        minValueDisplay.textContent = minSlider.value;
+        maxValueDisplay.textContent = maxSlider.value;
+  
+        // Dynamically update track highlight between sliders
+        const minPercent = ((minVal - minSlider.min) / (minSlider.max - minSlider.min)) * 100;
+        const maxPercent = ((maxVal - minSlider.min) / (minSlider.max - minSlider.min)) * 100;
+        sliderTrack.style.left = minPercent + "%";
+        sliderTrack.style.width = (maxPercent - minPercent) + "%";
+        sliderTrack.classList.add("active");
+    }
+
+    // Gestione del reset
+    document.getElementById("reset-filter").addEventListener("click", function() {
+      filters.overall_rating.min = 65;
+      filters.overall_rating.max = 95;
+      filters.league = "All Leagues";
+      filters.role = null;
+      let ds = applyFilters();
+      
+      document.getElementById("league-filter").value = "All Leagues";
+      document.getElementById("compare-mode").checked = false;
+      document.getElementById("radar-slider").disabled = false;
+      document.getElementById("radar-slider").value = 0;
+      document.getElementById("radar-slider-value").textContent = "0";
+      const minSlider = document.getElementById("min-slider");
+      const maxSlider = document.getElementById("max-slider");
+      minSlider.value = 65;
+      maxSlider.value = 94;
+      minSlider.textContent = 65;
+      maxSlider.textContent = 94;
+      updateSliderValues();
+      createScatterplot(ds); 
+      const playerInfoDiv = d3.select("#player-info");
+      playerInfoDiv.html("<div class='no-data'>Select a player to view details</div>");
+      initializeRadarChart();
+      const barChartDiv = d3.select("#bar-chart-card-content");
+      barChartDiv.html("<div class='no-data'>Select a player to compare with cluster</div>");
+      d3.select("#time-series").html('<div class="no-data">Select a player to view progression</div>');
+      // Ripristina la variabile del giocatore selezionato
+      selectedPlayer = null;
+      
+      // Rimuovi l'effetto fisso se presente
+      if (fixedCircle) {
+        d3.select(fixedCircle)
+          .classed("fixed", false)
+          .transition()
+          .duration(200)
+          .attr("r", 12)
+          .attr("stroke-width", 1.5)
+          .attr("stroke", "black");
+        fixedCircle = null;
+      }
+    });
   }).catch(error => {
       console.error("Error loading CSV:", error);
   });
 });
+
 
 function createBarChart(playerData, clusterPlayers) {
   const container = d3.select("#bar-chart-card-content");
