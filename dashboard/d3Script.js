@@ -389,20 +389,20 @@ document.addEventListener("DOMContentLoaded", function() {
     // Posizioni relative per la formazione 4-3-3
     const positions = [
       { role: "GK", x: 0.11, y: 0.5 },   // Portiere
-      { role: "LB", x: 0.27, y: 0.18 },  // Terzino sinistro
+      { role: "LB", x: 0.27, y: 0.25 },  // Terzino sinistro
       { role: "CB", x: 0.27, y: 0.5 },    // Difensore centrale
-      { role: "RB", x: 0.27, y: 0.82 }, // Terzino destro
-      { role: "RWB", x: 0.4, y: 0.85 },
-      { role: "LWB", x: 0.4, y: 0.16 },
-      { role: "LM", x: 0.6, y: 0.18 },  // Centrocampista sinistro
+      { role: "RB", x: 0.27, y: 0.75 }, // Terzino destro
+      { role: "RWB", x: 0.4, y: 0.77 },
+      { role: "LWB", x: 0.4, y: 0.23 },
+      { role: "LM", x: 0.6, y: 0.23 },  // Centrocampista sinistro
       { role: "CDM", x: 0.41, y: 0.5 }, // Centrocampista centrale
       { role: "CM", x: 0.54, y: 0.5 }, // Centrocampista destro
       { role: "CAM", x: 0.66, y: 0.5 }, // Trequartista
-      { role: "LW", x: 0.8, y: 0.23 },    // Attaccante sinistro
+      { role: "LW", x: 0.8, y: 0.25 },    // Attaccante sinistro
       { role: "CF", x: 0.77, y: 0.5 },   // Attaccante centrale
       { role: "ST", x: 0.87, y: 0.5 },
-      { role: "RW", x: 0.8, y: 0.8 },    // Attaccante destro
-      { role: "RM", x: 0.6, y: 0.82 }    // Attaccante destro
+      { role: "RW", x: 0.8, y: 0.75 },    // Attaccante destro
+      { role: "RM", x: 0.6, y: 0.77 }    // Attaccante destro
     ];
 
     const positionColors = {
@@ -432,7 +432,7 @@ document.addEventListener("DOMContentLoaded", function() {
       .attr("class", "role")
       .attr("cx", d => d.x * containerWidth)  // Posizione dinamica
       .attr("cy", d => d.y * containerHeight)  // Posizione dinamica
-      .attr("r", 15)
+      .attr("r", 12)
       .attr("fill", d => positionColors[d.role] || "gray")
       .attr("stroke", "black")
       .attr("stroke-width", 1.5)
@@ -449,7 +449,7 @@ document.addEventListener("DOMContentLoaded", function() {
           d3.select(this)
             .transition()
             .duration(200)
-            .attr("r", 15)  // Restore original size
+            .attr("r", 13)  // Restore original size
             .attr("stroke-width", 1.5)
             .attr("stroke", "black");  // Restore original stroke
       });
@@ -465,7 +465,7 @@ document.addEventListener("DOMContentLoaded", function() {
       .attr("fill", "white")
       .attr("stroke-width", "2")
       .attr("paint-order", "stroke")
-      .attr("font-size", "10px")
+      .attr("font-size", "8px")
       .attr("font-weight", "bold")
       .text(d => d.role);
     
@@ -1281,6 +1281,7 @@ function createLineChart(playerData, metric) {
         .on("mouseover", function (event, d) {
           tooltip.style("opacity", 1)
             .html(`<strong>${stat.toUpperCase()}</strong>: ${d.statistics?.[stat] || "N/A"}`)
+            .style("display", "block")
             .style("left", `${event.pageX + 15}px`)
             .style("top", `${event.pageY - 30}px`);
 
@@ -1295,7 +1296,7 @@ function createLineChart(playerData, metric) {
             .style("top", `${event.pageY - 30}px`);
         })
         .on("mouseout", function () {
-          tooltip.style("opacity", 0);
+          tooltip.style("opacity", 0).style("display", "none");
 
           d3.selectAll("path").transition().duration(20).attr("opacity", 1).attr("stroke-width", 2);
           d3.selectAll('[class^="dot-"]').transition().duration(20).attr("opacity", 1).attr("r", 4);
