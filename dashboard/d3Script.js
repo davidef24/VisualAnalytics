@@ -1265,51 +1265,71 @@ function createLineChart(playerData, metric) {
       .domain([0, 100])
       .range([height, 0]);
 
-    statistics.forEach(stat => {
-      const line = d3.line()
-        .x(d => xScale(new Date(d.year + 2000, 0))) // Usa la data per l'anno
-        .y(d => yScale(d.statistics?.[stat] || 0))
-        .defined(d => d.statistics?.[stat] !== null && d.statistics?.[stat] !== undefined);
-
-      svg.append("path")
-        .datum(playerData)
-        .attr("fill", "none")
-        .attr("stroke", statisticColors[stat])
-        .attr("stroke-width", 2)
-        .attr("d", line);
-
-      // Aggiungi i punti con tooltip
-      svg.selectAll(".dot-" + stat)
-        .data(playerData.filter(d => d.statistics?.[stat] !== null))
-        .enter()
-        .append("circle")
-        .attr("class", "dot-" + stat)
-        .attr("cx", d => xScale(new Date(d.year + 2000, 0))) // Usa la data per l'anno
-        .attr("cy", d => yScale(d.statistics?.[stat] || 0))
-        .attr("r", 4)
-        .attr("fill", statisticColors[stat])
-        .on("mouseover", function (event, d) {
-          tooltip.style("opacity", 1);
-          tooltip.html(`<strong>${stat.toUpperCase()}</strong>: ${d.statistics?.[stat] || "N/A"}`)
-            .style("left", `${event.pageX + 15}px`)
-            .style("top", `${event.pageY - 30}px`);
-
-          d3.select(this)
-            .transition().duration(200)
-            .attr("r", 6);
-        })
-        .on("mousemove", function (event) {
-          tooltip.style("left", `${event.pageX + 15}px`)
-            .style("top", `${event.pageY - 30}px`);
-        })
-        .on("mouseout", function () {
-          tooltip.style("opacity", 0);
-
-          d3.select(this)
-            .transition().duration(200)
-            .attr("r", 4);
+      statistics.forEach((stat, index) => {
+        const color = clustersColors[index % clustersColors.length]; // Cicla tra i colori disponibili
+    
+        const line = d3.line()
+            .x(d => xScale(new Date(d.year + 2000, 0))) // Usa la data per l'anno
+            .y(d => yScale(d.statistics?.[stat] || 0))
+            .defined(d => d.statistics?.[stat] !== null && d.statistics?.[stat] !== undefined);
+    
+        const path = svg.append("path")
+            .datum(playerData)
+            .attr("fill", "none")
+            .attr("stroke", color) // Assegna il colore dalla palette
+            .attr("stroke-width", 2)
+            .attr("opacity", 1)
+            .attr("class", `line-${stat}`)
+            .attr("d", line);
+    
+        // Aggiungi i punti con tooltip
+        svg.selectAll(".dot-" + stat)
+            .data(playerData.filter(d => d.statistics?.[stat] !== null))
+            .enter()
+            .append("circle")
+            .attr("class", "dot-" + stat)
+            .attr("cx", d => xScale(new Date(d.year + 2000, 0))) // Usa la data per l'anno
+            .attr("cy", d => yScale(d.statistics?.[stat] || 0))
+            .attr("r", 4)
+            .attr("fill", color) // Usa lo stesso colore della linea
+            .attr("stroke", "white") // Bordo bianco per evidenziare i punti
+            .attr("stroke-width", 0)
+            .on("mouseover", function (event, d) {
+                tooltip.style("opacity", 1);
+                tooltip.html(`<strong>${stat.toUpperCase()}</strong>: ${d.statistics?.[stat] || "N/A"}`)
+                    .style("left", `${event.pageX + 15}px`)
+                    .style("top", `${event.pageY - 30}px`);
+    
+                d3.selectAll("path").transition().duration(50).attr("opacity", 0.3);
+                d3.selectAll('[class^="dot-"]').transition().duration(50).attr("opacity", 0.3);
+    
+                d3.select(`.line-${stat}`).transition().duration(50).attr("opacity", 1).attr("stroke-width", 3);
+                d3.selectAll(`.dot-${stat}`).transition().duration(50).attr("opacity", 1).attr("r", 6);
+            })
+            .on("mousemove", function (event) {
+                tooltip.style("left", `${event.pageX + 15}px`)
+                    .style("top", `${event.pageY - 30}px`);
+            })
+            .on("mouseout", function () {
+                tooltip.style("opacity", 0);
+    
+                d3.selectAll("path").transition().duration(20).attr("opacity", 1).attr("stroke-width", 2);
+                d3.selectAll('[class^="dot-"]').transition().duration(20).attr("opacity", 1).attr("r", 4);
+            });
+    
+        // Aggiungi eventi anche alla linea per lo stesso effetto
+        path.on("mouseover", function () {
+            d3.selectAll("path").transition().duration(20).attr("opacity", 0.3);
+            d3.selectAll('[class^="dot-"]').transition().duration(20).attr("opacity", 0.3);
+    
+            d3.select(`.line-${stat}`).transition().duration(20).attr("opacity", 1).attr("stroke-width", 3);
+            d3.selectAll(`.dot-${stat}`).transition().duration(20).attr("opacity", 1).attr("r", 6);
+        }).on("mouseout", function () {
+            d3.selectAll("path").transition().duration(20).attr("opacity", 1).attr("stroke-width", 2);
+            d3.selectAll('[class^="dot-"]').transition().duration(20).attr("opacity", 1).attr("r", 4);
         });
     });
+    
   } else {
     yScale = d3.scaleLinear()
       .domain([0, d3.max(playerData, d => d[metric]) || 100000])
