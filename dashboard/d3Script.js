@@ -1191,8 +1191,7 @@ function loadAndCreateLineChart(selectedPlayer, selectedMetric) {
 
 
 function createLineChart(playerData, metric) {
-
-  // Creazione della tooltip
+  // 1. Setup Tooltip
   const tooltip = d3.select("body")
     .append("div")
     .attr("class", "tooltip")
@@ -1207,141 +1206,127 @@ function createLineChart(playerData, metric) {
     .style("opacity", 0)
     .style("z-index", "1000");
 
-  // Rimuovi il grafico precedente
+  // 2. Clear Previous Chart
   d3.select("#time-series").selectAll("*").remove();
 
+  // 3. Validate Data
   if (playerData.length === 0) {
     console.warn("Nessun dato disponibile per questo giocatore.");
     return;
   }
 
-  // Ordina i dati per anno
+  // 4. Sort Data by Year
   playerData.sort((a, b) => a.year - b.year);
 
-  // Configurazione del grafico
-  const margin = { top: -20, right: 120, bottom: 120, left: 90 };  // Aumentato margine destro e inferiore
+  // 5. Chart Configuration
+  const margin = { top: -20, right: 120, bottom: 120, left: 90 };
   const container = d3.select("#time-series");
-  const width = container.node().clientWidth - margin.left - margin.right;  // Calcola larghezza dinamica
-  const height = container.node().clientHeight - margin.top - margin.bottom;  // Calcola altezza dinamica
+  const width = container.node().clientWidth - margin.left - margin.right;
+  const height = container.node().clientHeight - margin.top - margin.bottom;
 
-  // Crea l'elemento SVG
+  // 6. Create SVG Container
   const svg = container.append("svg")
-    .attr("viewBox", `0 0 ${width + margin.right} ${height}`) // Aggiungi margine destro al viewBox
-    .attr("preserveAspectRatio", "xMidYMid meet")  // Mantieni le proporzioni durante il ridimensionamento
+    .attr("viewBox", `0 0 ${width + margin.right} ${height}`)
+    .attr("preserveAspectRatio", "xMidYMid meet")
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  // Scala per l'asse X (ora con d3.scaleTime() e formattazione dell'anno)
+  // 7. Define Scales
   const xScale = d3.scaleTime()
-    .domain([new Date(d3.min(playerData, d => d.year) + 2000, 0), new Date(d3.max(playerData, d => d.year) + 2000, 0)])  // Aggiungi 2000 all'anno
+    .domain([new Date(d3.min(playerData, d => d.year) + 2000, 0), new Date(d3.max(playerData, d => d.year) + 2000, 0)])
     .range([0, width]);
-
-  // Colori per le statistiche
-  const statisticColors = {
-    pace: "steelblue",
-    passing: "green",
-    shooting: "orange",
-    dribbling: "purple",
-    physics: "brown",
-    defending: "blue",
-    diving: "blue",
-    handling: "green",
-    kicking: "orange",
-    positioning: "purple",
-    reflexes: "red"
-  };
 
   let yScale;
   let statistics = [];
 
+  // 8. Handle Statistics Metric
   if (metric === "statistics") {
-    if (playerData[0].positions === "GK") {
-      // Statistiche per i portieri
-      statistics = ["diving", "handling", "kicking", "positioning", "reflexes"];
-    } else {
-      // Statistiche per i giocatori di campo
-      statistics = ["pace", "physics", "passing", "dribbling", "defending", "shooting"];
-    }
+    // Define statistics based on player position
+    statistics = playerData[0].positions === "GK"
+      ? ["diving", "handling", "kicking", "positioning", "reflexes"] // Goalkeeper stats
+      : ["pace", "physics", "passing", "dribbling", "defending", "shooting"]; // Field player stats
 
-    //console.log(playerData[0]);
-
-    // Forza la scala Y tra 0 e 100
+    // Set Y-Scale for statistics (0 to 100)
     yScale = d3.scaleLinear()
       .domain([0, 100])
       .range([height, 0]);
 
-      statistics.forEach((stat, index) => {
-        const color = clustersColors[index % clustersColors.length]; // Cicla tra i colori disponibili
-    
-        const line = d3.line()
-            .x(d => xScale(new Date(d.year + 2000, 0))) // Usa la data per l'anno
-            .y(d => yScale(d.statistics?.[stat] || 0))
-            .defined(d => d.statistics?.[stat] !== null && d.statistics?.[stat] !== undefined);
-    
-        const path = svg.append("path")
-            .datum(playerData)
-            .attr("fill", "none")
-            .attr("stroke", color) // Assegna il colore dalla palette
-            .attr("stroke-width", 2)
-            .attr("opacity", 1)
-            .attr("class", `line-${stat}`)
-            .attr("d", line);
-    
-        // Aggiungi i punti con tooltip
-        svg.selectAll(".dot-" + stat)
-            .data(playerData.filter(d => d.statistics?.[stat] !== null))
-            .enter()
-            .append("circle")
-            .attr("class", "dot-" + stat)
-            .attr("cx", d => xScale(new Date(d.year + 2000, 0))) // Usa la data per l'anno
-            .attr("cy", d => yScale(d.statistics?.[stat] || 0))
-            .attr("r", 4)
-            .attr("fill", color) // Usa lo stesso colore della linea
-            .attr("stroke", "white") // Bordo bianco per evidenziare i punti
-            .attr("stroke-width", 0)
-            .on("mouseover", function (event, d) {
-                tooltip.style("opacity", 1);
-                tooltip.html(`<strong>${stat.toUpperCase()}</strong>: ${d.statistics?.[stat] || "N/A"}`)
-                    .style("left", `${event.pageX + 15}px`)
-                    .style("top", `${event.pageY - 30}px`);
-    
-                d3.selectAll("path").transition().duration(50).attr("opacity", 0.3);
-                d3.selectAll('[class^="dot-"]').transition().duration(50).attr("opacity", 0.3);
-    
-                d3.select(`.line-${stat}`).transition().duration(50).attr("opacity", 1).attr("stroke-width", 3);
-                d3.selectAll(`.dot-${stat}`).transition().duration(50).attr("opacity", 1).attr("r", 6);
-            })
-            .on("mousemove", function (event) {
-                tooltip.style("left", `${event.pageX + 15}px`)
-                    .style("top", `${event.pageY - 30}px`);
-            })
-            .on("mouseout", function () {
-                tooltip.style("opacity", 0);
-    
-                d3.selectAll("path").transition().duration(20).attr("opacity", 1).attr("stroke-width", 2);
-                d3.selectAll('[class^="dot-"]').transition().duration(20).attr("opacity", 1).attr("r", 4);
-            });
-    
-        // Aggiungi eventi anche alla linea per lo stesso effetto
-        path.on("mouseover", function () {
-            d3.selectAll("path").transition().duration(20).attr("opacity", 0.3);
-            d3.selectAll('[class^="dot-"]').transition().duration(20).attr("opacity", 0.3);
-    
-            d3.select(`.line-${stat}`).transition().duration(20).attr("opacity", 1).attr("stroke-width", 3);
-            d3.selectAll(`.dot-${stat}`).transition().duration(20).attr("opacity", 1).attr("r", 6);
-        }).on("mouseout", function () {
-            d3.selectAll("path").transition().duration(20).attr("opacity", 1).attr("stroke-width", 2);
-            d3.selectAll('[class^="dot-"]').transition().duration(20).attr("opacity", 1).attr("r", 4);
+    // Draw Lines and Dots for Each Statistic
+    statistics.forEach((stat, index) => {
+      const color = clustersColors[index % clustersColors.length];
+
+      // Define Line Generator
+      const line = d3.line()
+        .x(d => xScale(new Date(d.year + 2000, 0)))
+        .y(d => yScale(d.statistics?.[stat] || 0))
+        .defined(d => d.statistics?.[stat] !== null && d.statistics?.[stat] !== undefined);
+
+      // Draw Line
+      const path = svg.append("path")
+        .datum(playerData)
+        .attr("fill", "none")
+        .attr("stroke", color)
+        .attr("stroke-width", 2)
+        .attr("opacity", 1)
+        .attr("class", `line-${stat}`)
+        .attr("d", line);
+
+      // Add Dots with Tooltips
+      svg.selectAll(".dot-" + stat)
+        .data(playerData.filter(d => d.statistics?.[stat] !== null))
+        .enter()
+        .append("circle")
+        .attr("class", "dot-" + stat)
+        .attr("cx", d => xScale(new Date(d.year + 2000, 0)))
+        .attr("cy", d => yScale(d.statistics?.[stat] || 0))
+        .attr("r", 4)
+        .attr("fill", color)
+        .attr("stroke", "white")
+        .attr("stroke-width", 0)
+        .on("mouseover", function (event, d) {
+          tooltip.style("opacity", 1)
+            .html(`<strong>${stat.toUpperCase()}</strong>: ${d.statistics?.[stat] || "N/A"}`)
+            .style("left", `${event.pageX + 15}px`)
+            .style("top", `${event.pageY - 30}px`);
+
+          d3.selectAll("path").transition().duration(50).attr("opacity", 0.3);
+          d3.selectAll('[class^="dot-"]').transition().duration(50).attr("opacity", 0.3);
+
+          d3.select(`.line-${stat}`).transition().duration(50).attr("opacity", 1).attr("stroke-width", 3);
+          d3.selectAll(`.dot-${stat}`).transition().duration(50).attr("opacity", 1).attr("r", 6);
+        })
+        .on("mousemove", function (event) {
+          tooltip.style("left", `${event.pageX + 15}px`)
+            .style("top", `${event.pageY - 30}px`);
+        })
+        .on("mouseout", function () {
+          tooltip.style("opacity", 0);
+
+          d3.selectAll("path").transition().duration(20).attr("opacity", 1).attr("stroke-width", 2);
+          d3.selectAll('[class^="dot-"]').transition().duration(20).attr("opacity", 1).attr("r", 4);
         });
+
+      // Add Hover Effects to Line
+      path.on("mouseover", function () {
+        d3.selectAll("path").transition().duration(20).attr("opacity", 0.3);
+        d3.selectAll('[class^="dot-"]').transition().duration(20).attr("opacity", 0.3);
+
+        d3.select(`.line-${stat}`).transition().duration(20).attr("opacity", 1).attr("stroke-width", 3);
+        d3.selectAll(`.dot-${stat}`).transition().duration(20).attr("opacity", 1).attr("r", 6);
+      }).on("mouseout", function () {
+        d3.selectAll("path").transition().duration(20).attr("opacity", 1).attr("stroke-width", 2);
+        d3.selectAll('[class^="dot-"]').transition().duration(20).attr("opacity", 1).attr("r", 4);
+      });
     });
-    
   } else {
+    // 9. Handle Non-Statistics Metric
     yScale = d3.scaleLinear()
       .domain([0, d3.max(playerData, d => d[metric]) || 100000])
       .range([height, 0]);
 
+    // Draw Line
     const line = d3.line()
-      .x(d => xScale(new Date(d.year + 2000, 0))) // Usa la data per l'anno
+      .x(d => xScale(new Date(d.year + 2000, 0)))
       .y(d => yScale(d[metric]))
       .defined(d => d[metric] !== null && d[metric] !== undefined);
 
@@ -1352,19 +1337,19 @@ function createLineChart(playerData, metric) {
       .attr("stroke-width", 2)
       .attr("d", line);
 
-    // Aggiungi i punti con tooltip
+    // Add Dots with Tooltips
     svg.selectAll(".dot")
       .data(playerData.filter(d => d[metric] !== null))
       .enter()
       .append("circle")
       .attr("class", "dot")
-      .attr("cx", d => xScale(new Date(d.year + 2000, 0))) // Usa la data per l'anno
+      .attr("cx", d => xScale(new Date(d.year + 2000, 0)))
       .attr("cy", d => yScale(d[metric]))
       .attr("r", 4)
       .attr("fill", "steelblue")
       .on("mouseover", function (event, d) {
-        tooltip.style("opacity", 1);
-        tooltip.html(`<strong>${metric.toUpperCase()}</strong>: ${d[metric]}`)
+        tooltip.style("opacity", 1)
+          .html(`<strong>${metric.toUpperCase()}</strong>: ${d[metric]}`)
           .style("left", `${event.pageX + 15}px`)
           .style("top", `${event.pageY - 30}px`);
 
@@ -1385,26 +1370,26 @@ function createLineChart(playerData, metric) {
       });
   }
 
-  // Aggiungi gli assi
+  // 10. Add Axes
   svg.append("g")
     .attr("transform", `translate(0,${height})`)
-    .call(d3.axisBottom(xScale).ticks(d3.timeYear.every(1))) // Forza la visualizzazione degli anni
+    .call(d3.axisBottom(xScale).ticks(d3.timeYear.every(1)))
     .selectAll("text")
     .style("font-size", "12px")
     .attr("dy", "0.5em")
     .attr("text-anchor", "middle")
-    .style("transform", "translateY(10px)")  // Aggiungi margine in basso per evitare sovrapposizione
-    .style("angle", "45deg"); // Ruota i tick per evitare sovrapposizioni
+    .style("transform", "translateY(10px)")
+    .style("angle", "45deg");
 
   svg.append("g")
     .call(d3.axisLeft(yScale));
 
-  // Aggiungi etichette agli assi
+  // 11. Add Axis Labels
   svg.append("text")
-    .attr("transform", `translate(${width / 2},${height + margin.bottom - 80})`) // Sposta più in basso
+    .attr("transform", `translate(${width / 2},${height + margin.bottom - 80})`)
     .style("text-anchor", "middle")
-    .style("font-size", "18px") // Opzionale: migliora leggibilità
-    .text("year");
+    .style("font-size", "18px")
+    .text("Year");
 
   svg.append("text")
     .attr("transform", "rotate(-90)")
@@ -1413,7 +1398,7 @@ function createLineChart(playerData, metric) {
     .attr("dy", "1em")
     .style("text-anchor", "middle")
     .style("font-size", "18px")
-    .text(metric === "statistics" ? "aggregated statistic" : metric);
+    .text(metric === "statistics" ? "Aggregated statistics" : metric);
 }
 
 
