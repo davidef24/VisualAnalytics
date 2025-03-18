@@ -186,157 +186,198 @@ function createScatterplot(data) {
     .style("display", "none")
     .attr("class", "tooltip");
 
-   // Draw all data points
-   const circles = scatterSvg.selectAll(".scatter-circle")
-   .data(data)
-   .enter()
-   .append("circle")
-   .attr("class", "scatter-circle")
-   .attr("cx", d => xScale(d.Tsne_Dim1))
-   .attr("cy", d => yScale(d.Tsne_Dim2))
-   .attr("r", 3)
-   .attr("fill", d => colorPalette[d.Cluster % colorPalette.length])
-   .attr("stroke", "black")
-   .attr("stroke-width", 0.5)
-   .attr("opacity", 0.8)
-   .on("mouseover", function(event, d) {
-     tooltip.style("display", "block")
-       .html(`
-         <strong>${d.name}</strong><br/>
-         Position: ${d.positions}<br/>
-         Age: ${calculateAge(d.dob)}<br/>
-         Overall: ${d.overall_rating}
-       `);
-   })
-   .on("mousemove", function(event) {
-     tooltip.style("left", (event.pageX + 10) + "px")
-       .style("top", (event.pageY - 20) + "px");
-   })
-   .on("mouseout", function() {
-     tooltip.style("display", "none");
-   })
-   .on("click", function(event, d) {
-
-    // Controllo per il compare mode
-    if (compareMode) {
-      if (!comparedPlayer) {
-        // Se non è stato ancora selezionato un giocatore da confrontare
-        comparedPlayer = d;
-        // Verifica se il giocatore selezionato è un portiere
-        const isSelectedPlayerGK = isGoalkeeper(selectedPlayer);
-        const isComparedPlayerGK = isGoalkeeper(comparedPlayer);
-  
-        // Se i ruoli sono diversi, non permettere la selezione
-        if (isSelectedPlayerGK !== isComparedPlayerGK) {
-            alert("Puoi confrontare solo giocatori dello stesso tipo (Portieri con Portieri, Altri ruoli con Altri ruoli).");
-            comparedPlayer = null; // Resetta il giocatore comparato se non valido
-            return;
-        }
-  
-        // Se la selezione è valida, procedi con la creazione del radar chart
-        createRadarChart(selectedPlayer, [comparedPlayer]); // Confronta solo sul radar chart
-      } else {
-        // Se un altro giocatore è già stato selezionato per il confronto, sostituiscilo
-        comparedPlayer = d;
-  
-        // Verifica se i giocatori hanno lo stesso tipo
-        const isSelectedPlayerGK = isGoalkeeper(selectedPlayer);
-        const isComparedPlayerGK = isGoalkeeper(comparedPlayer);
-  
-        if (isSelectedPlayerGK !== isComparedPlayerGK) {
-            alert("Puoi confrontare solo giocatori dello stesso tipo (Portieri con Portieri, Altri ruoli con Altri ruoli).");
-            comparedPlayer = null; // Resetta il giocatore comparato se non valido
-            return;
-        }
-  
-        // Procedi con la creazione del radar chart aggiornato
-        createRadarChart(selectedPlayer, [comparedPlayer]); // Confronta sul radar chart con il nuovo giocatore
+  // Draw all data points
+  const circles = scatterSvg.selectAll(".scatter-circle")
+    .data(data)
+    .enter()
+    .append("circle")
+    .attr("class", "scatter-circle")
+    .attr("cx", d => xScale(d.Tsne_Dim1))
+    .attr("cy", d => yScale(d.Tsne_Dim2))
+    .attr("r", 3)
+    .attr("fill", d => colorPalette[d.Cluster % colorPalette.length])
+    .attr("stroke", "black")
+    .attr("stroke-width", 0.5)
+    .attr("opacity", 0.8)
+    .on("mouseover", function(event, d) {
+      if (!window.brushedMode) { // Show tooltip only if brush mode is OFF
+        tooltip.style("display", "block")
+          .html(`
+            <strong>${d.name}</strong><br/>
+            Position: ${d.positions}<br/>
+            Age: ${calculateAge(d.dob)}<br/>
+            Overall: ${d.overall_rating}
+          `);
       }
-    } else {
-    // Memorizza il giocatore selezionato
-      window.selectedPlayer = d;
+    })
+    .on("mousemove", function(event) {
+      if (!window.brushedMode) { // Move tooltip only if brush mode is OFF
+        tooltip.style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 20) + "px");
+      }
+    })
+    .on("mouseout", function() {
+      tooltip.style("display", "none");
+    })
+    .on("click", function(event, d) {
+      // Compare mode check
+      if (compareMode) {
+        if (!comparedPlayer) {
+          comparedPlayer = d;
+          const isSelectedPlayerGK = isGoalkeeper(selectedPlayer);
+          const isComparedPlayerGK = isGoalkeeper(comparedPlayer);
 
-      // Trova i giocatori più vicini in base al valore iniziale dello slider
-      //const sliderValue = +document.getElementById("radar-slider").value;
-      document.getElementById("radar-slider").value = 0;
-      document.getElementById("radar-slider-value").textContent = "0";
-      const nearestPlayers = findNearestPlayers(d, data, 0);
-      const fiveNearest = findNearestPlayers(d, data, 5);
-      window.np = fiveNearest;
+          if (isSelectedPlayerGK !== isComparedPlayerGK) {
+            alert("Puoi confrontare solo giocatori dello stesso tipo (Portieri con Portieri, Altri ruoli con Altri ruoli).");
+            comparedPlayer = null;
+            return;
+          }
+          createRadarChart(selectedPlayer, [comparedPlayer]);
+        } else {
+          comparedPlayer = d;
+          const isSelectedPlayerGK = isGoalkeeper(selectedPlayer);
+          const isComparedPlayerGK = isGoalkeeper(comparedPlayer);
 
+          if (isSelectedPlayerGK !== isComparedPlayerGK) {
+            alert("Puoi confrontare solo giocatori dello stesso tipo (Portieri con Portieri, Altri ruoli con Altri ruoli).");
+            comparedPlayer = null;
+            return;
+          }
+          createRadarChart(selectedPlayer, [comparedPlayer]);
+        }
+      } else {
+        // Store the selected player
+        window.selectedPlayer = d;
+        document.getElementById("radar-slider").value = 0;
+        document.getElementById("radar-slider-value").textContent = "0";
+        const nearestPlayers = findNearestPlayers(d, data, 0);
+        const fiveNearest = findNearestPlayers(d, data, 5);
+        window.np = fiveNearest;
 
-      // Filter data to include only players from the same cluster
-      const sameClusterData = window.dataset.filter(player => player.Cluster === d.Cluster);
+        const sameClusterData = window.dataset.filter(player => player.Cluster === d.Cluster);
+        createBarChart(d, sameClusterData);
+        updatePlayerInfo(d);
+        createRadarChart(d, nearestPlayers);
+        loadAndCreateLineChart(d, "wage");
+        document.getElementById("line-chart-filter").value = "wage";
+      }
+    });
 
-      // Call the function to create the bar chart with the clicked player's data
-      createBarChart(d, sameClusterData);
+  // Define an array to store brushed players
+  let brushedPlayers = [];
 
-      // Update player info
-      updatePlayerInfo(d);
+  // Global flag for brush mode (initially off)
+  window.brushedMode = false;
 
-      // Create the radar chart with the selected player and the nearest players
-      createRadarChart(d, nearestPlayers);
+  const brush = d3.brush()
+  .extent([[0, 0], [width, height]])
+  .on("end", function(event) {
+    brushed(event);
+  });
 
+  // Append brush to the scatterplot
+  const brushG = scatterSvg.append("g")
+    .attr("class", "brush")
+    .call(brush);
 
-      // Carica i dati storici e crea il line chart, passando il giocatore selezionato
-      loadAndCreateLineChart(d, "wage");
-      document.getElementById("line-chart-filter").value = "wage";
+  // Disable brush overlay pointer events initially so that the area cannot be drawn
+  brushG.select(".overlay").style("pointer-events", "none");
+
+  // Lower the brush overlay so tooltips work when brush mode is off
+  brushG.lower();
+
+  function brushed(event) {
+    if (!event.selection) {
+      brushedPlayers = [];
+      window.brushedMode = false;
+      circles.attr("opacity", 0.8);
+      return;
     }
 
- });
- // Add Legend
- const legendWidth = 10;
- const legendHeight = 10;
- const legendSpacing = 15;
+    const [[x0, y0], [x1, y1]] = event.selection;
 
- const legend = scatterSvg.append("g")
-   .attr("transform", `translate(${width + 10}, 20)`); // Place legend to the right of the chart
+    brushedPlayers = data.filter(d =>
+      xScale(d.Tsne_Dim1) >= x0 &&
+      xScale(d.Tsne_Dim1) <= x1 &&
+      yScale(d.Tsne_Dim2) >= y0 &&
+      yScale(d.Tsne_Dim2) <= y1
+    );
 
- // Automatically generate legend categories based on the color palette
- const legendData = [
-   { color: colorPalette[0], label: "Defensive and Physical Players" },
-   { color: colorPalette[1], label: "Playmakers and Versatile Midfielders" },
-   { color: colorPalette[2], label: "Physical and Athletic Strikers" },
-   { color: colorPalette[3], label: "Goalkeepers" },
-   { color: colorPalette[4], label: "Full Backs and Side Midifielders" },
-   { color: colorPalette[5], label: "Wingers and Agile Attackers" }
- ];
+    window.brushedMode = true;
 
- // Add legend items (color boxes and text)
- legendData.forEach((item, index) => {
-   legend.append("rect")
-     .attr("x", 0)
-     .attr("y", index * legendSpacing)
-     .attr("width", legendWidth)
-     .attr("height", legendHeight)
-     .attr("fill", item.color);
+    circles.attr("opacity", d => 
+      brushedPlayers.includes(d) ? 1.0 : 0.2
+    );
 
-   legend.append("text")
-     .attr("x", legendWidth + 5)
-     .attr("y", index * legendSpacing + legendHeight / 2)
-     .attr("dy", ".35em")
-     .text(item.label)
-     .style("font-size", "12px");
- });
+    //updateBarChartWithAverages(avgValues);
+    // Hide the brush selection rectangle after the brush event is complete
+    brushG.select(".selection").style("display", "none");
+    window.brushedPlayers = brushedPlayers;
+    createBarChart(null, null);
+  }
+
+  // Toggle brush mode via a checkbox (ensure you have an element with id 'brushed-player-checkbox' in your HTML)
+  d3.select("#brushed-player-checkbox").on("click", function() {
+    window.brushedMode = !window.brushedMode;
+    if (window.brushedMode) {
+      // Activate brush mode: enable pointer events for drawing
+      brushG.raise();
+      brushG.select(".overlay").style("pointer-events", "all");
+      tooltip.style("display", "none");
+      console.log("Brush mode activated");
+    } else {
+      // Deactivate brush mode: disable pointer events to prevent drawing
+      brushG.lower();
+      brushG.select(".overlay").style("pointer-events", "none");
+      console.log("Brush mode deactivated");
+      // Clear any current brush selection:
+      brushG.call(brush.move, null);
+    }
+  });
+
+  // Add Legend
+  const legendWidth = 10;
+  const legendHeight = 10;
+  const legendSpacing = 15;
+
+  const legend = scatterSvg.append("g")
+    .attr("transform", `translate(${width + 10}, 20)`);
+
+  const legendData = [
+    { color: colorPalette[0], label: "Defensive and Physical Players" },
+    { color: colorPalette[1], label: "Playmakers and Versatile Midfielders" },
+    { color: colorPalette[2], label: "Physical and Athletic Strikers" },
+    { color: colorPalette[3], label: "Goalkeepers" },
+    { color: colorPalette[4], label: "Full Backs and Side Midifielders" },
+    { color: colorPalette[5], label: "Wingers and Agile Attackers" }
+  ];
+
+  legendData.forEach((item, index) => {
+    legend.append("rect")
+      .attr("x", 0)
+      .attr("y", index * legendSpacing)
+      .attr("width", legendWidth)
+      .attr("height", legendHeight)
+      .attr("fill", item.color);
+
+    legend.append("text")
+      .attr("x", legendWidth + 5)
+      .attr("y", index * legendSpacing + legendHeight / 2)
+      .attr("dy", ".35em")
+      .text(item.label)
+      .style("font-size", "12px");
+  });
 
   // Add ResizeObserver
   const resizeObserver = new ResizeObserver(entries => {
     const { width: newWidth, height: newHeight } = entries[0].contentRect;
-
-    // Check if dimensions actually changed
     if (newWidth !== containerWidth || newHeight !== containerHeight) {
       width = newWidth - margin.left - margin.right;
       height = newHeight - margin.top - margin.bottom;
-
-      // Update scales
       xScale.range([0, width]);
       yScale.range([height, 0]);
-
-      // Update axes
       xAxis.call(d3.axisBottom(xScale));
       yAxis.call(d3.axisLeft(yScale));
-
-      // Update circle positions
       circles
         .attr("cx", d => xScale(d.Tsne_Dim1))
         .attr("cy", d => yScale(d.Tsne_Dim2));
@@ -346,6 +387,7 @@ function createScatterplot(data) {
   resizeObserver.observe(container);
   return scatterSvg;
 }
+
 
 document.getElementById("league-filter").addEventListener("change", function () {
   const selectedLeague = this.value; // Ottieni il valore selezionato dal menù
@@ -581,78 +623,173 @@ document.addEventListener("DOMContentLoaded", function() {
 function createBarChart(playerData, clusterPlayers) {
   const container = d3.select("#bar-chart-card-content");
   container.selectAll("*").remove(); // Clear previous chart
-  const playerCluster = playerData["Cluster"];
-  //const clusterColor = clustersColors[playerCluster % clustersColors.length];
-  const clusterColor = "#d62828";
-  const playerColor = "#003049"
 
-  const width = container.node().clientWidth;
-  const height = container.node().clientHeight;
-  const margin = { top: 20, right: 60, bottom: 100, left: 50 };
-  const chartWidth = width - margin.left - margin.right;
-  const chartHeight = height - margin.top - margin.bottom;
+  // If brush mode is active, ignore playerData and use brushed players only.
+  if (window.brushedMode) {
+    // Use the brushed players stored globally (set in createScatterplot)
+    clusterPlayers = window.brushedPlayers || [];
+    console.log(clusterPlayers);
+    const numFeatures = 15; // Show top 15 features
+    const attributes = [
+      "crossing","finishing","heading_accuracy","short_passing","volleys","dribbling",
+      "curve","fk_accuracy","long_passing","ball_control","acceleration","sprint_speed",
+      "agility","reactions","balance","shot_power","jumping","stamina","strength",
+      "long_shots","aggression","interceptions","positioning","vision","penalties",
+      "composure","defensive_awareness","standing_tackle","sliding_tackle",
+      "gk_diving","gk_handling","gk_kicking","gk_positioning","gk_reflexes"
+    ];
 
-  const svg = container.append("svg")
+    // Compute average for each attribute among the brushed players.
+    const clusterAverages = {};
+    attributes.forEach(attr => {
+      const lowerAttr = attr.toLowerCase();
+      const values = clusterPlayers
+          .map(player => Number(player[lowerAttr]))
+          .filter(v => !isNaN(v) && v !== undefined);
+      const avg = values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0;
+      clusterAverages[lowerAttr] = avg;
+    });
+
+    // Get the top numFeatures attributes by average value.
+    const topFeatures = Object.entries(clusterAverages)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, numFeatures);
+    const topFeatureNames = topFeatures.map(([feature]) => feature);
+    const clusterValues = topFeatures.map(([_, value]) => value);
+
+    // Set up dimensions
+    const width = container.node().clientWidth;
+    const height = container.node().clientHeight;
+    const margin = { top: 20, right: 60, bottom: 100, left: 50 };
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
+
+    const svg = container.append("svg")
       .attr("width", width)
       .attr("height", height)
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // Define attributes based on position
-  // Define all attributes from playerData
-  const attributes = [
-    "crossing","finishing","heading_accuracy","short_passing","volleys","dribbling","curve","fk_accuracy","long_passing","ball_control","acceleration","sprint_speed","agility","reactions","balance","shot_power","jumping","stamina","strength","long_shots","aggression","interceptions","positioning","vision","penalties","composure","defensive_awareness","standing_tackle","sliding_tackle","gk_diving","gk_handling","gk_kicking","gk_positioning","gk_reflexes"
-  ];
-
-  const clusterAverages = {};
-  attributes.forEach(attr => {
-      const lowerAttr = attr.toLowerCase();
-
-      // Extract and filter only valid numeric values
-      const values = clusterPlayers
-          .map(player => Number(player[lowerAttr])) // Convert to Number to ensure numeric type
-          .filter(v => !isNaN(v) && v !== undefined);
-
-      // Compute average, avoiding division by zero
-      const avg = values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0;
-
-      clusterAverages[lowerAttr] = avg; // Store computed average
-  });
-  // Get the top 8 features with the highest average values
-  const topFeatures = Object.entries(clusterAverages)
-      .sort((a, b) => b[1] - a[1]) // Sort by value (descending)
-      .slice(0, 10); // Take the top 8
-
-  // Print the top 8 features in array format
-  //console.log("Top 20 Features:", topFeatures.map(([feature, _]) => feature));
-  const topFeatureNames = topFeatures.map(([feature]) => feature);
-  const playerValues = topFeatureNames.map(feature => playerData[feature]);
-  const clusterValues = topFeatures.map(([_, value]) => value);
-
-  const x = d3.scaleBand()
+    // Create scales and axes
+    const x = d3.scaleBand()
       .domain(topFeatureNames)
       .range([0, chartWidth])
       .padding(0.3);
-
-  const y = d3.scaleLinear()
+    const y = d3.scaleLinear()
       .domain([0, 100])
       .range([chartHeight, 0]);
 
-  svg.append("g")
+    svg.append("g")
       .attr("transform", `translate(0,${chartHeight})`)
       .call(d3.axisBottom(x))
       .selectAll("text")
-      .style("text-anchor", "end")  // Change anchor to end
-      .attr("dx", "-.8em")          // Adjust horizontal position
-      .attr("dy", ".15em")          // Adjust vertical position
-      .attr("transform", "rotate(-45)");  // Rotate 45 degrees
+      .style("text-anchor", "end")
+      .attr("dx", "-.8em")
+      .attr("dy", ".15em")
+      .attr("transform", "rotate(-45)");
 
-  svg.append("g")
+    svg.append("g")
       .call(d3.axisLeft(y));
 
-  const barWidth = x.bandwidth() / 2;
+    // Draw a single set of bars for the cluster (brushed players) average.
+    svg.selectAll(".cluster-bar")
+      .data(clusterValues)
+      .enter()
+      .append("rect")
+      .attr("class", "cluster-bar")
+      .attr("x", (_, i) => x(topFeatureNames[i]))
+      .attr("y", d => y(d))
+      .attr("width", x.bandwidth())
+      .attr("height", d => chartHeight - y(d))
+      .attr("fill", "#d62828"); // Cluster bar color
 
-  svg.selectAll(".player-bar")
+    // Legend (only one item)
+    const legend = svg.append("g")
+      .attr("class", "legend")
+      .attr("transform", `translate(${chartWidth - 120},${-margin.top + 20})`);
+
+    legend.append("rect")
+      .attr("x", 0)
+      .attr("y", 0)
+      .attr("width", 15)
+      .attr("height", 15)
+      .attr("fill", "#d62828");
+
+    legend.append("text")
+      .attr("x", 18)
+      .attr("y", 8)
+      .text("Brushed Cluster Average")
+      .style("font-size", "12px")
+      .style("alignment-baseline", "middle");
+
+    return;
+  } else {
+    // Normal mode: show player vs cluster bars.
+    const playerCluster = playerData["Cluster"];
+    const clusterColor = "#d62828";
+    const playerColor = "#003049";
+
+    const width = container.node().clientWidth;
+    const height = container.node().clientHeight;
+    const margin = { top: 20, right: 60, bottom: 100, left: 50 };
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
+
+    const svg = container.append("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const attributes = [
+      "crossing","finishing","heading_accuracy","short_passing","volleys","dribbling",
+      "curve","fk_accuracy","long_passing","ball_control","acceleration","sprint_speed",
+      "agility","reactions","balance","shot_power","jumping","stamina","strength",
+      "long_shots","aggression","interceptions","positioning","vision","penalties",
+      "composure","defensive_awareness","standing_tackle","sliding_tackle",
+      "gk_diving","gk_handling","gk_kicking","gk_positioning","gk_reflexes"
+    ];
+
+    const clusterAverages = {};
+    attributes.forEach(attr => {
+      const lowerAttr = attr.toLowerCase();
+      const values = clusterPlayers
+        .map(player => Number(player[lowerAttr]))
+        .filter(v => !isNaN(v) && v !== undefined);
+      const avg = values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0;
+      clusterAverages[lowerAttr] = avg;
+    });
+    // Get the top 10 features (as before)
+    const topFeatures = Object.entries(clusterAverages)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+    const topFeatureNames = topFeatures.map(([feature]) => feature);
+    const playerValues = topFeatureNames.map(feature => playerData[feature]);
+    const clusterValues = topFeatures.map(([_, value]) => value);
+
+    const x = d3.scaleBand()
+      .domain(topFeatureNames)
+      .range([0, chartWidth])
+      .padding(0.3);
+    const y = d3.scaleLinear()
+      .domain([0, 100])
+      .range([chartHeight, 0]);
+
+    svg.append("g")
+      .attr("transform", `translate(0,${chartHeight})`)
+      .call(d3.axisBottom(x))
+      .selectAll("text")
+      .style("text-anchor", "end")
+      .attr("dx", "-.8em")
+      .attr("dy", ".15em")
+      .attr("transform", "rotate(-45)");
+
+    svg.append("g")
+      .call(d3.axisLeft(y));
+
+    const barWidth = x.bandwidth() / 2;
+
+    svg.selectAll(".player-bar")
       .data(playerValues)
       .enter()
       .append("rect")
@@ -663,7 +800,7 @@ function createBarChart(playerData, clusterPlayers) {
       .attr("height", d => chartHeight - y(d))
       .attr("fill", playerColor);
 
-  svg.selectAll(".cluster-bar")
+    svg.selectAll(".cluster-bar")
       .data(clusterValues)
       .enter()
       .append("rect")
@@ -673,39 +810,38 @@ function createBarChart(playerData, clusterPlayers) {
       .attr("width", barWidth)
       .attr("height", d => chartHeight - y(d))
       .attr("fill", clusterColor);
-      // Add legend
+
     const legend = svg.append("g")
-    .attr("class", "legend")
-    .attr("transform", `translate(${chartWidth - 120},${-margin.top + 20})`); // Position at top-right
-  
-  // Legend items
-  const legendItems = [
-    { color: playerColor, text: `${window.selectedPlayer.name} values` },
-    { color: clusterColor, text: "Cluster Average" }
-  ];
-  
-  // Legend rectangles
-  legend.selectAll("rect")
-    .data(legendItems)
-    .enter()
-    .append("rect")
-    .attr("x", 0)
-    .attr("y", (d, i) => i * 20)
-    .attr("width", 15)
-    .attr("height", 15)
-    .attr("fill", d => d.color);
-  
-  // Legend text
-  legend.selectAll("text")
-    .data(legendItems)
-    .enter()
-    .append("text")
-    .attr("x", 18)
-    .attr("y", (d, i) => i * 20 + 8)
-    .text(d => d.text)
-    .style("font-size", "12px")
-    .style("alignment-baseline", "middle");
+      .attr("class", "legend")
+      .attr("transform", `translate(${chartWidth - 120},${-margin.top + 20})`);
+
+    const legendItems = [
+      { color: playerColor, text: `${window.selectedPlayer.name} values` },
+      { color: clusterColor, text: "Cluster Average" }
+    ];
+
+    legend.selectAll("rect")
+      .data(legendItems)
+      .enter()
+      .append("rect")
+      .attr("x", 0)
+      .attr("y", (d, i) => i * 20)
+      .attr("width", 15)
+      .attr("height", 15)
+      .attr("fill", d => d.color);
+
+    legend.selectAll("text")
+      .data(legendItems)
+      .enter()
+      .append("text")
+      .attr("x", 18)
+      .attr("y", (d, i) => i * 20 + 8)
+      .text(d => d.text)
+      .style("font-size", "12px")
+      .style("alignment-baseline", "middle");
+  }
 }
+
 
 
 

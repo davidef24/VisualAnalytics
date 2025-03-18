@@ -37,7 +37,8 @@
             display: flex;
             justify-content: space-between; /* Distribuisce lo spazio tra il titolo e il pulsante */
             align-items: center; /* Allinea verticalmente il contenuto */
-            border-bottom: 1px solid #eee;
+            border-bottom: 2px solid #ccc;  /* Increased thickness and changed color */
+
             padding-bottom: 10px;
             margin-bottom: 10px;
             font-weight: bold;
@@ -57,6 +58,10 @@
             align-items: center;
             position:relative;
             overflow: hidden;
+        }
+
+        #brushed-player-checkbox-container{
+            grid-column: 3;
         }
         
         #soccer-field-card { grid-column: 1; grid-row: 1; }
@@ -224,12 +229,12 @@
 
         #scatterplot-card-header {
             display: grid;
-            grid-template-columns: 4fr 2fr 1fr 2fr;
-            grid-template-rows: 1;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            grid-template-rows: 1 !important;
         }
 
         #slider-container {
-            width: 300px;
+            width: 100%;
             grid-column: 4;
             grid-row: 1;
             position: relative;
@@ -408,8 +413,9 @@
 
          /* Stile per il menù a tendina */
          #league-filter {
+            width: 60%;
             grid-column: 2;
-            width: 100%; /* Larghezza del menù */
+            grid-row: 1;
             padding: 8px;
             font-size: 14px;
             border: 1px solid #ccc;
@@ -451,6 +457,7 @@
         #league-filter {
             max-height: 200px; /* Altezza massima del menù aperto */
             overflow-y: auto; /* Abilita lo scroll verticale */
+            width: 130px;
         }
 
         /* Aggiungi una freccia personalizzata al menù */
@@ -458,6 +465,7 @@
             grid-column: 2;
             position: relative;
             display: inline-block;
+            width: 130px;
         }
 
         .custom-select-wrapper::after {
@@ -493,17 +501,7 @@
         <!-- Scatterplot Visualization -->
         <div id="scatterplot-card" class="dashboard-card">
             <div class="card-header" id="scatterplot-card-header">
-                <div id="slider-container">
-                    <div class="range-slider">
-                        <div id="slider-track"></div>
-                        <input type="range" id="min-slider" min="65" max="94" value="65">
-                        <input type="range" id="max-slider" min="65" max="94" value="94">
-                    </div>
-                    <div class="slider-values">
-                        Selected overall range: <span id="min-value">65</span> - <span id="max-value">94</span>
-                    </div>
-                </div>
-                <div>
+                <div style="grid-column: 1;">
                     Player Clusters (t-SNE) 
                 </div>
                 <div class="custom-select-wrapper">
@@ -549,8 +547,25 @@
                     <option value="Premier Division">Premier Division</option>
                     <option value="League Two">League Two</option>
                     <option value="Veikkausliiga">Veikkausliiga</option>        
-                </select>
-            </div>
+                    </select>
+                </div>
+                <div id="brushed-player-checkbox-container" style="margin-top: 10px;">
+                    <input type="checkbox" id="brushed-player-checkbox" name="brushedPlayerCheckbox">
+                    <label for="brushed-player-checkbox">Brush Mode</label>
+                </div>
+                <div id="slider-container">
+                    <div class="range-slider">
+                        <div id="slider-track"></div>
+                        <input type="range" id="min-slider" min="65" max="94" value="65">
+                        <input type="range" id="max-slider" min="65" max="94" value="94">
+                    </div>
+                    <div class="slider-values">
+                        Selected overall range: <span id="min-value">65</span> - <span id="max-value">94</span>
+                    </div>
+                      <!-- Brushed players checkbox -->
+                      
+                </div>
+                
             </div>
             <div class="card-content">
                 <div id="scatterplot-container"></div>
