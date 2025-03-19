@@ -10,9 +10,8 @@ from sklearn.metrics import silhouette_score, silhouette_samples
 # Define the columns to drop
 columns_to_drop = [
     "version", "club_kit_number", "club_rating", "club_league_id", "club_id",
-     "club_jersey_number", "club_loaned_from", "club_joined", "club_contract_valid_until",
-    "nation_team_id", "nation_jersey_number", "work_rate", "body_type", "release_clause",
-     "country_position", "country_kit_number", "country_rating", "country_league_name", "country_league_id" 
+    "club_joined", "club_contract_valid_until", "work_rate", "body_type", "release_clause",
+    "country_position", "country_kit_number", "country_rating", "country_league_name", "country_league_id" 
 ]
 
 # Load dataset (update file_path with your actual file)
@@ -20,7 +19,8 @@ columns_to_drop = [
 file_path = "data/player-data-full.csv"
 df = pd.read_csv(file_path)
 ## Filter only FIFA 23 players
-
+num_columns = len(df.columns)
+print(f"Number of columns: {num_columns}")
 df = df[df["overall_rating"] >= 65]
 df2 = df.replace("", np.nan)  # Convert "" to NaN
 df3 = df2.dropna(subset=["gk_diving","gk_handling","gk_kicking","gk_positioning","gk_reflexes"])  # Now drop NaNs
@@ -29,7 +29,8 @@ df_cleaned = df3.drop(columns=columns_to_drop, errors='ignore')
 
 # Drop rows where 'value_eur' is null
 df_cleaned = df_cleaned.dropna(subset=["value"])
-
+num_columns2 = len(df_cleaned.columns)
+print(f"Number of columns: {num_columns2}")
 # Define columns to exclude for PCA and K-Means
 excluded_columns = [
     "player_id", "short_name", "dob", "positions",
@@ -57,6 +58,8 @@ column_means_pca = np.round(df_pca_kmeans[numeric_columns_pca].min())
 # Fill the NaN values with the respective column means for only numeric columns
 df_cleaned_pca = df_pca_kmeans.fillna(column_means_pca)
 df_output = df_cleaned.fillna(column_means_original)
+num_columns1 = len(df_output.columns)
+print(f"Number of columns: {num_columns1}")
 
 print(df_cleaned["club_league_name"].unique())
 
@@ -137,4 +140,5 @@ plt.show()
 
 # Save the cleaned dataset
 df_output.to_csv("dashboard/players_with_tsne_and_clusters_data.csv", index=False)
+
 print(df_cleaned["club_league_name"].unique)
