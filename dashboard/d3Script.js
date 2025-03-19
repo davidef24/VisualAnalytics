@@ -267,7 +267,8 @@ function createScatterplot(data) {
   let brushedPlayers = [];
 
   // Global flag for brush mode (initially off)
-  window.brushedMode = false;
+  window.brushedMode = window.brushedMode || false;
+
 
   const brush = d3.brush()
   .extent([[0, 0], [width, height]])
@@ -280,11 +281,14 @@ function createScatterplot(data) {
     .attr("class", "brush")
     .call(brush);
 
-  // Disable brush overlay pointer events initially so that the area cannot be drawn
-  brushG.select(".overlay").style("pointer-events", "none");
-
-  // Lower the brush overlay so tooltips work when brush mode is off
-  brushG.lower();
+  // Enable or disable the brush overlay based on window.brushedMode
+  if (window.brushedMode) {
+    brushG.raise();
+    brushG.select(".overlay").style("pointer-events", "all");
+  } else {
+    brushG.lower();
+    brushG.select(".overlay").style("pointer-events", "none");
+  }
 
   function brushed(event) {
     if (!event.selection) {
@@ -324,12 +328,12 @@ function createScatterplot(data) {
       brushG.raise();
       brushG.select(".overlay").style("pointer-events", "all");
       tooltip.style("display", "none");
-      console.log("Brush mode activated");
+      //console.log("Brush mode activated");
     } else {
       // Deactivate brush mode: disable pointer events to prevent drawing
       brushG.lower();
       brushG.select(".overlay").style("pointer-events", "none");
-      console.log("Brush mode deactivated");
+      //console.log("Brush mode deactivated");
       // Clear any current brush selection:
       brushG.call(brush.move, null);
     }
@@ -591,6 +595,8 @@ document.addEventListener("DOMContentLoaded", function() {
       maxSlider.value = 94;
       minSlider.textContent = 65;
       maxSlider.textContent = 94;
+      document.getElementById("brushed-player-checkbox").checked = false;  // <- Add this
+      window.brushedMode = false;  // <- Add this
       updateSliderValues();
       createScatterplot(ds); 
       const playerInfoDiv = d3.select("#player-info");
@@ -623,6 +629,17 @@ document.addEventListener("DOMContentLoaded", function() {
 function createBarChart(playerData, clusterPlayers) {
   const container = d3.select("#bar-chart-card-content");
   container.selectAll("*").remove(); // Clear previous chart
+
+  // Create tooltip element (if not already exists)
+  const tooltip = d3.select("body").append("div")
+        .attr("id", "tooltip")
+        .style("position", "absolute")
+        .style("padding", "8px")
+        .style("background-color", "rgba(0, 0, 0, 0.7)")
+        .style("color", "white")
+        .style("border", "1px solid #ddd")
+        .style("pointer-events", "none")
+        .style("display", "none");
 
   // If brush mode is active, ignore playerData and use brushed players only.
   if (window.brushedMode) {
@@ -701,7 +718,15 @@ function createBarChart(playerData, clusterPlayers) {
       .attr("y", d => y(d))
       .attr("width", x.bandwidth())
       .attr("height", d => chartHeight - y(d))
-      .attr("fill", "#d62828"); // Cluster bar color
+      .attr("fill", "#d62828") // Cluster bar color
+      .on("mouseover", function(event, d) {
+        tooltip
+          .style("left", `${event.pageX}px`)
+          .style("top", `${event.pageY}px`)
+          .html(`Feature value: ${Number(d).toFixed(1)}`)
+          .style("display", "block");
+      })
+      .on("mouseout", () => tooltip.style("display", "none"));
 
     // Legend (only one item)
     const legend = svg.append("g")
@@ -798,7 +823,15 @@ function createBarChart(playerData, clusterPlayers) {
       .attr("y", d => y(d))
       .attr("width", barWidth)
       .attr("height", d => chartHeight - y(d))
-      .attr("fill", playerColor);
+      .attr("fill", playerColor)
+      .on("mouseover", function(event, d) {
+        tooltip
+          .style("left", `${event.pageX - 10}px`)
+          .style("top", `${event.pageY + 10}px`)
+          .html(`Player feature value: ${Number(d).toFixed(1)}`)
+          .style("display", "block");
+      })
+      .on("mouseout", () => tooltip.style("display", "none"));
 
     svg.selectAll(".cluster-bar")
       .data(clusterValues)
@@ -809,7 +842,15 @@ function createBarChart(playerData, clusterPlayers) {
       .attr("y", d => y(d))
       .attr("width", barWidth)
       .attr("height", d => chartHeight - y(d))
-      .attr("fill", clusterColor);
+      .attr("fill", clusterColor)
+      .on("mouseover", function(event, d) {
+        tooltip
+          .style("left", `${event.pageX}px`)
+          .style("top", `${event.pageY}px`)
+          .html(`Cluster average value: ${d.toFixed(1)}`)
+          .style("display", "block");
+      })
+      .on("mouseout", () => tooltip.style("display", "none"));
 
     const legend = svg.append("g")
       .attr("class", "legend")
