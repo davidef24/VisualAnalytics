@@ -5,13 +5,14 @@ const filters = {
 };
 
 const clustersColors = [
-  "#ff595e", 
-  "#ff924c", 
-  "#ffca3a",  
-  "#6a4c93",  
-  "#1982c4",  
-  "#8ac926" 
+  "#e41a1c", 
+  "#377eb8",
+  "#ff7f00", 
+  "#984ea3",
+  "#4daf4a"
 ];
+
+const colorPalette = clustersColors;
 
 
 function applyFilters() {
@@ -117,10 +118,6 @@ function calculateAge(dob) {
   return age;
 }
 
-
-// Define a color palette for clusters.
-const customColorPalette = clustersColors;
-
 // Add these at the top of your script (global or in parent scope)
 let originalXDomain, originalYDomain;
 // Calculate once when first loading data
@@ -176,9 +173,6 @@ function createScatterplot(data) {
   const yAxis = scatterSvg.append("g")
     .attr("class", "y-axis")
     .call(d3.axisLeft(yScale));
-
-  // Define color palette
-  const colorPalette = customColorPalette;
 
   // Define tooltip (ensure it exists)
   const tooltip = d3.select("body")
@@ -348,12 +342,11 @@ function createScatterplot(data) {
     .attr("transform", `translate(${width + 10}, 20)`);
 
   const legendData = [
-    { color: colorPalette[0], label: "Defensive and Physical Players" },
-    { color: colorPalette[1], label: "Playmakers and Versatile Midfielders" },
-    { color: colorPalette[2], label: "Physical and Athletic Strikers" },
-    { color: colorPalette[3], label: "Goalkeepers" },
-    { color: colorPalette[4], label: "Full Backs and Side Midifielders" },
-    { color: colorPalette[5], label: "Wingers and Agile Attackers" }
+    { color: colorPalette[3], label: "Defensive players" },
+    { color: colorPalette[2], label: "Technical players" },
+    { color: colorPalette[1], label: "Offensive players" },
+    { color: colorPalette[4], label: "Goalkeepers" },
+    { color: colorPalette[0], label: "Athletical players" },
   ];
 
   legendData.forEach((item, index) => {
