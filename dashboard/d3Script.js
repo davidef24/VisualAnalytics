@@ -9,7 +9,8 @@ const clustersColors = [
   "#377eb8",
   "#ff7f00", 
   "#984ea3",
-  "#4daf4a"
+  "#4daf4a",
+  "#a65628"
 ];
 
 const colorPalette = clustersColors;
@@ -431,13 +432,13 @@ document.addEventListener("DOMContentLoaded", function() {
     // Posizioni relative per la formazione 4-3-3
     const positions = [
       { role: "GK", x: 0.11, y: 0.5 },
-      { role: "LB", x: 0.27, y: 0.25 },
-      { role: "CB", x: 0.27, y: 0.5 },
-      { role: "RB", x: 0.27, y: 0.75 },
-      { role: "RWB", x: 0.4, y: 0.77 },
-      { role: "LWB", x: 0.4, y: 0.23 },
+      { role: "LB", x: 0.27, y: 0.26 },
+      { role: "CB", x: 0.24, y: 0.5 },
+      { role: "RB", x: 0.27, y: 0.74 },
+      { role: "RWB", x: 0.38, y: 0.78 },
+      { role: "LWB", x: 0.38, y: 0.22 },
       { role: "LM", x: 0.6, y: 0.23 },
-      { role: "CDM", x: 0.41, y: 0.5 },
+      { role: "CDM", x: 0.42, y: 0.5 },
       { role: "CM", x: 0.54, y: 0.5 },
       { role: "CAM", x: 0.66, y: 0.5 },
       { role: "LW", x: 0.8, y: 0.25 },
