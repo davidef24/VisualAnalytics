@@ -702,17 +702,18 @@ function createBarChart(playerData, clusterPlayers) {
     svg.append("g")
       .call(d3.axisLeft(y));
 
+    const barWidth = x.bandwidth() * 0.7;
     // Draw a single set of bars for the cluster (brushed players) average.
     svg.selectAll(".cluster-bar")
       .data(clusterValues)
       .enter()
       .append("rect")
       .attr("class", "cluster-bar")
-      .attr("x", (_, i) => x(topFeatureNames[i]))
+      .attr("x", (_, i) => x(topFeatureNames[i]) + (x.bandwidth() - barWidth) / 2)
       .attr("y", d => y(d))
-      .attr("width", x.bandwidth())
+      .attr("width", barWidth) // Apply new width
       .attr("height", d => chartHeight - y(d))
-      .attr("fill", "#d62828") // Cluster bar color
+      .attr("fill", "#0077b6") // Cluster bar color
       .on("mouseover", function(event, d) {
         tooltip
           .style("left", `${event.pageX}px`)
@@ -732,7 +733,7 @@ function createBarChart(playerData, clusterPlayers) {
       .attr("y", 0)
       .attr("width", 15)
       .attr("height", 15)
-      .attr("fill", "#d62828");
+      .attr("fill", "#0077b6");
 
     legend.append("text")
       .attr("x", 18)
@@ -745,8 +746,8 @@ function createBarChart(playerData, clusterPlayers) {
   } else {
     // Normal mode: show player vs cluster bars.
     const playerCluster = playerData["Cluster"];
-    const clusterColor = "#d62828";
-    const playerColor = "#003049";
+    const clusterColor = "#db504a";
+    const playerColor = "#084c61";
 
     const width = container.node().clientWidth;
     const height = container.node().clientHeight;
@@ -876,8 +877,6 @@ function createBarChart(playerData, clusterPlayers) {
       .style("alignment-baseline", "middle");
   }
 }
-
-
 
 
 function updatePlayerInfo(playerData) {
