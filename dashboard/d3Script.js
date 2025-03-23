@@ -245,8 +245,8 @@ function createScatterplot(data) {
         window.selectedPlayer = d;
         document.getElementById("radar-slider").value = 0;
         document.getElementById("radar-slider-value").textContent = "0";
-        const nearestPlayers = findNearestPlayers(d, data, 0);
-        const fiveNearest = findNearestPlayers(d, data, 5);
+        const nearestPlayers = findNearestPlayers(d, window.dataset, 0);
+        const fiveNearest = findNearestPlayers(d, window.dataset, 5);
         window.np = fiveNearest;
 
         const sameClusterData = window.dataset.filter(player => player.Cluster === d.Cluster);
