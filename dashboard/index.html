@@ -13,6 +13,111 @@
             padding: 20px;
             background-color:#C7C8CC;
         }
+
+        /* Soccer Field Info Icon Specific Styles */
+        #soccer-field-card .info-icon {
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        
+        #soccer-field-card .info-icon .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background: rgba(83, 78, 78, 0.8);
+            color: #fff;
+            padding: 12px;
+            border-radius: 4px;
+            position: absolute;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 0.85em;
+            line-height: 1.4;
+            pointer-events: none;
+            text-align: left;
+            /* Dynamic positioning */
+            bottom: auto;
+            top: 100%; /* Show tooltip below the icon */
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        /* Adjust for edge cases */
+        #soccer-field-card .info-icon:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        /* Ensure tooltip stays within viewport */
+        #soccer-field-card .info-icon {
+            position: relative;
+        }
+        
+        #soccer-field-card .info-icon .tooltip-text {
+            max-width: 90vw; /* Prevent tooltip from being too wide */
+            word-wrap: break-word;
+        }
+
+        .checkbox-container {
+            position: relative;
+            display: inline-flex;
+            max-width: 100%;
+        }
+
+        .info-icon {
+            position: relative;
+            display: inline-block;
+            margin-left: 8px;
+            width: 16px;
+            height: 16px;
+            line-height: 16px;
+            text-align: center;
+            cursor: help;
+            color: #666;
+        }
+
+        .info-icon .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background: rgba(83, 78, 78, 0.8);
+            color: #fff;
+            padding: 12px;
+            border-radius: 4px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(calc(-100% + 16px));
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 0.85em;
+            line-height: 1.4;
+            pointer-events: none;
+            text-align: left;
+        }
+
+        /* Right edge protection */
+        @media screen and (min-width: 768px) {
+            .info-icon .tooltip-text {
+                left: auto;
+                right: 0;
+                transform: none;
+            }
+        }
+
+        .info-icon:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .tooltip-row {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .info-icon:hover {
+            color: #007bff;
+        }
         
         .dashboard-container {
             display: grid;
@@ -143,6 +248,11 @@
             flex: 1; /* Occupa lo spazio rimanente */
             grid-row: 2;
             gap: 500px; /* Spazio tra le statistiche */
+        }
+
+        .role.fixed {
+          stroke: #ffffff !important;
+          stroke-width: 2.5px !important;
         }
 
         .player-name {
@@ -490,14 +600,25 @@
         <!-- Soccer Field Visualization -->
         <div id="soccer-field-card" class="dashboard-card">
             <div class="card-header">
-                <span>Soccer Field Line-Up</span>
+                <div class="header-content">
+                    <span>Soccer Field Line-Up
+                        <span class="info-icon" aria-label="Role selection information">
+                            ⓘ
+                            <span class="tooltip-text">
+                                Click positions to filter players<br>
+                                • Select up to 3 roles<br>
+                                • Roles are cumulative (AND filter)<br>
+                                • Click again to remove selection
+                            </span>
+                        </span>
+                    </span>
+                </div>
                 <button id="reset-filter" class="reset-button">Reset Filter</button>
             </div>
             <div class="card-content">
                 <div id="soccer-field"></div>
             </div>
         </div>
-        
         <!-- Scatterplot Visualization -->
         <div id="scatterplot-card" class="dashboard-card">
             <div class="card-header" id="scatterplot-card-header">
@@ -603,10 +724,20 @@
         <!-- Bar Chart -->
         <div id="bar-chart-card" class="dashboard-card">
             <div class="card-header" id="bar-chart-card-header">
-                Player vs Top Cluster Features
-                <label>
-                    <input type="checkbox" id="filtered-data-checkbox"> Use filtered data for cluster averages
-                </label>
+                <h3>Player vs Top Cluster Features</h3>
+                <div class="checkbox-container">
+                    <label>
+                        <input type="checkbox" id="filtered-data-checkbox"> 
+                        Use filtered data for cluster averages
+                        <span class="info-icon" aria-label="Information">
+                            ⓘ
+                            <span class="tooltip-text">
+                                When checked: Averages are calculated using only visible players in the scatterplot<br>
+                                When unchecked: Averages use the complete original dataset
+                            </span>
+                        </span>
+                    </label>
+                </div>
             </div>
             <div class="card-content" id="bar-chart-card-content">
                 <div id="bar-chart">

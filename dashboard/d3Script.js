@@ -1,6 +1,6 @@
 const filters = {
   overall_rating: { min: 65, max: 94 },
-  role: null,
+  role: [], 
   league: "All Leagues"
 };
 
@@ -15,6 +15,22 @@ const clustersColors = [
 
 const colorPalette = clustersColors;
 
+function calculateAge(dob) {
+  const birthDate = new Date(dob);
+  const today = new Date();
+  
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  const dayDiff = today.getDate() - birthDate.getDate();
+
+  // Adjust age if the birthday hasn't occurred yet this year
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+      age--;
+  }
+
+  return age;
+}
+
 
 function applyFilters() {
   let filtered = window.dataset;
@@ -24,16 +40,12 @@ function applyFilters() {
       player.overall_rating <= filters.overall_rating.max
     );
   }
-  if (filters.role) {
-    console.log(filters.role);
+  if (filters.role.length > 0) {
     filtered = filtered.filter(player => {
-        if (!player.positions) return false; // Avoid errors if missing
-
-        // Convert player positions (comma-separated string) into an array
-        const playerRoles = player.positions.split(",").map(role => role.trim());
-
-        // Check if the first role matches the specified role
-      return playerRoles.length > 0 && playerRoles[0] === filters.role[0];
+      if (!player.positions) return false;
+      const playerRoles = player.positions.split(",").map(role => role.trim());
+      // Check if player has ALL selected roles
+      return filters.role.every(role => playerRoles.includes(role));
     });
   }
   if (filters.league) {
@@ -106,22 +118,6 @@ function loadCSVData(csvFilePath, callback) {
   }).catch(function(error) {
     console.error("Error loading the CSV file: ", error);
   });
-}
-
-function calculateAge(dob) {
-  const birthDate = new Date(dob);
-  const today = new Date();
-  
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  const dayDiff = today.getDate() - birthDate.getDate();
-
-  // Adjust age if the birthday hasn't occurred yet this year
-  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
-      age--;
-  }
-
-  return age;
 }
 
 // Add these at the top of your script (global or in parent scope)
@@ -507,29 +503,36 @@ document.addEventListener("DOMContentLoaded", function() {
         }
       })
       .on("click", function(event, d) {
-        // Rimuovi l'effetto fisso dal precedente cerchio, se presente
-        if (fixedCircle && fixedCircle !== this) {
-          d3.select(fixedCircle)
-            .classed("fixed", false)
-            .transition()
-            .duration(200)
+        const circle = d3.select(this);
+        const role = d.role;
+        const index = filters.role.indexOf(role);
+      
+        if (index === -1) {
+          // Add role if less than 3 selected
+          if (filters.role.length < 3) {
+            filters.role.push(role);
+            circle.classed("fixed", true)
+              .interrupt() // Stop any ongoing transitions
+              .transition().duration(200)
+              .attr("r", 15)
+              .attr("stroke-width", 2.5)
+              .attr("stroke", "#ffffff");
+          }
+        } else {
+          // Remove role
+          filters.role.splice(index, 1);
+          circle.classed("fixed", false)
+            .interrupt() // Stop any ongoing transitions
+            .transition().duration(200)
             .attr("r", 12)
             .attr("stroke-width", 1.5)
-            .attr("stroke", "black");
+            .attr("stroke", "black")
+            .on("end", function() {
+              const originalFill = circle.style("fill"); 
+              circle.attr("fill", originalFill); // Restore original color
+            });
         }
-        // Imposta questo cerchio come fisso
-        fixedCircle = this;
-        d3.select(this)
-          .classed("fixed", true)
-          .transition()
-          .duration(200)
-          .attr("r", 15)
-          .attr("stroke-width", 2.5)
-          .attr("stroke", "#ffffff");
-
-        // Aggiorna i filtri e lo scatterplot
-        const selectedRoles = d.role.split("-").map(role => role.trim());
-        filters.role = selectedRoles;
+      
         updateScatterplot();
       });
 
@@ -580,8 +583,17 @@ document.addEventListener("DOMContentLoaded", function() {
       filters.overall_rating.min = 65;
       filters.overall_rating.max = 95;
       filters.league = "All Leagues";
-      filters.role = null;
+      filters.role = [];
       let ds = applyFilters();
+
+      // Reset all role circles
+      d3.selectAll(".role.fixed")
+      .classed("fixed", false)
+      .transition().duration(200)
+      .attr("r", 12)
+      .attr("stroke-width", 1.5)
+      .attr("stroke", "black");
+
       
       document.getElementById("league-filter").value = "All Leagues";
       document.getElementById("compare-mode").checked = false;
@@ -969,7 +981,7 @@ function updatePlayerInfo(playerData) {
     // Aggiungi le statistiche del giocatore
     playerStats.append("div")
       .attr("class", "player-stat")
-      .html(`<div class="stat-label">Overall</div><div class="stat-value">${player.overall_rating}</div>`);
+      .html(`<div class="stat-label">FC 25 Overall </div><div class="stat-value">${player.overall_rating}</div>`);
 
     playerStats.append("div")
       .attr("class", "player-stat")
