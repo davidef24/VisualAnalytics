@@ -602,7 +602,12 @@
         
         <!-- Bar Chart -->
         <div id="bar-chart-card" class="dashboard-card">
-            <div class="card-header">Player vs Top Cluster Features</div>
+            <div class="card-header" id="bar-chart-card-header">
+                Player vs Top Cluster Features
+                <label>
+                    <input type="checkbox" id="filtered-data-checkbox"> Use filtered data for cluster averages
+                </label>
+            </div>
             <div class="card-content" id="bar-chart-card-content">
                 <div id="bar-chart">
                     <div class="no-data">Select a player to compare with cluster</div>

@@ -78,6 +78,11 @@ document.getElementById("compare-mode").addEventListener("change", function() {
 function updateScatterplot() {
   const filteredPlayers = applyFilters();
   createScatterplot(filteredPlayers);
+  // Update the bar chart if using filtered data
+  if (document.getElementById('filtered-data-checkbox').checked && window.selectedPlayer && !window.brushedMode) {
+    const sameClusterFiltered = filteredPlayers.filter(player => player.Cluster === window.selectedPlayer.Cluster);
+    createBarChart(window.selectedPlayer, sameClusterFiltered);
+  }
 }
 
 // Function to load and process CSV data
@@ -619,10 +624,24 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 });
 
+document.getElementById('filtered-data-checkbox').addEventListener('change', function() {
+  if (window.selectedPlayer && !window.brushedMode) {
+    const sameClusterData = window.dataset.filter(player => player.Cluster === window.selectedPlayer.Cluster);
+    createBarChart(window.selectedPlayer, sameClusterData);
+  }
+});
+
 
 function createBarChart(playerData, clusterPlayers) {
   const container = d3.select("#bar-chart-card-content");
   container.selectAll("*").remove(); // Clear previous chart
+
+  // Check if we should use the filtered dataset
+  const useFilteredData = document.getElementById('filtered-data-checkbox').checked && !window.brushedMode;
+  if (useFilteredData) {
+    const filteredData = applyFilters();
+    clusterPlayers = filteredData.filter(player => player.Cluster === playerData.Cluster);
+  }
 
   // Create tooltip element (if not already exists)
   const tooltip = d3.select("body").append("div")
