@@ -581,8 +581,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Gestione del reset
     document.getElementById("reset-filter").addEventListener("click", function() {
-      filters.age.min = 65;
-      filters.age.max = 95;
+      filters.age.min = 18;
+      filters.age.max = 46;
       filters.league = "All Leagues";
       filters.role = [];
       let ds = applyFilters();
