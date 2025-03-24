@@ -1,5 +1,5 @@
 const filters = {
-  overall_rating: { min: 65, max: 94 },
+  age: { min: 18, max: 46 },
   role: [], 
   league: "All Leagues"
 };
@@ -34,11 +34,12 @@ function calculateAge(dob) {
 
 function applyFilters() {
   let filtered = window.dataset;
-  if (filters.overall_rating.min !== null && filters.overall_rating.max !== null) {
-    filtered = filtered.filter(player =>
-      player.overall_rating >= filters.overall_rating.min &&
-      player.overall_rating <= filters.overall_rating.max
-    );
+  if (filters.age.min !== null && filters.age.max !== null) {
+    filtered = filtered.filter(player => {
+      const age = calculateAge(player.dob); // Compute age from dob
+      return age >= filters.age.min &&
+      age <= filters.age.max;
+    });
   }
   if (filters.role.length > 0) {
     filtered = filtered.filter(player => {
@@ -556,8 +557,8 @@ document.addEventListener("DOMContentLoaded", function() {
         const maxSlider = document.getElementById("max-slider");
         const minValueDisplay = document.getElementById("min-value");
         const maxValueDisplay = document.getElementById("max-value");
-        filters.overall_rating.min = parseInt(minSlider.value);
-        filters.overall_rating.max = parseInt(maxSlider.value);
+        filters.age.min = parseInt(minSlider.value);
+        filters.age.max = parseInt(maxSlider.value);
         const sliderTrack = document.getElementById("slider-track");
         const minVal = parseInt(minSlider.value);
         const maxVal = parseInt(maxSlider.value);
@@ -580,8 +581,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Gestione del reset
     document.getElementById("reset-filter").addEventListener("click", function() {
-      filters.overall_rating.min = 65;
-      filters.overall_rating.max = 95;
+      filters.age.min = 65;
+      filters.age.max = 95;
       filters.league = "All Leagues";
       filters.role = [];
       let ds = applyFilters();
@@ -1691,8 +1692,8 @@ document.addEventListener("DOMContentLoaded", function() {
   const maxSlider = document.getElementById("max-slider");
   const minValueDisplay = document.getElementById("min-value");
   const maxValueDisplay = document.getElementById("max-value");
-  filters.overall_rating.min = parseInt(minSlider.value);
-  filters.overall_rating.max = parseInt(maxSlider.value);
+  filters.age.min = parseInt(minSlider.value);
+  filters.age.max = parseInt(maxSlider.value);
   const sliderTrack = document.getElementById("slider-track");
 
   function updateSliderValues() {
@@ -1723,8 +1724,6 @@ document.addEventListener("DOMContentLoaded", function() {
   updateSliderValues();
 });
 
-
-
 // Event listener for slider change
 document.addEventListener("DOMContentLoaded", function() {
   const minSlider = document.getElementById("min-slider");
@@ -1738,7 +1737,7 @@ document.addEventListener("DOMContentLoaded", function() {
       if (minValue > maxValue) {
           minSlider.value = maxSlider.value;
       }
-      filters.overall_rating.min = minValue;
+      filters.age.min = minValue;
       updateScatterplot();
   });
 
@@ -1749,7 +1748,7 @@ document.addEventListener("DOMContentLoaded", function() {
       if (maxValue < minValue) {
           maxSlider.value = minSlider.value;
       }
-      filters.overall_rating.max = maxValue;
+      filters.age.max = maxValue;
       updateScatterplot();
   });
 });
