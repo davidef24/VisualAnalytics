@@ -1,38 +1,52 @@
 const filters = {
-  overall_rating: { min: 65, max: 94 },
-  role: null,
+  age: { min: 18, max: 46 },
+  role: [], 
   league: "All Leagues"
 };
 
 const clustersColors = [
-  "#ff595e", 
-  "#ff924c", 
-  "#ffca3a",  
-  "#6a4c93",  
-  "#1982c4",  
-  "#8ac926" 
+  "#e41a1c", 
+  "#377eb8",
+  "#ff7f00", 
+  "#984ea3",
+  "#4daf4a",
+  "#a65628"
 ];
+
+const colorPalette = clustersColors;
+
+function calculateAge(dob) {
+  const birthDate = new Date(dob);
+  const today = new Date();
+  
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  const dayDiff = today.getDate() - birthDate.getDate();
+
+  // Adjust age if the birthday hasn't occurred yet this year
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+      age--;
+  }
+
+  return age;
+}
 
 
 function applyFilters() {
   let filtered = window.dataset;
-  d3.select("#brushed-player-checkbox").property("checked", false);
-  if (filters.overall_rating.min !== null && filters.overall_rating.max !== null) {
-    filtered = filtered.filter(player =>
-      player.overall_rating >= filters.overall_rating.min &&
-      player.overall_rating <= filters.overall_rating.max
-    );
-  }
-  if (filters.role) {
-    console.log(filters.role);
+  if (filters.age.min !== null && filters.age.max !== null) {
     filtered = filtered.filter(player => {
-        if (!player.positions) return false; // Avoid errors if missing
-
-        // Convert player positions (comma-separated string) into an array
-        const playerRoles = player.positions.split(",").map(role => role.trim());
-
-        // Check if the first role matches the specified role
-      return playerRoles.length > 0 && playerRoles[0] === filters.role[0];
+      const age = calculateAge(player.dob); // Compute age from dob
+      return age >= filters.age.min &&
+      age <= filters.age.max;
+    });
+  }
+  if (filters.role.length > 0) {
+    filtered = filtered.filter(player => {
+      if (!player.positions) return false;
+      const playerRoles = player.positions.split(",").map(role => role.trim());
+      // Check if player has ALL selected roles
+      return filters.role.every(role => playerRoles.includes(role));
     });
   }
   if (filters.league) {
@@ -77,6 +91,11 @@ document.getElementById("compare-mode").addEventListener("change", function() {
 function updateScatterplot() {
   const filteredPlayers = applyFilters();
   createScatterplot(filteredPlayers);
+  // Update the bar chart if using filtered data
+  if (document.getElementById('filtered-data-checkbox').checked && window.selectedPlayer && !window.brushedMode) {
+    const sameClusterFiltered = filteredPlayers.filter(player => player.Cluster === window.selectedPlayer.Cluster);
+    createBarChart(window.selectedPlayer, sameClusterFiltered);
+  }
 }
 
 // Function to load and process CSV data
@@ -101,26 +120,6 @@ function loadCSVData(csvFilePath, callback) {
     console.error("Error loading the CSV file: ", error);
   });
 }
-
-function calculateAge(dob) {
-  const birthDate = new Date(dob);
-  const today = new Date();
-  
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  const dayDiff = today.getDate() - birthDate.getDate();
-
-  // Adjust age if the birthday hasn't occurred yet this year
-  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
-      age--;
-  }
-
-  return age;
-}
-
-
-// Define a color palette for clusters.
-const customColorPalette = clustersColors;
 
 // Add these at the top of your script (global or in parent scope)
 let originalXDomain, originalYDomain;
@@ -252,8 +251,8 @@ function createScatterplot(data) {
         window.selectedPlayer = d;
         document.getElementById("radar-slider").value = 0;
         document.getElementById("radar-slider-value").textContent = "0";
-        const nearestPlayers = findNearestPlayers(d, data, 0);
-        const fiveNearest = findNearestPlayers(d, data, 5);
+        const nearestPlayers = findNearestPlayers(d, window.dataset, 0);
+        const fiveNearest = findNearestPlayers(d, window.dataset, 5);
         window.np = fiveNearest;
 
         const sameClusterData = window.dataset.filter(player => player.Cluster === d.Cluster);
@@ -269,7 +268,8 @@ function createScatterplot(data) {
   let brushedPlayers = [];
 
   // Global flag for brush mode (initially off)
-  window.brushedMode = false;
+  window.brushedMode = window.brushedMode || false;
+
 
   const brush = d3.brush()
   .extent([[0, 0], [width, height]])
@@ -282,11 +282,14 @@ function createScatterplot(data) {
     .attr("class", "brush")
     .call(brush);
 
-  // Disable brush overlay pointer events initially so that the area cannot be drawn
-  brushG.select(".overlay").style("pointer-events", "none");
-
-  // Lower the brush overlay so tooltips work when brush mode is off
-  brushG.lower();
+  // Enable or disable the brush overlay based on window.brushedMode
+  if (window.brushedMode) {
+    brushG.raise();
+    brushG.select(".overlay").style("pointer-events", "all");
+  } else {
+    brushG.lower();
+    brushG.select(".overlay").style("pointer-events", "none");
+  }
 
   function brushed(event) {
     if (!event.selection) {
@@ -326,12 +329,12 @@ function createScatterplot(data) {
       brushG.raise();
       brushG.select(".overlay").style("pointer-events", "all");
       tooltip.style("display", "none");
-      console.log("Brush mode activated");
+      //console.log("Brush mode activated");
     } else {
       // Deactivate brush mode: disable pointer events to prevent drawing
       brushG.lower();
       brushG.select(".overlay").style("pointer-events", "none");
-      console.log("Brush mode deactivated");
+      //console.log("Brush mode deactivated");
       // Clear any current brush selection:
       brushG.call(brush.move, null);
     }
@@ -346,12 +349,11 @@ function createScatterplot(data) {
     .attr("transform", `translate(${width + 10}, 20)`);
 
   const legendData = [
-    { color: colorPalette[0], label: "Defensive and Physical Players" },
-    { color: colorPalette[1], label: "Playmakers and Versatile Midfielders" },
-    { color: colorPalette[2], label: "Physical and Athletic Strikers" },
-    { color: colorPalette[3], label: "Goalkeepers" },
-    { color: colorPalette[4], label: "Full Backs and Side Midifielders" },
-    { color: colorPalette[5], label: "Wingers and Agile Attackers" }
+    { color: colorPalette[3], label: "Defensive players" },
+    { color: colorPalette[2], label: "Technical players" },
+    { color: colorPalette[1], label: "Offensive players" },
+    { color: colorPalette[4], label: "Goalkeepers" },
+    { color: colorPalette[0], label: "Athletical players" },
   ];
 
   legendData.forEach((item, index) => {
@@ -436,13 +438,13 @@ document.addEventListener("DOMContentLoaded", function() {
     // Posizioni relative per la formazione 4-3-3
     const positions = [
       { role: "GK", x: 0.11, y: 0.5 },
-      { role: "LB", x: 0.27, y: 0.25 },
-      { role: "CB", x: 0.27, y: 0.5 },
-      { role: "RB", x: 0.27, y: 0.75 },
-      { role: "RWB", x: 0.4, y: 0.77 },
-      { role: "LWB", x: 0.4, y: 0.23 },
+      { role: "LB", x: 0.27, y: 0.26 },
+      { role: "CB", x: 0.24, y: 0.5 },
+      { role: "RB", x: 0.27, y: 0.74 },
+      { role: "RWB", x: 0.38, y: 0.78 },
+      { role: "LWB", x: 0.38, y: 0.22 },
       { role: "LM", x: 0.6, y: 0.23 },
-      { role: "CDM", x: 0.41, y: 0.5 },
+      { role: "CDM", x: 0.42, y: 0.5 },
       { role: "CM", x: 0.54, y: 0.5 },
       { role: "CAM", x: 0.66, y: 0.5 },
       { role: "LW", x: 0.8, y: 0.25 },
@@ -506,29 +508,36 @@ document.addEventListener("DOMContentLoaded", function() {
         }
       })
       .on("click", function(event, d) {
-        // Rimuovi l'effetto fisso dal precedente cerchio, se presente
-        if (fixedCircle && fixedCircle !== this) {
-          d3.select(fixedCircle)
-            .classed("fixed", false)
-            .transition()
-            .duration(200)
+        const circle = d3.select(this);
+        const role = d.role;
+        const index = filters.role.indexOf(role);
+      
+        if (index === -1) {
+          // Add role if less than 3 selected
+          if (filters.role.length < 3) {
+            filters.role.push(role);
+            circle.classed("fixed", true)
+              .interrupt() // Stop any ongoing transitions
+              .transition().duration(200)
+              .attr("r", 15)
+              .attr("stroke-width", 2.5)
+              .attr("stroke", "#ffffff");
+          }
+        } else {
+          // Remove role
+          filters.role.splice(index, 1);
+          circle.classed("fixed", false)
+            .interrupt() // Stop any ongoing transitions
+            .transition().duration(200)
             .attr("r", 12)
             .attr("stroke-width", 1.5)
-            .attr("stroke", "black");
+            .attr("stroke", "black")
+            .on("end", function() {
+              const originalFill = circle.style("fill"); 
+              circle.attr("fill", originalFill); // Restore original color
+            });
         }
-        // Imposta questo cerchio come fisso
-        fixedCircle = this;
-        d3.select(this)
-          .classed("fixed", true)
-          .transition()
-          .duration(200)
-          .attr("r", 15)
-          .attr("stroke-width", 2.5)
-          .attr("stroke", "#ffffff");
-
-        // Aggiorna i filtri e lo scatterplot
-        const selectedRoles = d.role.split("-").map(role => role.trim());
-        filters.role = selectedRoles;
+      
         updateScatterplot();
       });
 
@@ -552,8 +561,8 @@ document.addEventListener("DOMContentLoaded", function() {
         const maxSlider = document.getElementById("max-slider");
         const minValueDisplay = document.getElementById("min-value");
         const maxValueDisplay = document.getElementById("max-value");
-        filters.overall_rating.min = parseInt(minSlider.value);
-        filters.overall_rating.max = parseInt(maxSlider.value);
+        filters.age.min = parseInt(minSlider.value);
+        filters.age.max = parseInt(maxSlider.value);
         const sliderTrack = document.getElementById("slider-track");
         const minVal = parseInt(minSlider.value);
         const maxVal = parseInt(maxSlider.value);
@@ -576,11 +585,20 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Gestione del reset
     document.getElementById("reset-filter").addEventListener("click", function() {
-      filters.overall_rating.min = 65;
-      filters.overall_rating.max = 95;
+      filters.age.min = 18;
+      filters.age.max = 46;
       filters.league = "All Leagues";
-      filters.role = null;
+      filters.role = [];
       let ds = applyFilters();
+
+      // Reset all role circles
+      d3.selectAll(".role.fixed")
+      .classed("fixed", false)
+      .transition().duration(200)
+      .attr("r", 12)
+      .attr("stroke-width", 1.5)
+      .attr("stroke", "black");
+
       
       document.getElementById("league-filter").value = "All Leagues";
       document.getElementById("compare-mode").checked = false;
@@ -593,6 +611,8 @@ document.addEventListener("DOMContentLoaded", function() {
       maxSlider.value = 94;
       minSlider.textContent = 65;
       maxSlider.textContent = 94;
+      document.getElementById("brushed-player-checkbox").checked = false;  // <- Add this
+      window.brushedMode = false;  // <- Add this
       updateSliderValues();
       createScatterplot(ds); 
       const playerInfoDiv = d3.select("#player-info");
@@ -621,10 +641,35 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 });
 
+document.getElementById('filtered-data-checkbox').addEventListener('change', function() {
+  if (window.selectedPlayer && !window.brushedMode) {
+    const sameClusterData = window.dataset.filter(player => player.Cluster === window.selectedPlayer.Cluster);
+    createBarChart(window.selectedPlayer, sameClusterData);
+  }
+});
+
 
 function createBarChart(playerData, clusterPlayers) {
   const container = d3.select("#bar-chart-card-content");
   container.selectAll("*").remove(); // Clear previous chart
+
+  // Check if we should use the filtered dataset
+  const useFilteredData = document.getElementById('filtered-data-checkbox').checked && !window.brushedMode;
+  if (useFilteredData) {
+    const filteredData = applyFilters();
+    clusterPlayers = filteredData.filter(player => player.Cluster === playerData.Cluster);
+  }
+
+  // Create tooltip element (if not already exists)
+  const tooltip = d3.select("body").append("div")
+        .attr("id", "tooltip")
+        .style("position", "absolute")
+        .style("padding", "8px")
+        .style("background-color", "rgba(0, 0, 0, 0.7)")
+        .style("color", "white")
+        .style("border", "1px solid #ddd")
+        .style("pointer-events", "none")
+        .style("display", "none");
 
   // If brush mode is active, ignore playerData and use brushed players only.
   if (window.brushedMode) {
@@ -662,7 +707,7 @@ function createBarChart(playerData, clusterPlayers) {
     // Set up dimensions
     const width = container.node().clientWidth;
     const height = container.node().clientHeight;
-    const margin = { top: 20, right: 60, bottom: 100, left: 50 };
+    const margin = { top: 20, right: 200, bottom: 150, left: 50 }; // Increased right margin
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
 
@@ -693,31 +738,38 @@ function createBarChart(playerData, clusterPlayers) {
     svg.append("g")
       .call(d3.axisLeft(y));
 
-    const barWidth2 = x.bandwidth() / 2;
-
+    const barWidth = x.bandwidth() * 0.7;
     // Draw a single set of bars for the cluster (brushed players) average.
     svg.selectAll(".cluster-bar")
       .data(clusterValues)
       .enter()
       .append("rect")
       .attr("class", "cluster-bar")
-      .attr("x", (_, i) => x(topFeatureNames[i]))
+      .attr("x", (_, i) => x(topFeatureNames[i]) + (x.bandwidth() - barWidth) / 2)
       .attr("y", d => y(d))
-      .attr("width", x.bandwidth())
+      .attr("width", barWidth) // Apply new width
       .attr("height", d => chartHeight - y(d))
-      .attr("fill", "#d62828"); // Cluster bar color
+      .attr("fill", "#0077b6") // Cluster bar color
+      .on("mouseover", function(event, d) {
+        tooltip
+          .style("left", `${event.pageX}px`)
+          .style("top", `${event.pageY}px`)
+          .html(`Feature value: ${Number(d).toFixed(1)}`)
+          .style("display", "block");
+      })
+      .on("mouseout", () => tooltip.style("display", "none"));
 
-    // Legend (only one item)
+      // Brushed mode legend positioning
     const legend = svg.append("g")
-      .attr("class", "legend")
-      .attr("transform", `translate(${chartWidth - 120},${-margin.top + 20})`);
+    .attr("class", "legend")
+    .attr("transform", `translate(${chartWidth + 20},${-margin.top + 20})`); // Move to margin area
 
     legend.append("rect")
       .attr("x", 0)
       .attr("y", 0)
       .attr("width", 15)
       .attr("height", 15)
-      .attr("fill", "#d62828");
+      .attr("fill", "#0077b6");
 
     legend.append("text")
       .attr("x", 18)
@@ -730,12 +782,12 @@ function createBarChart(playerData, clusterPlayers) {
   } else {
     // Normal mode: show player vs cluster bars.
     const playerCluster = playerData["Cluster"];
-    const clusterColor = "#d62828";
-    const playerColor = "#003049";
+    const clusterColor = "#db504a";
+    const playerColor = "#084c61";
 
     const width = container.node().clientWidth;
     const height = container.node().clientHeight;
-    const margin = { top: 20, right: 60, bottom: 100, left: 50 };
+    const margin = { top: 20, right: 200, bottom: 80, left: 50 }; // Increased right margin
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
 
@@ -815,16 +867,13 @@ function createBarChart(playerData, clusterPlayers) {
       .attr("height", d => chartHeight - y(d))
       .attr("fill", playerColor)
       .on("mouseover", function(event, d) {
-        tooltip.style("display", "block")
-               .html("Player Value: " + d);
+        tooltip
+          .style("left", `${event.pageX - 10}px`)
+          .style("top", `${event.pageY + 10}px`)
+          .html(`Player feature value: ${Number(d).toFixed(1)}`)
+          .style("display", "block");
       })
-      .on("mousemove", function(event) {
-          tooltip.style("left", (event.pageX + 10) + "px")
-                 .style("top", (event.pageY - 20) + "px");
-      })
-      .on("mouseout", function() {
-          tooltip.style("display", "none");
-      });
+      .on("mouseout", () => tooltip.style("display", "none"));
 
     svg.selectAll(".cluster-bar")
       .data(clusterValues)
@@ -837,20 +886,17 @@ function createBarChart(playerData, clusterPlayers) {
       .attr("height", d => chartHeight - y(d))
       .attr("fill", clusterColor)
       .on("mouseover", function(event, d) {
-        tooltip.style("display", "block")
-               .html("Cluster Value: " + d);
+        tooltip
+          .style("left", `${event.pageX}px`)
+          .style("top", `${event.pageY}px`)
+          .html(`Cluster average value: ${d.toFixed(1)}`)
+          .style("display", "block");
       })
-      .on("mousemove", function(event) {
-          tooltip.style("left", (event.pageX + 10) + "px")
-                 .style("top", (event.pageY - 20) + "px");
-      })
-      .on("mouseout", function() {
-          tooltip.style("display", "none");
-      });
+      .on("mouseout", () => tooltip.style("display", "none"));
 
     const legend = svg.append("g")
       .attr("class", "legend")
-      .attr("transform", `translate(${chartWidth - 120},${-margin.top + 20})`);
+      .attr("transform", `translate(${chartWidth + 20},${-margin.top + 20})`); // Move to margin area
 
     const legendItems = [
       { color: playerColor, text: `${window.selectedPlayer.name} values` },
@@ -878,8 +924,6 @@ function createBarChart(playerData, clusterPlayers) {
       .style("alignment-baseline", "middle");
   }
 }
-
-
 
 
 function updatePlayerInfo(playerData) {
@@ -953,7 +997,7 @@ function updatePlayerInfo(playerData) {
     // Aggiungi le statistiche del giocatore
     playerStats.append("div")
       .attr("class", "player-stat")
-      .html(`<div class="stat-label">Overall</div><div class="stat-value">${player.overall_rating}</div>`);
+      .html(`<div class="stat-label">FC 25 Overall </div><div class="stat-value">${player.overall_rating}</div>`);
 
     playerStats.append("div")
       .attr("class", "player-stat")
@@ -1438,6 +1482,7 @@ function loadAndCreateLineChart(selectedPlayer, selectedMetric) {
 
 
 function createLineChart(playerData, metric) {
+
   // 1. Setup Tooltip
   const tooltip = d3.select("body")
     .append("div")
@@ -1466,50 +1511,218 @@ function createLineChart(playerData, metric) {
   playerData.sort((a, b) => a.year - b.year);
 
   // 5. Chart Configuration
-  const margin = { top: -20, right: 120, bottom: 120, left: 90 };
+  if (metric === "statistics"){
+    var margin = { top: 20, right: 250, bottom: 70, left: 80 }; // NEW
+  }
+  else{
+    var margin = { top: 20, right: 100, bottom: 70, left: 80 }; // NEW
+  }
+  
   const container = d3.select("#time-series");
-  const width = container.node().clientWidth - margin.left - margin.right;
-  const height = container.node().clientHeight - margin.top - margin.bottom;
+  const containerWidth = container.node().clientWidth;
+  const containerHeight = container.node().clientHeight;
+  
+  const chartWidth = containerWidth - margin.left - margin.right;
+  const chartHeight = containerHeight - margin.top - margin.bottom;
 
   // 6. Create SVG Container
   const svg = container.append("svg")
-    .attr("viewBox", `0 0 ${width + margin.right} ${height}`)
-    .attr("preserveAspectRatio", "xMidYMid meet")
-    .append("g")
+    .attr("width", containerWidth)
+    .attr("height", containerHeight)
+    .attr("viewBox", `0 0 ${containerWidth} ${containerHeight}`)
+    .attr("preserveAspectRatio", "xMidYMid meet");
+
+  // Main chart area (left column)
+  const chartGroup = svg.append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // Sidebar group (right column - contains legend and trends)
+  const sidebarGroup = svg.append("g")
+    .attr("transform", `translate(${margin.left + chartWidth + 40}, ${margin.top})`);
 
   // 7. Define Scales
   const xScale = d3.scaleTime()
     .domain([new Date(d3.min(playerData, d => d.year) + 2000, 0), new Date(d3.max(playerData, d => d.year) + 2000, 0)])
-    .range([0, width]);
+    .range([0, chartWidth]);
 
   let yScale;
   let statistics = [];
+
+  // Revised tooltip position handler using page coordinates directly.
+  function updateTooltipPosition(event) {
+    let x = event.pageX + 15;
+    let y = event.pageY - 30;
+    const tooltipNode = tooltip.node();
+    if (tooltipNode) {
+      // Use window.innerWidth for boundary check
+      if (x + tooltipNode.offsetWidth > window.innerWidth) {
+        x = event.pageX - tooltipNode.offsetWidth - 15;
+      }
+      if (y < 0) {
+        y = event.pageY + 15;
+      }
+      tooltip.style("left", `${x}px`)
+             .style("top", `${y}px`);
+    }
+  }
+
+  function createLegendAndTrends(sidebarElement, statistics, colors, insights) {
+    // Compact Legend Section
+    const legendGroup = sidebarElement.append("g")
+      .attr("class", "legend")
+      .attr("transform", "translate(0, 0)");
+
+    statistics.forEach((stat, index) => {
+      const legendItem = legendGroup.append("g")
+        .attr("transform", `translate(0, ${20 * index})`);
+
+      legendItem.append("rect")
+        .attr("width", 14)
+        .attr("height", 14)
+        .attr("fill", colors[index % colors.length]);
+
+      legendItem.append("text")
+        .attr("x", 20)
+        .attr("y", 7)
+        .style("font-size", "11px")
+        .text(stat.charAt(0).toUpperCase() + stat.slice(1));
+    });
+
+    // Process insights: sort, limit to 7, and add signs
+    const processedInsights = insights
+      .sort((a, b) => b.percentage - a.percentage) // Sort by absolute value descending
+      .slice(0, 7) // Take top 7
+      .map(insight => ({
+        ...insight,
+        // Add negative sign for decreases
+        percentage: insight.direction === "decreased" 
+                   ? `-${insight.percentage}%` 
+                   : `+${insight.percentage}%`
+      }));
+
+    // Trends Section with Arrows
+    const trendsGroup = sidebarElement.append("g")
+      .attr("class", "trends")
+      .attr("transform", `translate(0, ${20 * statistics.length + 20})`);
+
+    trendsGroup.append("text")
+      .attr("class", "sidebar-title")
+      .style("font-size", "14px")
+      .style("font-weight", "bold")
+      .text("Performance Trends");
+
+    const trendsContent = trendsGroup.append("g")
+      .attr("transform", "translate(0, 20)");
+
+    if (processedInsights.length > 0) {
+      processedInsights.forEach((insight, i) => {
+        const trendItem = trendsContent.append("g")
+          .attr("transform", `translate(0, ${25 * i})`);
+
+        // Add colored arrow
+        const arrowColor = insight.direction === "increased" ? "#4CAF50" : "#F44336";
+        trendItem.append("text")
+          .attr("x", 0)
+          .attr("y", 0)
+          .attr("dy", "0.32em")
+          .style("font-size", "16px")
+          .style("fill", arrowColor)
+          .text(insight.direction === "increased" ? "↑" : "↓");
+
+        // Single line with all information
+        trendItem.append("text")
+          .attr("x", 20)
+          .attr("y", 0)
+          .style("font-size", "12px")
+          .html(`
+            ${insight.stat.toUpperCase()} 
+            <tspan style="fill:${arrowColor}">${insight.percentage}</tspan>
+            <tspan style="fill:#666"> 
+              | ${insight.years.join("-")} (${insight.duration} season${insight.duration > 1 ? "s" : ""})
+            </tspan>
+          `);
+      });
+    } else {
+      trendsContent.append("text")
+        .attr("x", 0)
+        .attr("y", 0)
+        .style("font-size", "12px")
+        .text("No significant trends detected");
+    }
+  }
+
+  // New Insight Detection Function
+  function searchForInsights(playerData, statistics) {
+    const insights = [];
+    const threshold = 10; // 10% change threshold
+    statistics.forEach(stat => {
+      const validData = playerData
+        .filter(d => d.statistics?.[stat] !== null && d.statistics?.[stat] !== undefined)
+        .sort((a, b) => a.year - b.year);
+      if (validData.length < 2) return;
+      for (let i = 1; i < validData.length; i++) {
+        const prev = validData[i - 1].statistics[stat];
+        const current = validData[i].statistics[stat];
+        const change = ((current - prev) / prev) * 100;
+        if (Math.abs(change) >= threshold) {
+          insights.push({
+            stat,
+            direction: change > 0 ? "increased" : "decreased",
+            percentage: Math.abs(change).toFixed(1),
+            years: [validData[i - 1].year, validData[i].year],
+            duration: 1
+          });
+        }
+      }
+      if (validData.length > 2) {
+        const overallChange = ((validData[validData.length - 1].statistics[stat] - validData[0].statistics[stat]) / validData[0].statistics[stat] * 100);
+        if (Math.abs(overallChange) >= threshold) {
+          const isAlreadyCovered = insights.some(insight => 
+            insight.stat === stat && 
+            insight.years[0] <= validData[0].year && 
+            insight.years[1] >= validData[validData.length - 1].year
+          );
+          if (!isAlreadyCovered) {
+            insights.push({
+              stat,
+              direction: overallChange > 0 ? "increased" : "decreased",
+              percentage: Math.abs(overallChange).toFixed(1),
+              years: [validData[0].year, validData[validData.length - 1].year],
+              duration: validData.length - 1
+            });
+          }
+        }
+      }
+    });
+    return insights;
+  }
 
   // 8. Handle Statistics Metric
   if (metric === "statistics") {
     // Define statistics based on player position
     statistics = playerData[0].positions === "GK"
-      ? ["diving", "handling", "kicking", "positioning", "reflexes"] // Goalkeeper stats
-      : ["pace", "physics", "passing", "dribbling", "defending", "shooting"]; // Field player stats
+      ? ["diving", "handling", "kicking", "positioning", "reflexes"]
+      : ["pace", "physics", "passing", "dribbling", "defending", "shooting"];
+
+    // Find insights/trends
+    const insights = searchForInsights(playerData, statistics);
+    // Create legend and trend information in the sidebar (left side of chart)
+    createLegendAndTrends(sidebarGroup, statistics, clustersColors, insights);
 
     // Set Y-Scale for statistics (0 to 100)
     yScale = d3.scaleLinear()
       .domain([0, 100])
-      .range([height, 0]);
+      .range([chartHeight, 0]);
 
-    // Draw Lines and Dots for Each Statistic
+    // Draw Lines and Dots for Each Statistic in the chartGroup
     statistics.forEach((stat, index) => {
       const color = clustersColors[index % clustersColors.length];
-
-      // Define Line Generator
       const line = d3.line()
         .x(d => xScale(new Date(d.year + 2000, 0)))
         .y(d => yScale(d.statistics?.[stat] || 0))
         .defined(d => d.statistics?.[stat] !== null && d.statistics?.[stat] !== undefined);
 
-      // Draw Line
-      const path = svg.append("path")
+      const path = chartGroup.append("path")
         .datum(playerData)
         .attr("fill", "none")
         .attr("stroke", color)
@@ -1518,8 +1731,7 @@ function createLineChart(playerData, metric) {
         .attr("class", `line-${stat}`)
         .attr("d", line);
 
-      // Add Dots with Tooltips
-      svg.selectAll(".dot-" + stat)
+      chartGroup.selectAll(".dot-" + stat)
         .data(playerData.filter(d => d.statistics?.[stat] !== null))
         .enter()
         .append("circle")
@@ -1531,62 +1743,56 @@ function createLineChart(playerData, metric) {
         .attr("stroke", "white")
         .attr("stroke-width", 0)
         .on("mouseover", function (event, d) {
+          updateTooltipPosition(event);
+          const value = d.statistics?.[stat] !== null ? Math.round(d.statistics[stat]) : "N/A";
           tooltip.style("opacity", 1)
-            .html(`<strong>${stat.toUpperCase()}</strong>: ${d.statistics?.[stat] || "N/A"}`)
-            .style("display", "block")
-            .style("left", `${event.pageX + 15}px`)
-            .style("top", `${event.pageY - 30}px`);
-
-          d3.selectAll("path").transition().duration(50).attr("opacity", 0.3);
-          d3.selectAll('[class^="dot-"]').transition().duration(50).attr("opacity", 0.3);
-
-          d3.select(`.line-${stat}`).transition().duration(50).attr("opacity", 1).attr("stroke-width", 3);
-          d3.selectAll(`.dot-${stat}`).transition().duration(50).attr("opacity", 1).attr("r", 6);
+            .html(`<strong>${stat.toUpperCase()}</strong>: ${value}`)
+            .style("display", "block");
+          chartGroup.selectAll("path").transition().duration(50).attr("opacity", 0.3);
+          chartGroup.selectAll('[class^="dot-"]').transition().duration(50).attr("opacity", 0.3);
+          chartGroup.select(`.line-${stat}`).transition().duration(50).attr("opacity", 1).attr("stroke-width", 3);
+          chartGroup.selectAll(`.dot-${stat}`).transition().duration(50).attr("opacity", 1).attr("r", 6);
         })
         .on("mousemove", function (event) {
-          tooltip.style("left", `${event.pageX + 15}px`)
-            .style("top", `${event.pageY - 30}px`);
+          updateTooltipPosition(event);
         })
         .on("mouseout", function () {
           tooltip.style("opacity", 0).style("display", "none");
-
-          d3.selectAll("path").transition().duration(20).attr("opacity", 1).attr("stroke-width", 2);
-          d3.selectAll('[class^="dot-"]').transition().duration(20).attr("opacity", 1).attr("r", 4);
+          chartGroup.selectAll("path").transition().duration(20).attr("opacity", 1).attr("stroke-width", 2);
+          chartGroup.selectAll('[class^="dot-"]').transition().duration(20).attr("opacity", 1).attr("r", 4);
         });
 
-      // Add Hover Effects to Line
-      path.on("mouseover", function () {
-        d3.selectAll("path").transition().duration(20).attr("opacity", 0.3);
-        d3.selectAll('[class^="dot-"]').transition().duration(20).attr("opacity", 0.3);
-
-        d3.select(`.line-${stat}`).transition().duration(20).attr("opacity", 1).attr("stroke-width", 3);
-        d3.selectAll(`.dot-${stat}`).transition().duration(20).attr("opacity", 1).attr("r", 6);
-      }).on("mouseout", function () {
-        d3.selectAll("path").transition().duration(20).attr("opacity", 1).attr("stroke-width", 2);
-        d3.selectAll('[class^="dot-"]').transition().duration(20).attr("opacity", 1).attr("r", 4);
+      path.on("mouseover", function (event) {
+        updateTooltipPosition(event);
+        chartGroup.selectAll("path").transition().duration(20).attr("opacity", 0.3);
+        chartGroup.selectAll('[class^="dot-"]').transition().duration(20).attr("opacity", 0.3);
+        chartGroup.select(`.line-${stat}`).transition().duration(20).attr("opacity", 1).attr("stroke-width", 3);
+        chartGroup.selectAll(`.dot-${stat}`).transition().duration(20).attr("opacity", 1).attr("r", 6);
+      }).on("mouseout", function (event) {
+        updateTooltipPosition(event);
+        chartGroup.selectAll("path").transition().duration(20).attr("opacity", 1).attr("stroke-width", 2);
+        chartGroup.selectAll('[class^="dot-"]').transition().duration(20).attr("opacity", 1).attr("r", 4);
       });
     });
   } else {
     // 9. Handle Non-Statistics Metric
     yScale = d3.scaleLinear()
       .domain([0, d3.max(playerData, d => d[metric]) || 100000])
-      .range([height, 0]);
+      .range([chartHeight, 0]);
 
-    // Draw Line
     const line = d3.line()
       .x(d => xScale(new Date(d.year + 2000, 0)))
       .y(d => yScale(d[metric]))
       .defined(d => d[metric] !== null && d[metric] !== undefined);
 
-    svg.append("path")
+    chartGroup.append("path")
       .datum(playerData)
       .attr("fill", "none")
       .attr("stroke", "steelblue")
       .attr("stroke-width", 2)
       .attr("d", line);
 
-    // Add Dots with Tooltips
-    svg.selectAll(".dot")
+    chartGroup.selectAll(".dot")
       .data(playerData.filter(d => d[metric] !== null))
       .enter()
       .append("circle")
@@ -1596,31 +1802,25 @@ function createLineChart(playerData, metric) {
       .attr("r", 4)
       .attr("fill", "steelblue")
       .on("mouseover", function (event, d) {
+        const value = d[metric] !== null ? Math.round(d[metric]) : "N/A";
         tooltip.style("opacity", 1)
-          .html(`<strong>${metric.toUpperCase()}</strong>: ${d[metric]}`)
-          .style("left", `${event.pageX + 15}px`)
-          .style("top", `${event.pageY - 30}px`);
-
-        d3.select(this)
-          .transition().duration(200)
-          .attr("r", 6);
+          .html(`<strong>${metric.toUpperCase()}</strong>: ${value}`)
+          .style("display", "block");
+          updateTooltipPosition(event);
+          d3.select(this).transition().duration(200).attr("r", 6);
       })
       .on("mousemove", function (event) {
-        tooltip.style("left", `${event.pageX + 15}px`)
-          .style("top", `${event.pageY - 30}px`);
+          updateTooltipPosition(event);
       })
       .on("mouseout", function () {
         tooltip.style("opacity", 0);
-
-        d3.select(this)
-          .transition().duration(200)
-          .attr("r", 4);
+        d3.select(this).transition().duration(200).attr("r", 4);
       });
   }
 
   // 10. Add Axes
-  svg.append("g")
-    .attr("transform", `translate(0,${height})`)
+  chartGroup.append("g")
+    .attr("transform", `translate(0,${chartHeight})`)
     .call(d3.axisBottom(xScale).ticks(d3.timeYear.every(1)))
     .selectAll("text")
     .style("font-size", "12px")
@@ -1629,24 +1829,24 @@ function createLineChart(playerData, metric) {
     .style("transform", "translateY(10px)")
     .style("angle", "45deg");
 
-  svg.append("g")
+  chartGroup.append("g")
     .call(d3.axisLeft(yScale));
 
   // 11. Add Axis Labels
-  svg.append("text")
-    .attr("transform", `translate(${width / 2},${height + margin.bottom - 80})`)
+  chartGroup.append("text")
+    .attr("transform", `translate(${chartWidth / 2},${chartHeight + 40})`)
     .style("text-anchor", "middle")
-    .style("font-size", "18px")
+    .style("font-size", "16px")
     .text("Year");
 
-  svg.append("text")
+  chartGroup.append("text")
     .attr("transform", "rotate(-90)")
     .attr("y", 0 - margin.left)
-    .attr("x", 0 - (height / 2))
+    .attr("x", 0 - (chartHeight / 2))
     .attr("dy", "1em")
     .style("text-anchor", "middle")
-    .style("font-size", "18px")
-    .text(metric === "statistics" ? "Aggregated statistics" : metric);
+    .style("font-size", "16px")
+    .text(metric === "statistics" ? "Rating (0-100)" : (metric.charAt(0).toUpperCase() + metric.slice(1)));
 }
 
 
@@ -1663,8 +1863,8 @@ document.addEventListener("DOMContentLoaded", function() {
   const maxSlider = document.getElementById("max-slider");
   const minValueDisplay = document.getElementById("min-value");
   const maxValueDisplay = document.getElementById("max-value");
-  filters.overall_rating.min = parseInt(minSlider.value);
-  filters.overall_rating.max = parseInt(maxSlider.value);
+  filters.age.min = parseInt(minSlider.value);
+  filters.age.max = parseInt(maxSlider.value);
   const sliderTrack = document.getElementById("slider-track");
 
   function updateSliderValues() {
@@ -1695,8 +1895,6 @@ document.addEventListener("DOMContentLoaded", function() {
   updateSliderValues();
 });
 
-
-
 // Event listener for slider change
 document.addEventListener("DOMContentLoaded", function() {
   const minSlider = document.getElementById("min-slider");
@@ -1710,7 +1908,7 @@ document.addEventListener("DOMContentLoaded", function() {
       if (minValue > maxValue) {
           minSlider.value = maxSlider.value;
       }
-      filters.overall_rating.min = minValue;
+      filters.age.min = minValue;
       updateScatterplot();
   });
 
@@ -1721,7 +1919,7 @@ document.addEventListener("DOMContentLoaded", function() {
       if (maxValue < minValue) {
           maxSlider.value = minSlider.value;
       }
-      filters.overall_rating.max = maxValue;
+      filters.age.max = maxValue;
       updateScatterplot();
   });
 });
