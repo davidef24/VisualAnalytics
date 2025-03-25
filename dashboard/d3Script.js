@@ -177,10 +177,6 @@ function createScatterplot(data) {
     .attr("class", "y-axis")
     .call(d3.axisLeft(yScale));
 
-  // Define color palette
-  const colorPalette = customColorPalette;
-  
-
   // Define tooltip (ensure it exists)
   const tooltip = d3.select("body")
     .append("div")
@@ -585,8 +581,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Gestione del reset
     document.getElementById("reset-filter").addEventListener("click", function() {
-      filters.age.min = 18;
-      filters.age.max = 46;
+      filters.age.min = 17;
+      filters.age.max = 43;
       filters.league = "All Leagues";
       filters.role = [];
       let ds = applyFilters();
@@ -599,7 +595,7 @@ document.addEventListener("DOMContentLoaded", function() {
       .attr("stroke-width", 1.5)
       .attr("stroke", "black");
 
-      
+
       document.getElementById("league-filter").value = "All Leagues";
       document.getElementById("compare-mode").checked = false;
       document.getElementById("radar-slider").disabled = false;
@@ -607,10 +603,10 @@ document.addEventListener("DOMContentLoaded", function() {
       document.getElementById("radar-slider-value").textContent = "0";
       const minSlider = document.getElementById("min-slider");
       const maxSlider = document.getElementById("max-slider");
-      minSlider.value = 65;
-      maxSlider.value = 94;
-      minSlider.textContent = 65;
-      maxSlider.textContent = 94;
+      minSlider.value = 17;
+      maxSlider.value = 43;
+      minSlider.textContent = 17;
+      maxSlider.textContent = 43;
       document.getElementById("brushed-player-checkbox").checked = false;  // <- Add this
       window.brushedMode = false;  // <- Add this
       updateSliderValues();
@@ -676,7 +672,7 @@ function createBarChart(playerData, clusterPlayers) {
     // Use the brushed players stored globally (set in createScatterplot)
     clusterPlayers = window.brushedPlayers || [];
     console.log(clusterPlayers);
-    const numFeatures = 20; // Show top 15 features
+    const numFeatures = 15; // Show top 15 features
     const attributes = [
       "crossing","finishing","heading_accuracy","short_passing","volleys","dribbling",
       "curve","fk_accuracy","long_passing","ball_control","acceleration","sprint_speed",
@@ -844,17 +840,6 @@ function createBarChart(playerData, clusterPlayers) {
       .call(d3.axisLeft(y));
 
     const barWidth = x.bandwidth() / 2;
-
-    // Create tooltip in the bar-chart-card-content div
-    const tooltip = d3.select("#bar-chart-card-content")
-    .append("div")
-    .attr("class", "tooltip")
-    .style("position", "absolute")
-    .style("display", "none")
-    .style("background", "rgba(0, 0, 0, 0.7)")
-    .style("color", "white")
-    .style("padding", "8px")
-    .style("border-radius", "4px");
 
     svg.selectAll(".player-bar")
       .data(playerValues)
@@ -1357,7 +1342,7 @@ function findNearestPlayers(selectedPlayer, data, numNearest) {
   return distances.slice(0, numNearest).map(d => d.player);
 }
 
-
+//line chart
 
 function loadAndCreateLineChart(selectedPlayer, selectedMetric) {
   d3.csv("../data/male_players.csv").then(function(malePlayers) {
@@ -1638,7 +1623,7 @@ function createLineChart(playerData, metric) {
             ${insight.stat.toUpperCase()} 
             <tspan style="fill:${arrowColor}">${insight.percentage}</tspan>
             <tspan style="fill:#666"> 
-              | ${insight.years.join("-")} (${insight.duration} season${insight.duration > 1 ? "s" : ""})
+              | ${insight.years.join("-")}
             </tspan>
           `);
       });

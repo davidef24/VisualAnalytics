@@ -449,10 +449,9 @@ input[type="range"]::-moz-range-thumb {
 
 #radar-chart-card .card-header {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr; /* Titolo a sinistra, checkbox e slider a destra */
+    grid-template-columns: 1fr 1fr 1.3fr; /* Titolo a sinistra, checkbox e slider a destra */
     align-items: center; /* Centra verticalmente */
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 50px;
 }
 
 #compare-mode-container {
