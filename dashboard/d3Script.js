@@ -1181,7 +1181,7 @@ function createRadarChart(selectedPlayer, nearestPlayers) {
   
 
   // Impostazioni del grafico
-  const margin = { top: 10, right: 50, bottom: 60, left: 50 };
+  const margin = { top: 50, right: 50, bottom: 80, left: 50 };
   const container = d3.select(`#${containerId}`);
   const width = container.node().clientWidth - margin.left - margin.right;
   const height = container.node().clientHeight - margin.top - margin.bottom;
