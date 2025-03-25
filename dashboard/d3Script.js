@@ -581,8 +581,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Gestione del reset
     document.getElementById("reset-filter").addEventListener("click", function() {
-      filters.age.min = 17;
-      filters.age.max = 43;
+      filters.age.min = 18;
+      filters.age.max = 46;
       filters.league = "All Leagues";
       filters.role = [];
       let ds = applyFilters();
@@ -595,7 +595,7 @@ document.addEventListener("DOMContentLoaded", function() {
       .attr("stroke-width", 1.5)
       .attr("stroke", "black");
 
-
+      
       document.getElementById("league-filter").value = "All Leagues";
       document.getElementById("compare-mode").checked = false;
       document.getElementById("radar-slider").disabled = false;
@@ -603,10 +603,10 @@ document.addEventListener("DOMContentLoaded", function() {
       document.getElementById("radar-slider-value").textContent = "0";
       const minSlider = document.getElementById("min-slider");
       const maxSlider = document.getElementById("max-slider");
-      minSlider.value = 17;
-      maxSlider.value = 43;
-      minSlider.textContent = 17;
-      maxSlider.textContent = 43;
+      minSlider.value = 65;
+      maxSlider.value = 94;
+      minSlider.textContent = 65;
+      maxSlider.textContent = 94;
       document.getElementById("brushed-player-checkbox").checked = false;  // <- Add this
       window.brushedMode = false;  // <- Add this
       updateSliderValues();
@@ -1342,7 +1342,7 @@ function findNearestPlayers(selectedPlayer, data, numNearest) {
   return distances.slice(0, numNearest).map(d => d.player);
 }
 
-//line chart
+
 
 function loadAndCreateLineChart(selectedPlayer, selectedMetric) {
   d3.csv("../data/male_players.csv").then(function(malePlayers) {
@@ -1623,7 +1623,7 @@ function createLineChart(playerData, metric) {
             ${insight.stat.toUpperCase()} 
             <tspan style="fill:${arrowColor}">${insight.percentage}</tspan>
             <tspan style="fill:#666"> 
-              | ${insight.years.join("-")}
+              | ${insight.years.join("-")} (${insight.duration} season${insight.duration > 1 ? "s" : ""})
             </tspan>
           `);
       });
