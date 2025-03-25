@@ -16,6 +16,7 @@ const clustersColors = [
 
 function applyFilters() {
   let filtered = window.dataset;
+  d3.select("#brushed-player-checkbox").property("checked", false);
   if (filters.overall_rating.min !== null && filters.overall_rating.max !== null) {
     filtered = filtered.filter(player =>
       player.overall_rating >= filters.overall_rating.min &&
@@ -179,6 +180,7 @@ function createScatterplot(data) {
 
   // Define color palette
   const colorPalette = customColorPalette;
+  
 
   // Define tooltip (ensure it exists)
   const tooltip = d3.select("body")
@@ -629,7 +631,7 @@ function createBarChart(playerData, clusterPlayers) {
     // Use the brushed players stored globally (set in createScatterplot)
     clusterPlayers = window.brushedPlayers || [];
     console.log(clusterPlayers);
-    const numFeatures = 15; // Show top 15 features
+    const numFeatures = 20; // Show top 15 features
     const attributes = [
       "crossing","finishing","heading_accuracy","short_passing","volleys","dribbling",
       "curve","fk_accuracy","long_passing","ball_control","acceleration","sprint_speed",
@@ -690,6 +692,8 @@ function createBarChart(playerData, clusterPlayers) {
 
     svg.append("g")
       .call(d3.axisLeft(y));
+
+    const barWidth2 = x.bandwidth() / 2;
 
     // Draw a single set of bars for the cluster (brushed players) average.
     svg.selectAll(".cluster-bar")
@@ -789,6 +793,17 @@ function createBarChart(playerData, clusterPlayers) {
 
     const barWidth = x.bandwidth() / 2;
 
+    // Create tooltip in the bar-chart-card-content div
+    const tooltip = d3.select("#bar-chart-card-content")
+    .append("div")
+    .attr("class", "tooltip")
+    .style("position", "absolute")
+    .style("display", "none")
+    .style("background", "rgba(0, 0, 0, 0.7)")
+    .style("color", "white")
+    .style("padding", "8px")
+    .style("border-radius", "4px");
+
     svg.selectAll(".player-bar")
       .data(playerValues)
       .enter()
@@ -798,7 +813,18 @@ function createBarChart(playerData, clusterPlayers) {
       .attr("y", d => y(d))
       .attr("width", barWidth)
       .attr("height", d => chartHeight - y(d))
-      .attr("fill", playerColor);
+      .attr("fill", playerColor)
+      .on("mouseover", function(event, d) {
+        tooltip.style("display", "block")
+               .html("Player Value: " + d);
+      })
+      .on("mousemove", function(event) {
+          tooltip.style("left", (event.pageX + 10) + "px")
+                 .style("top", (event.pageY - 20) + "px");
+      })
+      .on("mouseout", function() {
+          tooltip.style("display", "none");
+      });
 
     svg.selectAll(".cluster-bar")
       .data(clusterValues)
@@ -809,7 +835,18 @@ function createBarChart(playerData, clusterPlayers) {
       .attr("y", d => y(d))
       .attr("width", barWidth)
       .attr("height", d => chartHeight - y(d))
-      .attr("fill", clusterColor);
+      .attr("fill", clusterColor)
+      .on("mouseover", function(event, d) {
+        tooltip.style("display", "block")
+               .html("Cluster Value: " + d);
+      })
+      .on("mousemove", function(event) {
+          tooltip.style("left", (event.pageX + 10) + "px")
+                 .style("top", (event.pageY - 20) + "px");
+      })
+      .on("mouseout", function() {
+          tooltip.style("display", "none");
+      });
 
     const legend = svg.append("g")
       .attr("class", "legend")
