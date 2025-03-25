@@ -703,7 +703,7 @@ function createBarChart(playerData, clusterPlayers) {
     // Set up dimensions
     const width = container.node().clientWidth;
     const height = container.node().clientHeight;
-    const margin = { top: 20, right: 200, bottom: 150, left: 50 }; // Increased right margin
+    const margin = { top: 20, right: 200, bottom: 80, left: 50 }; // Increased right margin
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
 
@@ -1017,9 +1017,15 @@ function updatePlayerInfo(playerData) {
       .attr("class", "player-stat")
       .html(`<div class="stat-label">Weekly Wage</div><div class="stat-value">${player.wage}</div>`);
 
+    // Assuming player.play_styles is a comma-separated string
+    const formattedPlayStyles = player.play_styles
+    .split(',')
+    .map(style => style.trim())
+    .join(', ');
+
     playerStats.append("div")
     .attr("class", "player-stat")
-    .html(`<div class="stat-label" sty>Play styles</div><div class="stat-value">${player.play_styles}</div>`);
+    .html(`<div class="stat-label" sty>Play styles</div><div class="stat-value">${formattedPlayStyles}</div>`);
 
     //console.log(window.np);
 

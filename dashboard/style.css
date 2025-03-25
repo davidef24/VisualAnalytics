@@ -214,7 +214,7 @@ svg {
   height: 100%;
   width: 100%;
   display: grid;
-  grid-template-rows: 1fr 2.5fr; /* Define 2 rows */
+  grid-template-rows: 1fr 1fr; /* Define 2 rows */
   grid-template-columns: 1fr; /* Define 1 column */
 }
 
