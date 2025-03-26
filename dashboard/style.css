@@ -210,10 +210,6 @@ svg {
     transform: scale(0.90);
 }
 
-.scatter-circle {
-    transition: opacity 0.3s ease;
-}
-
 .pie-title {
     font-size: 14px;
     font-weight: bold;

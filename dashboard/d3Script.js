@@ -165,18 +165,7 @@ function createScatterplot(data) {
   const yScale = d3.scaleLinear()
     .domain(originalYDomain) // Use stored domain instead of data's extent
     .range([height, 0]);
-
-  // Append X axis
-  const xAxis = scatterSvg.append("g")
-    .attr("class", "x-axis")
-    .attr("transform", `translate(0, ${height})`)
-    .call(d3.axisBottom(xScale));
-
-  // Append Y axis
-  const yAxis = scatterSvg.append("g")
-    .attr("class", "y-axis")
-    .call(d3.axisLeft(yScale));
-
+    
   // Define tooltip (ensure it exists)
   const tooltip = d3.select("body")
     .append("div")
@@ -337,6 +326,7 @@ function createScatterplot(data) {
     );
 
     window.brushedMode = true;
+    window.brushedPlayers = brushedPlayers;
 
     circles.attr("opacity", d => 
       brushedPlayers.includes(d) ? 1.0 : 0.2
@@ -1778,7 +1768,7 @@ function createLineChart(playerData, metric) {
             ${insight.stat.toUpperCase()} 
             <tspan style="fill:${arrowColor}">${insight.percentage}</tspan>
             <tspan style="fill:#666"> 
-              | ${insight.years.join("-")} (${insight.duration} season${insight.duration > 1 ? "s" : ""})
+              | ${insight.years.join("-")}
             </tspan>
           `);
       });
