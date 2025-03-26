@@ -214,6 +214,10 @@ svg {
     transition: opacity 0.3s ease;
 }
 
+.pie-title {
+    font-size: 14px;
+    font-weight: bold;
+}
 
 #player-info {
   height: 100%;
@@ -530,7 +534,7 @@ input[type="range"]::-moz-range-thumb {
 
  /* Stile per il menù a tendina */
  #league-filter {
-    width: 60%;
+    width: 100%;
     grid-column: 2;
     grid-row: 1;
     padding: 8px;
@@ -574,7 +578,6 @@ input[type="range"]::-moz-range-thumb {
 #league-filter {
     max-height: 200px; /* Altezza massima del menù aperto */
     overflow-y: auto; /* Abilita lo scroll verticale */
-    width: 130px;
 }
 
 /* Aggiungi una freccia personalizzata al menù */
@@ -582,7 +585,7 @@ input[type="range"]::-moz-range-thumb {
     grid-column: 2;
     position: relative;
     display: inline-block;
-    width: 130px;
+    width: 85%;
 }
 
 .custom-select-wrapper::after {

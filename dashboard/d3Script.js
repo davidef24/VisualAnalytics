@@ -1,5 +1,5 @@
 const filters = {
-  age: { min: 18, max: 46 },
+  age: { min: 17, max: 43 },
   role: [], 
   league: "All Leagues"
 };
@@ -368,9 +368,16 @@ function createScatterplot(data) {
       // Deactivate brush mode: disable pointer events to prevent drawing
       brushG.lower();
       brushG.select(".overlay").style("pointer-events", "none");
-      //console.log("Brush mode deactivated");
+      // Add pie chart update when deactivating brush mode
+      updatePieChart(data);
+
       // Clear any current brush selection:
       brushG.call(brush.move, null);
+      
+      // Also reset player count display
+      playerCountGroup.select("text")
+          .text(`Players: ${data.length}`);
+
     }
   });
 
@@ -524,24 +531,6 @@ function createScatterplot(data) {
 
   // Initial pie chart
   updatePieChart(data);
-
-  // Add ResizeObserver
-  const resizeObserver = new ResizeObserver(entries => {
-    const { width: newWidth, height: newHeight } = entries[0].contentRect;
-    if (newWidth !== containerWidth || newHeight !== containerHeight) {
-      width = newWidth - margin.left - margin.right;
-      height = newHeight - margin.top - margin.bottom;
-      xScale.range([0, width]);
-      yScale.range([height, 0]);
-      xAxis.call(d3.axisBottom(xScale));
-      yAxis.call(d3.axisLeft(yScale));
-      circles
-        .attr("cx", d => xScale(d.Tsne_Dim1))
-        .attr("cy", d => yScale(d.Tsne_Dim2));
-    }
-  });
-
-  resizeObserver.observe(container);
   return scatterSvg;
 }
 
@@ -738,8 +727,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Gestione del reset
     document.getElementById("reset-filter").addEventListener("click", function() {
-      filters.age.min = 18;
-      filters.age.max = 46;
+      filters.age.min = 17;
+      filters.age.max = 43;
       filters.league = "All Leagues";
       filters.role = [];
       let ds = applyFilters();
@@ -760,10 +749,10 @@ document.addEventListener("DOMContentLoaded", function() {
       document.getElementById("radar-slider-value").textContent = "0";
       const minSlider = document.getElementById("min-slider");
       const maxSlider = document.getElementById("max-slider");
-      minSlider.value = 65;
-      maxSlider.value = 94;
-      minSlider.textContent = 65;
-      maxSlider.textContent = 94;
+      minSlider.value = 17;
+      maxSlider.value = 43;
+      minSlider.textContent = 17;
+      maxSlider.textContent = 43;
       document.getElementById("brushed-player-checkbox").checked = false;  // <- Add this
       window.brushedMode = false;  // <- Add this
       updateSliderValues();
@@ -1485,24 +1474,27 @@ document.getElementById("radar-slider").addEventListener("input", function() {
   updateRadarChart();
 });
 
+
+
 function findNearestPlayers(selectedPlayer, data, numNearest) {
-  //console.log(selectedPlayer);
-  // Calcola la distanza euclidea tra il giocatore selezionato e tutti gli altri
-  const distances = data.map(player => {
-      if (player.name === selectedPlayer.name) return null; // Salta il giocatore selezionato stesso
-
-      const dx = player.Tsne_Dim1 - selectedPlayer.Tsne_Dim1;
-      const dy = player.Tsne_Dim2 - selectedPlayer.Tsne_Dim2;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-
-      return { player, distance };
-  }).filter(d => d !== null); // Rimuove il valore nullo (il giocatore selezionato)
-
-  // Ordina i giocatori per distanza crescente
-  distances.sort((a, b) => a.distance - b.distance);
-
-  // Prendi i primi N giocatori più vicini
-  return distances.slice(0, numNearest).map(d => d.player);
+  const base = positionCache.get(selectedPlayer.player_id);
+  const distances = [];
+  
+  // Use pre-cached positions
+  for (const player of data) {
+    if (player.player_id === selectedPlayer.player_id) continue;
+    const pos = positionCache.get(player.player_id);
+    const dx = pos.x - base.x;
+    const dy = pos.y - base.y;
+    distances.push({
+      player,
+      distance: dx*dx + dy*dy // Skip sqrt for performance
+    });
+  }
+  
+  return distances.sort((a, b) => a.distance - b.distance)
+                  .slice(0, numNearest)
+                  .map(d => d.player);
 }
 
 
@@ -2072,11 +2064,22 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 });
 
+const positionCache = new Map();
+
 // Load the CSV data and create the scatterplot.
 loadCSVData(csvFilePath, function(data) {
   // Save the data for later use (e.g., updating other visualizations).
   //console.log(data);
   window.dataset = data;
+  // Precompute positions once
+  
+  window.dataset.forEach((d, i) => {
+    positionCache.set(d.player_id, {
+      x: d.Tsne_Dim1,
+      y: d.Tsne_Dim2,
+      index: i
+    });
+  });
   // Create the scatterplot.
   createScatterplot(data);
 
