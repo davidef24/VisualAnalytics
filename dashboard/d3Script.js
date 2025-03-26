@@ -146,7 +146,7 @@ function createScatterplot(data) {
   }
 
   // Define margins and available width/height
-  const margin = { top: 20, right: 230, bottom: 30, left: 40 };
+  const margin = { top: 20, right: 280, bottom: 30, left: 40 };
   let width = containerWidth - margin.left - margin.right;
   let height = containerHeight - margin.top - margin.bottom;
 
@@ -217,6 +217,15 @@ function createScatterplot(data) {
       tooltip.style("display", "none");
     })
     .on("click", function(event, d) {
+     // Store the clicked player in the appropriate variable
+     if (compareMode) {
+        comparedPlayer = d;
+    } else {
+        // Normal mode
+        selectedPlayer = d;
+    }
+        // Update opacity based on current state
+        updateCircleOpacity();
       // Compare mode check
       if (compareMode) {
         if (!comparedPlayer) {
@@ -259,6 +268,29 @@ function createScatterplot(data) {
         document.getElementById("line-chart-filter").value = "wage";
       }
     });
+
+    function updateCircleOpacity() {
+      if (compareMode) {
+          if (selectedPlayer && comparedPlayer) {
+              // Both players selected in compare mode
+              circles.attr("opacity", player => 
+                  (player === selectedPlayer || player === comparedPlayer) ? 1 : 0.1
+              );
+          } else if (comparedPlayer) {
+              // Only compared player selected (first selection)
+              circles.attr("opacity", player => 
+                  player === comparedPlayer ? 1 : 0.1
+              );
+          }
+      } else {
+          // Normal mode
+          if (selectedPlayer) {
+              circles.attr("opacity", player => 
+                  player === selectedPlayer ? 1 : 0.1
+              );
+          }
+      }
+  }
 
   // Define an array to store brushed players
   let brushedPlayers = [];
@@ -313,7 +345,13 @@ function createScatterplot(data) {
     //updateBarChartWithAverages(avgValues);
     // Hide the brush selection rectangle after the brush event is complete
     brushG.select(".selection").style("display", "none");
-    window.brushedPlayers = brushedPlayers;
+    
+    // Update pie chart with brushed data
+    updatePieChart(brushedPlayers.length > 0 ? brushedPlayers : data);
+
+    // Update player count display
+    playerCountGroup.select("text")
+      .text(`Displayed Players: ${brushedPlayers.length > 0 ? brushedPlayers.length : data.length}`);
     createBarChart(null, null);
   }
 
@@ -367,6 +405,125 @@ function createScatterplot(data) {
       .text(item.label)
       .style("font-size", "12px");
   });
+
+  // Add Player Count Display (centered above pie chart)
+  const playerCountGroup = scatterSvg.append("g")
+    .attr("transform", `translate(${width + margin.right/2}, ${height/2 - 100})`); // Centered above pie
+  const playerCountText = playerCountGroup.append("text")
+    .attr("text-anchor", "middle")
+    .style("font-weight", "bold")
+    .style("font-size", "14px")
+    .text(`Players: ${data.length}`);
+
+  // Add Pie Chart (centered in remaining space)
+  const pieRadius = 60; // Reduced size for better fit
+  const pieGroup = scatterSvg.append("g")
+    .attr("transform", `translate(${width + margin.right/2}, ${height/2+30})`); // True center
+
+    function updatePieChart(currentData) {
+      // Clear existing elements
+      pieGroup.selectAll("*").remove();
+  
+      // Add title (centered above pie)
+      pieGroup.append("text")
+          .attr("text-anchor", "middle")
+          .attr("y", -pieRadius - 30)
+          .style("font-size", "14px")
+          .style("font-weight", "bold")
+          .text("Cluster Distribution");
+  
+      // Calculate cluster distribution
+      const clusterData = Array.from(
+          d3.rollup(currentData, v => v.length, d => d.Cluster),
+          ([cluster, count]) => ({
+              cluster,
+              count,
+              color: colorPalette[cluster % colorPalette.length]
+          })
+      ).sort((a, b) => b.count - a.count);
+  
+      const pie = d3.pie()
+          .value(d => d.count)
+          .sort(null);
+  
+      const arc = d3.arc()
+          .innerRadius(0)
+          .outerRadius(pieRadius);
+  
+      // Create arcs
+      const arcs = pie(clusterData);
+  
+      // Draw slices
+      pieGroup.selectAll("path")
+          .data(arcs)
+          .enter()
+          .append("path")
+          .attr("d", arc)
+          .attr("fill", d => d.data.color)
+          .attr("stroke", "#333")
+          .attr("stroke-width", 0.5);
+  
+      // Create a separate arc for labels to position them nicely
+      const labelArc = d3.arc()
+      .innerRadius(d => {
+          const percentage = (d.data.count/currentData.length * 100);
+          return percentage < 5 ? pieRadius * 1.2 : pieRadius * 0.7;
+      })
+      .outerRadius(d => {
+          const percentage = (d.data.count/currentData.length * 100);
+          return percentage < 5 ? pieRadius * 1.2 : pieRadius * 0.7;
+      });
+  
+      // Add labels with improved positioning
+      pieGroup.selectAll(".pie-label")
+          .data(arcs)
+          .enter()
+          .append("text")
+          .attr("class", "pie-label")
+          .attr("transform", d => {
+              const [x, y] = labelArc.centroid(d);
+              return `translate(${x},${y})`;
+          })
+          .attr("text-anchor", "middle")
+          .attr("dy", "0.35em") // Vertical alignment
+          .style("font-size", d => {
+              const percentage = (d.data.count/currentData.length * 100);
+              return percentage < 3 ? "8px" : "10px";
+          })
+          .style("font-weight", "bold")
+          .style("fill", d => {
+              const percentage = (d.data.count/currentData.length * 100);
+              return percentage < 5 ? "#000" : "#fff"; // Black for small percentages
+          })
+          .text(d => {
+              const percentage = (d.data.count/currentData.length * 100).toFixed(1);
+              return `${percentage}%`;
+          });
+  
+      // Add lines connecting labels to slices (optional)
+      pieGroup.selectAll(".pie-line")
+          .data(arcs.filter(d => (d.data.count/currentData.length * 100) < 5)) // Only for small slices
+          .enter()
+          .append("line")
+          .attr("class", "pie-line")
+          .attr("x1", d => arc.centroid(d)[0])
+          .attr("y1", d => arc.centroid(d)[1])
+          .attr("x2", d => labelArc.centroid(d)[0])
+          .attr("y2", d => labelArc.centroid(d)[1])
+          .attr("stroke", "#999")
+          .attr("stroke-width", 1);
+  
+      // Update player count
+      playerCountText.text(
+          currentData === data 
+              ? `Total Players: ${data.length}` 
+              : `Selected Players: ${currentData.length}`
+      );
+  }
+  
+
+  // Initial pie chart
+  updatePieChart(data);
 
   // Add ResizeObserver
   const resizeObserver = new ResizeObserver(entries => {

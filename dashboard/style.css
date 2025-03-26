@@ -210,6 +210,11 @@ svg {
     transform: scale(0.90);
 }
 
+.scatter-circle {
+    transition: opacity 0.3s ease;
+}
+
+
 #player-info {
   height: 100%;
   width: 100%;
