@@ -1,6 +1,10 @@
 # VisualAnalytics
-This repository contains the project related to the course of Visual Analytics 2024-2025
+This repository contains the project related to the course of Visual Analytics
+Sapienza A.Y. 2024/2025
 
-# Pre processing
-Removed from the original dataset the following attributes:
-player_url, fifa_update, fifa_update_date, potential, club_position, club_jersey_number, club_loaned_from, club_joined_date, club_contract_valid_until_year, nation_team_id, nation_jersey_number, work_rate, body_type, release_clause_eur, nation_position, player_tags, player_traits, ls, st, rs, lw, lf, cf, rf, rw, lam, cam, ram, lm, lcm, cm, rcm, rm, lwb, ldm, cdm, rdm, rwb, lb, lcb, cb, rcb, rb, gk
+# Dashboard Folder
+Contains the main index.html file, the d3.js script and the css style. It contains also the final dataset preprocessed.
+
+# Data Folder
+Contains 2 datasets, the main one of FC 25 is player-data-full.csv and the second of other versions of FIFA is male_players.csv.
+It has also the python script for pre-processing, dimensionality reduction and clustering.
