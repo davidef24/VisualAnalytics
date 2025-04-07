@@ -171,7 +171,7 @@ function createScatterplot(data) {
   .attr("class", "x axis")
   .attr("transform", `translate(0, ${height})`)
   .call(d3.axisBottom(xScale));
-  
+
   // Add y-axis
   scatterSvg.append("g")
   .attr("class", "y axis")
@@ -295,8 +295,12 @@ function createScatterplot(data) {
   // Define an array to store brushed players
   let brushedPlayers = [];
 
+  console.log("Before" + window.brushedMode);
+
   // Global flag for brush mode (initially off)
   window.brushedMode = window.brushedMode || false;
+
+  console.log("After" + window.brushedMode);
 
 
   const brush = d3.brush()
@@ -322,7 +326,6 @@ function createScatterplot(data) {
   function brushed(event) {
     if (!event.selection) {
       brushedPlayers = [];
-      window.brushedMode = false;
       circles.attr("opacity", 0.8);
       return;
     }
