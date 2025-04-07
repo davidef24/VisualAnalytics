@@ -165,6 +165,17 @@ function createScatterplot(data) {
   const yScale = d3.scaleLinear()
     .domain(originalYDomain) // Use stored domain instead of data's extent
     .range([height, 0]);
+
+  // Add x-axis
+  scatterSvg.append("g")
+  .attr("class", "x axis")
+  .attr("transform", `translate(0, ${height})`)
+  .call(d3.axisBottom(xScale));
+  
+  // Add y-axis
+  scatterSvg.append("g")
+  .attr("class", "y axis")
+  .call(d3.axisLeft(yScale));
     
   // Define tooltip (ensure it exists)
   const tooltip = d3.select("body")
